@@ -1,0 +1,49 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>io.github.hibjan.tfg</groupId>
+  <artifactId>backend</artifactId>
+  <version>1.0.0</version>
+  <packaging>war</packaging>
+
+  <name>backend</name>
+
+  <properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+  </properties>
+
+  <dependencies>
+    <!-- Servlet -->
+    <dependency>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <version>6.0.0</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- PostgreSQL -->
+    <dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>postgresql</artifactId>
+        <version>42.7.9</version>
+    </dependency>
+
+     <!-- JSON -->
+    <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>2.17.1</version>
+    </dependency>
+        
+  </dependencies>
+
+  <build>
+    <finalName>backend</finalName>
+  </build>
+
+</project>
