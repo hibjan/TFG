@@ -1,0 +1,491 @@
+{
+   "collections":[
+        {
+            "name": "People",
+            "id": 1
+        },
+        {
+            "name": "Movies",
+            "id": 2
+        },
+        {
+            "name": "Studios",
+            "id": 3
+        }
+    ],
+   "objects":[
+        {
+            "id": 1,
+            "collection_id": 1,
+            "metadata":{
+                "Year":[
+                    "1980"
+                ],
+                "Gender":[
+                    "Male"
+                ]
+            },
+            "references":[
+                {
+                    "reason": "Actor",
+                    "reference_id": 1,
+                    "reference_collection_id": 2
+                },
+                {
+                    "reason": "Actor",
+                    "reference_id": 2,
+                    "reference_collection_id": 2
+                },
+                {
+                    "reason": "Actor",
+                    "reference_id": 3,
+                    "reference_collection_id": 2
+                }
+            ],
+            "contents":{
+                "name": "A1",
+                "description": "Just an actor"
+            }
+        },
+        {
+            "id": 2,
+            "collection_id": 1,
+            "metadata":{
+                "Year":[
+                    "1980"
+                ],
+                "Gender":[
+                    "Male"
+                ]
+            },
+            "references":[
+                {
+                    "reason": "Actor",
+                    "reference_id": 1,
+                    "reference_collection_id": 2
+                }
+            ],
+            "contents":{
+                "name": "A2",
+                "content1": "Just an actor"
+            }
+        },
+        {
+            "id": 3,
+            "collection_id": 1,
+            "metadata":{
+                "Year":[
+                    "1990"
+                ],
+                "Gender":[
+                    "Female"
+                ]
+            },
+            "references":[
+                {
+                    "reason": "Actor",
+                    "reference_id": 3,
+                    "reference_collection_id": 2
+                },
+                {
+                    "reason": "Actor",
+                    "reference_id": 4,
+                    "reference_collection_id": 2
+                },
+                {
+                    "reason": "Actor",
+                    "reference_id": 5,
+                    "reference_collection_id": 2
+                },
+                {
+                    "reason": "Producer",
+                    "reference_id": 3,
+                    "reference_collection_id": 2
+                }
+            ],
+            "contents":{
+                "name": "A3",
+                "description": "Just an actor, and one time producer"
+            }
+        },
+        {
+            "id": 4,
+            "collection_id": 1,
+            "metadata":{
+                "Year":[
+                    "1950"
+                ],
+                "Gender":[
+                    "Female"
+                ]
+            },
+            "references":[
+                {
+                    "reason": "Director",
+                    "reference_id": 3,
+                    "reference_collection_id": 2
+                },
+                {
+                    "reason": "Director",
+                    "reference_id": 4,
+                    "reference_collection_id": 2
+                },
+                {
+                    "reason": "Director",
+                    "reference_id": 5,
+                    "reference_collection_id": 2
+                },
+                {
+                    "reason": "Founder",
+                    "reference_id": 2,
+                    "reference_collection_id": 3
+                }
+            ],
+            "contents":{
+                "name": "D1",
+                "description": "A director that founded S2"
+            }
+        },
+        {
+            "id": 5,
+            "collection_id": 1,
+            "metadata":{
+                "Year":[
+                    "1950"
+                ],
+                "Gender":[
+                    "Male"
+                ]
+            },
+            "references":[
+                {
+                    "reason": "Director",
+                    "reference_id": 1,
+                    "reference_collection_id": 2
+                },
+                {
+                    "reason": "Director",
+                    "reference_id": 2,
+                    "reference_collection_id": 2
+                }
+            ],
+            "contents":{
+                "name": "D2",
+                "description": "Just a director"
+            }
+        },
+        {
+            "id": 6,
+            "collection_id": 1,
+            "metadata":{
+                "Year":[
+                    "1950"
+                ],
+                "Gender":[
+                    "Male"
+                ]
+            },
+            "references":[
+                {
+                    "reason": "President",
+                    "reference_id": 1,
+                    "reference_collection_id": 3
+                }
+            ],
+            "contents":{
+                "name": "P1",
+                "description": "Just a president"
+            }
+        },
+        {
+            "id": 7,
+            "collection_id": 1,
+            "metadata":{
+                "Year":[
+                    "1960"
+                ],
+                "Gender":[
+                    "Female"
+                ]
+            },
+            "references":[
+                {
+                    "reason": "President",
+                    "reference_id": 2,
+                    "reference_collection_id": 3
+                }
+            ],
+            "contents":{
+                "name": "P2",
+                "description": "Just a president"
+            }
+        },
+        {
+            "id": 1,
+            "collection_id": 2,
+            "metadata":{
+                "Year":[
+                    "1990"
+                ],
+                "Genre":[
+                    "Action"
+                ]
+            },
+            "references":[
+                {
+                    "reason": "Actor",
+                    "reference_id": 1,
+                    "reference_collection_id": 1
+                },
+                {
+                    "reason": "Actor",
+                    "reference_id": 2,
+                    "reference_collection_id": 1
+                },
+                {
+                    "reason": "Director",
+                    "reference_id": 5,
+                    "reference_collection_id": 1
+                },
+                {
+                    "reason": "Production",
+                    "reference_id": 3,
+                    "reference_collection_id": 3
+                }
+            ],
+            "contents":{
+                "name": "M1",
+                "description": "Just a movie"
+            }
+        },
+        {
+            "id": 2,
+            "collection_id": 2,
+            "metadata":{
+                "Year":[
+                    "1990"
+                ],
+                "Genre":[
+                    "Action",
+                    "Drama"
+                ]
+            },
+            "references":[
+                {
+                    "reason": "Actor",
+                    "reference_id": 1,
+                    "reference_collection_id": 1
+                },
+                {
+                    "reason": "Director",
+                    "reference_id": 5,
+                    "reference_collection_id": 1
+                },
+                {
+                    "reason": "Production",
+                    "reference_id": 2,
+                    "reference_collection_id": 3
+                }
+            ],
+            "contents":{
+                "name": "M2",
+                "description": "Just a movie"
+            }
+        },
+        {
+            "id": 3,
+            "collection_id": 2,
+            "metadata":{
+                "Year":[
+                    "1995"
+                ],
+                "Genre":[
+                    "Romance"
+                ]
+            },
+            "references":[
+                {
+                    "reason": "Actor",
+                    "reference_id": 1,
+                    "reference_collection_id": 1
+                },
+                {
+                    "reason": "Actor",
+                    "reference_id": 3,
+                    "reference_collection_id": 1
+                },
+                {
+                    "reason": "Director",
+                    "reference_id": 4,
+                    "reference_collection_id": 1
+                },
+                {
+                    "reason": "Producer",
+                    "reference_id": 3,
+                    "reference_collection_id": 1
+                },
+                {
+                    "reason": "Production",
+                    "reference_id": 1,
+                    "reference_collection_id": 3
+                }
+            ],
+            "contents":{
+                "name": "M3",
+                "description": "Just a movie"
+            }
+        },
+        {
+            "id": 4,
+            "collection_id": 2,
+            "metadata":{
+                "Year":[
+                    "2000"
+                ],
+                "Genre":[
+                    "Scifi",
+                    "Action"
+                ]
+            },
+            "references":[
+                {
+                    "reason": "Actor",
+                    "reference_id": 3,
+                    "reference_collection_id": 1
+                },
+                {
+                    "reason": "Director",
+                    "reference_id": 4,
+                    "reference_collection_id": 1
+                },
+                {
+                    "reason": "Production",
+                    "reference_id": 2,
+                    "reference_collection_id": 3
+                }
+            ],
+            "contents":{
+                "name": "M4",
+                "description": "Just a movie"
+            }
+        },
+        {
+            "id": 5,
+            "collection_id": 2,
+            "metadata":{
+                "Year":[
+                    "1995"
+                ],
+                "Genre":[
+                    "Drama"
+                ]
+            },
+            "references":[
+                {
+                    "reason": "Actor",
+                    "reference_id": 3,
+                    "reference_collection_id": 1
+                },
+                {
+                    "reason": "Director",
+                    "reference_id": 4,
+                    "reference_collection_id": 1
+                },
+                {
+                    "reason": "Production",
+                    "reference_id": 2,
+                    "reference_collection_id": 3
+                }
+            ],
+            "contents":{
+                "name": "M5",
+                "description": "Just a movie"
+            }
+        },
+        {
+            "id": 1,
+            "collection_id": 3,
+            "metadata":{
+                "Year":[
+                    "1990"
+                ]
+            },
+            "references":[
+                {
+                    "reason": "President",
+                    "reference_id": 6,
+                    "reference_collection_id": 1
+                },
+                {
+                    "reason": "Production",
+                    "reference_id": 3,
+                    "reference_collection_id": 2
+                }
+            ],
+            "contents":{
+                "name": "S1",
+                "description": "Just a studio"
+            }
+        },
+        {
+            "id": 2,
+            "collection_id": 3,
+            "metadata":{
+                "Year":[
+                    "1990"
+                ]
+            },
+            "references":[
+                {
+                    "reason": "President",
+                    "reference_id": 7,
+                    "reference_collection_id": 1
+                },
+                {
+                    "reason": "Founder",
+                    "reference_id": 4,
+                    "reference_collection_id": 1
+                },
+                {
+                    "reason": "Production",
+                    "reference_id": 2,
+                    "reference_collection_id": 2
+                },
+                {
+                    "reason": "Production",
+                    "reference_id": 4,
+                    "reference_collection_id": 2
+                },
+                {
+                    "reason": "Production",
+                    "reference_id": 5,
+                    "reference_collection_id": 2
+                }
+            ],
+            "contents":{
+                "name": "S2",
+                "description": "Just a studio"
+            }
+        },
+        {
+            "id": 3,
+            "collection_id": 3,
+            "metadata":{
+                "Year":[
+                    "1980"
+                ]
+            },
+            "references":[
+                {
+                    "reason": "Production",
+                    "reference_id": 1,
+                    "reference_collection_id": 2
+                }
+            ],
+            "contents":{
+                "name": "S3",
+                "description": "Just a studio"
+            }
+        }
+    ]
+}

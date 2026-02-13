@@ -1,0 +1,4 @@
+<Context>
+    <CookieProcessor className="org.apache.tomcat.util.http.Rfc6265CookieProcessor"
+                     sameSiteCookies="None" />
+</Context>

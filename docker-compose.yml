@@ -1,12 +1,13 @@
 services:
   postgres:
     image: postgres:16
-    container_name: myapp-postgres
+    env_file: .env
+    container_name: tfg-postgres
     environment:
-      POSTGRES_DB: myapp
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypass
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
     volumes:
       - ./database:/docker-entrypoint-initdb.d

@@ -29,3 +29,5 @@ apache-tomcat-*/
 .project
 .classpath
 .settings/
+
+.env

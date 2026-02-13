@@ -1,18 +1,129 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Users</title>
-    <link rel="stylesheet" href="./src/styles/style.css" />
-  </head>
-  <body>
-    <h1 id="main-title">Hello, World!</h1>
-    <button id="colorButton">Click to Change Color</button>
 
-    <h1>Users</h1>
-    <table id="users"></table>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TFG Navigation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
 
-    <script src="./src/main.js"></script>
-  </body>
+<body>
+  <div class="container">
+
+    <!-- ========== Screen 1: Dataset Selection ========== -->
+    <section id="screen-datasets" class="screen">
+      <h1 class="screen-title">Select a Dataset</h1>
+      <div id="datasets" class="pill-row"></div>
+    </section>
+
+    <!-- ========== Screen 2: Collection Selection ========== -->
+    <section id="screen-collections" class="screen hidden">
+      <h1 class="screen-title">Select a Collection</h1>
+      <div id="collections" class="pill-row"></div>
+    </section>
+
+    <!-- ========== Screen 3: Navigation Mode ========== -->
+    <section id="screen-navigation" class="screen hidden">
+
+      <!-- Top bar -->
+      <div class="nav-topbar">
+        <button id="exit-nav-btn" class="exit-btn" title="Exit navigation mode">
+          <span class="exit-arrow">&#8592;</span>
+        </button>
+        <h1 class="screen-title" id="nav-title">Navigating</h1>
+        <div class="topbar-actions">
+          <button id="goback-btn" class="topbar-btn hidden" title="Undo last link navigation">&#8592; Go Back</button>
+          <button id="restore-btn" class="topbar-btn hidden" title="Restore previous saved state">&#x21A9;
+            Restore</button>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="panel filters-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Filters</h2>
+          <button id="toggle-not-btn" class="mode-toggle include">Include</button>
+        </div>
+
+        <div class="filter-sections">
+          <!-- Metadata -->
+          <div class="filter-section">
+            <h3 class="filter-section-label">Metadata</h3>
+            <div id="metadata-filters" class="filter-dropdowns"></div>
+          </div>
+          <!-- References -->
+          <div class="filter-section">
+            <h3 class="filter-section-label">References</h3>
+            <div id="reference-filters" class="filter-dropdowns"></div>
+          </div>
+        </div>
+
+        <!-- Active Filters -->
+        <div id="active-filters" class="active-filters"></div>
+      </div>
+
+      <!-- Links -->
+      <div class="panel links-panel">
+        <h2 class="panel-title">Links</h2>
+        <div id="links" class="pill-row"></div>
+      </div>
+
+      <!-- Spaces: Filtered + Union grids -->
+      <div class="spaces-row">
+        <!-- Filtered Collection -->
+        <div class="space-panel">
+          <div class="space-header">
+            <h2 class="panel-title">Filtered Collection <span id="current-collection-label"
+                class="collection-label"></span></h2>
+            <span id="entities-count" class="count-badge"></span>
+          </div>
+          <div id="entities" class="entity-grid"></div>
+          <div class="pagination">
+            <button id="prev-page" class="pg-btn" disabled>&#8592; Prev</button>
+            <span id="page-info" class="pg-info">Page 1</span>
+            <button id="next-page" class="pg-btn">Next &#8594;</button>
+          </div>
+        </div>
+
+        <!-- Union Set -->
+        <div class="space-panel">
+          <div class="space-header">
+            <h2 class="panel-title">Union Set</h2>
+            <span id="union-count" class="count-badge"></span>
+          </div>
+          <div id="union-entities" class="entity-grid"></div>
+          <div class="pagination">
+            <button id="union-prev-page" class="pg-btn" disabled>&#8592; Prev</button>
+            <span id="union-page-info" class="pg-info">Page 1</span>
+            <button id="union-next-page" class="pg-btn">Next &#8594;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Union action -->
+      <div class="union-bar">
+        <button id="union-btn" class="union-btn">&#x2795; Add to Union &amp; Switch Collection</button>
+      </div>
+
+    </section>
+  </div>
+
+  <!-- Entity Detail Modal -->
+  <div id="entity-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <button id="modal-close" class="modal-close">&times;</button>
+      <h2 id="modal-entity-name" class="modal-title"></h2>
+      <div id="modal-entity-contents" class="modal-contents"></div>
+      <div id="modal-entity-metadata" class="modal-section"></div>
+      <div id="modal-entity-references" class="modal-section"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
 </html>
