@@ -2,17 +2,19 @@ import json
 import psycopg2
 from psycopg2.extras import execute_values
 import os
-import time
+from dotenv import load_dotenv
 
 # --- CONFIGURATION ---
-JSON_FILE = "./scripts/TMDB/tmdb_dataset.json"
-DATASET_NAME = "TMDB"
+JSON_FILE = "./scripts/TMDB/output.json"
+DATASET_NAME = "TMDb 1k"
 
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_NAME = os.getenv("DB_NAME", "tfg_db")
-DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASS = os.getenv("DB_PASS", "postgres")
-DB_PORT = os.getenv("DB_PORT", "5432")
+load_dotenv(".env")
+
+DB_HOST = os.getenv("DB_HOST")
+DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASS")
+DB_PORT = os.getenv("DB_PORT")
 
 def get_db_connection():
     return psycopg2.connect(
@@ -76,7 +78,7 @@ def populate():
             if not db_col_id: continue
 
             contents = obj.get('contents', {})
-            name = contents.get('name', 'Unknown')
+            name = contents.get('Name', 'Unknown')
             
             entity_values.append((db_col_id, json_ent_id, name, json.dumps(contents)))
             entity_tracker.append((json_col_id, json_ent_id))

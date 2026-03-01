@@ -31,3 +31,5 @@ apache-tomcat-*/
 .settings/
 
 .env
+
+*.jsonl
