@@ -59,6 +59,21 @@ This will take the contents of the json file and insert them into the
 
 ### 3. Backend
 
+Go to $TOMCAT_HOME/conf/context.xml, and make sure to include the cookie processor for handling sessions:
+
+```
+<Context>
+  ...
+
+  <CookieProcessor
+      className="org.apache.tomcat.util.http.Rfc6265CookieProcessor"
+      sameSiteCookies="none" />
+
+  ...
+</Context>
+```
+
+
 In VS Code Terminal:
 
 1. cd backend
