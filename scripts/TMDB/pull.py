@@ -177,8 +177,9 @@ def format_eta(seconds):
     if seconds < 60:
         return f"{seconds:.0f}s"
     elif seconds < 3600:
-        # minutes with one decimal for partial minutes is still useful
-        return f"{seconds / 60:.1f}m"
+        minutes = int(seconds // 60)
+        secs = int(seconds % 60)
+        return f"{minutes}:{secs:02d}m"
     else:
         hours = int(seconds // 3600)
         minutes = int((seconds % 3600) / 60)
@@ -261,9 +262,10 @@ async def process_endpoint(session, limiter, config):
                 remaining = total - done
                 eta = remaining / rate if rate > 0 else 0
                 print(
-                    f"[{name}] {done}/{total} | "
-                    f"OK: {processed} | Failed: {failed} | Skipped: {skipped} | "
-                    f"{rate:.1f} req/s | ETA: {format_eta(eta)}"
+                    f"\r[{name}] {done:,}/{total:,} | "
+                    f"OK: {processed:,} | Failed: {failed:,} | Skipped: {skipped:,} | "
+                    f"{rate:.1f} req/s | ETA: {format_eta(eta)}          ",
+                    end="", flush=True
                 )
 
     # Start fixed worker pool
@@ -288,9 +290,19 @@ async def process_endpoint(session, limiter, config):
 
     elapsed = time.time() - start_time
     rate = (processed + failed) / elapsed if elapsed > 0 else 0
+
+    # Final progress flush to reach 100% before completion
+    done = processed + failed + skipped
     print(
-        f"Finished endpoint: {name} in {format_eta(elapsed)} — "
-        f"{processed} OK, {failed} failed, {skipped} skipped ({rate:.1f} req/s)"
+        f"\r[{name}] {done:,}/{total:,} | "
+        f"OK: {processed:,} | Failed: {failed:,} | Skipped: {skipped:,} | "
+        f"{rate:.1f} req/s | ETA: 0s          ",
+        end="", flush=True
+    )
+    
+    print(
+        f"\nFinished endpoint: {name} in {format_eta(elapsed)} — "
+        f"{processed:,} OK, {failed:,} failed, {skipped:,} skipped ({rate:.1f} req/s)"
     )
 
 
