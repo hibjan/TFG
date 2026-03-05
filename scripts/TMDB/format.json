@@ -106,9 +106,26 @@
                 },
                 "Vote count": {
                     "name": "vote_count"
+                }
+            },
+            "resources": {
+                "Poster": {
+                    "name": "poster_path",
+                    "type": "image",
+                    "base_url": "https://image.tmdb.org/t/p/w500"
+                },
+                "Backdrop": {
+                    "name": "backdrop_path",
+                    "type": "image",
+                    "base_url": "https://image.tmdb.org/t/p/w780"
                 },
                 "Homepage": {
-                    "name": "homepage"
+                    "name": "homepage",
+                    "type": "link"
+                },
+                "IMDB": {
+                    "name": "imdb_id",
+                    "type": "imdb"
                 }
             }
         },
@@ -186,7 +203,7 @@
                 },
                 "Spoken languages": {
                     "type": "string",
-                    "name": "spoken_languages", 
+                    "name": "spoken_languages",
                     "multiple": true,
                     "multiple_field": "iso_639_1"
                 },
@@ -222,9 +239,22 @@
                 },
                 "Vote count": {
                     "name": "vote_count"
+                }
+            },
+            "resources": {
+                "Poster": {
+                    "name": "poster_path",
+                    "type": "image",
+                    "base_url": "https://image.tmdb.org/t/p/w500"
+                },
+                "Backdrop": {
+                    "name": "backdrop_path",
+                    "type": "image",
+                    "base_url": "https://image.tmdb.org/t/p/w780"
                 },
                 "Homepage": {
-                    "name": "homepage"
+                    "name": "homepage",
+                    "type": "link"
                 }
             }
         },
@@ -279,9 +309,21 @@
                 },
                 "Popularity": {
                     "name": "popularity"
+                }
+            },
+            "resources": {
+                "Photo": {
+                    "name": "profile_path",
+                    "type": "image",
+                    "base_url": "https://image.tmdb.org/t/p/w500"
                 },
                 "Homepage": {
-                    "name": "homepage"
+                    "name": "homepage",
+                    "type": "link"
+                },
+                "IMDB": {
+                    "name": "imdb_id",
+                    "type": "imdb"
                 }
             }
         },
@@ -303,9 +345,17 @@
                 },
                 "Headquarters": {
                     "name": "headquarters"
+                }
+            },
+            "resources": {
+                "Logo": {
+                    "name": "logo_path",
+                    "type": "image",
+                    "base_url": "https://image.tmdb.org/t/p/w500"
                 },
                 "Homepage": {
-                    "name": "homepage"
+                    "name": "homepage",
+                    "type": "link"
                 }
             }
         },
@@ -324,9 +374,17 @@
                 },
                 "Headquarters": {
                     "name": "headquarters"
+                }
+            },
+            "resources": {
+                "Logo": {
+                    "name": "logo_path",
+                    "type": "image",
+                    "base_url": "https://image.tmdb.org/t/p/w500"
                 },
                 "Homepage": {
-                    "name": "homepage"
+                    "name": "homepage",
+                    "type": "link"
                 }
             }
         }

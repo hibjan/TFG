@@ -237,6 +237,7 @@ def process_collection(collection_cfg, object_cfg):
     collection_id = collection_cfg["id"]
     metadata_fields = object_cfg.get("metadata", {})
     contents_fields = object_cfg.get("contents", {})
+    resources_fields = object_cfg.get("resources", {})
 
     # Pre-convert coded field lookups for this collection
     precompute_code_dicts(metadata_fields)
@@ -256,6 +257,15 @@ def process_collection(collection_cfg, object_cfg):
     content_configs = []
     for display_name, content_cfg in contents_fields.items():
         content_configs.append((display_name, content_cfg["name"]))
+
+    resource_configs = []
+    for label, res_cfg in resources_fields.items():
+        resource_configs.append((
+            label,
+            res_cfg["name"],
+            res_cfg["type"],
+            res_cfg.get("base_url", ""),
+        ))
 
     objects = []
     raw_objects = []
@@ -296,6 +306,31 @@ def process_collection(collection_cfg, object_cfg):
                 )
                 obj_metadata.update(meta_additions)
                 obj_contents.update(contents_additions)
+
+            # ── Build resources ──
+            obj_resources = []
+            for label, field_name, res_type, base_url in resource_configs:
+                raw_value = raw_obj.get(field_name)
+                if is_empty(raw_value):
+                    continue
+                raw_value = str(raw_value).strip()
+                if not raw_value:
+                    continue
+
+                if res_type == "image":
+                    url = f"{base_url}{raw_value}" if base_url else raw_value
+                    obj_resources.append({"type": "image", "label": label, "url": url})
+                elif res_type == "link":
+                    obj_resources.append({"type": "link", "label": label, "url": raw_value})
+                elif res_type == "imdb":
+                    if raw_value.startswith("nm"):
+                        imdb_url = f"https://www.imdb.com/name/{raw_value}"
+                    else:
+                        imdb_url = f"https://www.imdb.com/title/{raw_value}"
+                    obj_resources.append({"type": "link", "label": label, "url": imdb_url})
+
+            if obj_resources:
+                obj_contents["_resources"] = obj_resources
 
             out_obj = {
                 "id": obj_id,
