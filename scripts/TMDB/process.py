@@ -1,35 +1,9 @@
 import os
-
-try:
-    import orjson
-
-    def json_loads(s):
-        return orjson.loads(s)
-
-    def json_dumps(obj):
-        return orjson.dumps(obj, option=orjson.OPT_NON_STR_KEYS).decode("utf-8")
-
-    def json_dumps_pretty(obj):
-        return orjson.dumps(
-            obj, option=orjson.OPT_INDENT_2 | orjson.OPT_NON_STR_KEYS
-        ).decode("utf-8")
-
-except ImportError:
-    import json
-
-    def json_loads(s):
-        return json.loads(s)
-
-    def json_dumps(obj):
-        return json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
-
-    def json_dumps_pretty(obj):
-        return json.dumps(obj, indent=4, ensure_ascii=False)
-
+import orjson
 
 # ─── Global variables ────────────────────────────────────────────────
 FORMAT_PATH = "scripts/TMDB/format.json"
-OUTPUT_PATH = "scripts/TMDB/output.json"
+OUTPUT_PATH = "scripts/TMDB/dataset1k.jsonl"
 
 # Toggle: True = range mode (numeric/date stored as ranges in metadata, raw in contents)
 #         False = raw mode  (numeric/date stored as raw values in metadata only)
@@ -37,7 +11,7 @@ RANGE_MODE = True
 
 # Toggle: True = compact JSON output (no indentation, ~40% smaller)
 #         False = pretty-printed JSON output (indented, human-readable)
-COMPACT_OUTPUT = False
+COMPACT_OUTPUT = True
 
 # Write buffer size (8 MB)
 WRITE_BUFFER_SIZE = 8 * 1024 * 1024
@@ -46,11 +20,24 @@ WRITE_BUFFER_SIZE = 8 * 1024 * 1024
 CREW_ROLES = {
     "Directing": ["Director"],
     "Production": ["Producer", "Executive Producer"],
-    "Writing": ["Screenplay", "Writer"],
+    "Writing": ["Screenplay", "Novel"],
+    "Sound": ["Original Music Composer"],
+    "Photography": ["Director of Photography"],
 }
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────
+
+def json_loads(s):
+        return orjson.loads(s)
+
+def json_dumps(obj):
+    return orjson.dumps(obj, option=orjson.OPT_NON_STR_KEYS).decode("utf-8")
+
+def json_dumps_pretty(obj):
+    return orjson.dumps(
+        obj, option=orjson.OPT_INDENT_2 | orjson.OPT_NON_STR_KEYS
+    ).decode("utf-8")
 
 def is_empty(value):
     """Return True if a value should be considered empty (None, 0, or empty string)."""
@@ -228,6 +215,35 @@ def process_metadata_field(meta_name, field_type, field_cfg, raw_values):
     return metadata, contents
 
 
+def extract_references_data(raw_obj):
+    """Extract only the fields needed for the second iteration to save memory."""
+    refs = {"id": raw_obj.get("id")}
+    
+    comp = [c.get("id") for c in raw_obj.get("production_companies") or [] if c.get("id") is not None]
+    if comp: refs["companies"] = comp
+
+    creat = [c.get("id") for c in raw_obj.get("created_by") or [] if c.get("id") is not None]
+    if creat: refs["creators"] = creat
+    
+    net = [n.get("id") for n in raw_obj.get("networks") or [] if n.get("id") is not None]
+    if net: refs["networks"] = net
+    
+    credits = raw_obj.get("credits") or {}
+    cast = [c.get("id") for c in credits.get("cast") or [] if c.get("id") is not None]
+    if cast: refs["cast"] = cast
+    
+    crew = []
+    for c in credits.get("crew") or []:
+        dept = c.get("department")
+        job = c.get("job")
+        cid = c.get("id")
+        if cid is not None and dept in CREW_ROLES and job in CREW_ROLES[dept]:
+            crew.append((cid, job))
+    if crew: refs["crew"] = crew
+    
+    return refs if len(refs) > 1 else None
+
+
 def process_collection(collection_cfg, object_cfg):
     """Process all objects in a collection's JSONL file.
     Returns (list_of_output_objects, list_of_raw_objects).
@@ -237,6 +253,7 @@ def process_collection(collection_cfg, object_cfg):
     collection_id = collection_cfg["id"]
     metadata_fields = object_cfg.get("metadata", {})
     contents_fields = object_cfg.get("contents", {})
+    resources_fields = object_cfg.get("resources", {})
 
     # Pre-convert coded field lookups for this collection
     precompute_code_dicts(metadata_fields)
@@ -257,8 +274,18 @@ def process_collection(collection_cfg, object_cfg):
     for display_name, content_cfg in contents_fields.items():
         content_configs.append((display_name, content_cfg["name"]))
 
+    resource_configs = []
+    for label, res_cfg in resources_fields.items():
+        resource_configs.append((
+            label,
+            res_cfg["name"],
+            res_cfg["type"],
+            res_cfg.get("base_url", ""),
+        ))
+
     objects = []
     raw_objects = []
+    seen_ids = set()  # Track (collection_id, id) to detect duplicates
 
     if not os.path.exists(input_file):
         print(f"WARNING: Input file not found: {input_file}")
@@ -277,6 +304,13 @@ def process_collection(collection_cfg, object_cfg):
             obj_id = raw_obj.get("id")
             if obj_id is None:
                 continue
+
+            # Duplicate detection
+            key = (collection_id, obj_id)
+            if key in seen_ids:
+                print(f"  WARNING: Duplicate (collection_id={collection_id}, id={obj_id}), skipping")
+                continue
+            seen_ids.add(key)
 
             # ── Build contents ──
             obj_contents = {}
@@ -297,6 +331,31 @@ def process_collection(collection_cfg, object_cfg):
                 obj_metadata.update(meta_additions)
                 obj_contents.update(contents_additions)
 
+            # ── Build resources ──
+            obj_resources = []
+            for label, field_name, res_type, base_url in resource_configs:
+                raw_value = raw_obj.get(field_name)
+                if is_empty(raw_value):
+                    continue
+                raw_value = str(raw_value).strip()
+                if not raw_value:
+                    continue
+
+                if res_type == "image":
+                    url = f"{base_url}{raw_value}" if base_url else raw_value
+                    obj_resources.append({"type": "image", "label": label, "url": url})
+                elif res_type == "link":
+                    obj_resources.append({"type": "link", "label": label, "url": raw_value})
+                elif res_type == "imdb":
+                    if raw_value.startswith("nm"):
+                        imdb_url = f"https://www.imdb.com/name/{raw_value}"
+                    else:
+                        imdb_url = f"https://www.imdb.com/title/{raw_value}"
+                    obj_resources.append({"type": "link", "label": label, "url": imdb_url})
+
+            if obj_resources:
+                obj_contents["_resources"] = obj_resources
+
             out_obj = {
                 "id": obj_id,
                 "collection_id": collection_id,
@@ -305,9 +364,15 @@ def process_collection(collection_cfg, object_cfg):
                 "contents": obj_contents
             }
             objects.append(out_obj)
-            raw_objects.append(raw_obj)
+            
+            ref_data = extract_references_data(raw_obj)
+            if ref_data is not None:
+                raw_objects.append(ref_data)
 
-    print(f"  -> {len(objects)} objects")
+            if len(objects) % 10000 == 0:
+                print(f"\r  -> {len(objects):,} objects created", end="", flush=True)
+
+    print(f"\r  -> {len(objects):,} objects created")
     return objects, raw_objects
 
 
@@ -333,21 +398,19 @@ def build_references(all_objects, raw_by_collection, col_id_by_name):
     networks_cid = col_id_by_name.get("Networks")
 
     ref_count = 0
+    last_printed_refs = 0
 
     # ── Movies ──
     if movies_cid is not None:
-        for raw_obj in raw_by_collection.get(movies_cid, []):
-            movie_id = raw_obj.get("id")
+        for ref_data in raw_by_collection.get(movies_cid, []):
+            movie_id = ref_data["id"]
             movie = index.get((movies_cid, movie_id))
             if movie is None:
                 continue
 
             # 1. production_companies -> Companies
             if companies_cid is not None:
-                for company in raw_obj.get("production_companies", []) or []:
-                    cid = company.get("id")
-                    if cid is None:
-                        continue
+                for cid in ref_data.get("companies", []):
                     add_ref(movie, "Produced by", cid, companies_cid)
                     ref_count += 1
                     target = index.get((companies_cid, cid))
@@ -355,14 +418,9 @@ def build_references(all_objects, raw_by_collection, col_id_by_name):
                         add_ref(target, "Produced", movie_id, movies_cid)
                         ref_count += 1
 
-            credits = raw_obj.get("credits", {}) or {}
-
             # 2. credits.cast -> People
             if people_cid is not None:
-                for person in credits.get("cast", []) or []:
-                    pid = person.get("id")
-                    if pid is None:
-                        continue
+                for pid in ref_data.get("cast", []):
                     add_ref(movie, "Actor", pid, people_cid)
                     ref_count += 1
                     target = index.get((people_cid, pid))
@@ -370,16 +428,9 @@ def build_references(all_objects, raw_by_collection, col_id_by_name):
                         add_ref(target, "Actor", movie_id, movies_cid)
                         ref_count += 1
 
-            # 3. credits.crew (filtered by CREW_ROLES) -> People
+            # 3. credits.crew -> People
             if people_cid is not None:
-                for crew_member in credits.get("crew", []) or []:
-                    dept = crew_member.get("department")
-                    job = crew_member.get("job")
-                    pid = crew_member.get("id")
-                    if pid is None or dept not in CREW_ROLES:
-                        continue
-                    if job not in CREW_ROLES[dept]:
-                        continue
+                for pid, job in ref_data.get("crew", []):
                     add_ref(movie, job, pid, people_cid)
                     ref_count += 1
                     target = index.get((people_cid, pid))
@@ -387,20 +438,21 @@ def build_references(all_objects, raw_by_collection, col_id_by_name):
                         add_ref(target, job, movie_id, movies_cid)
                         ref_count += 1
 
+            if ref_count - last_printed_refs >= 10000:
+                print(f"\r  -> {ref_count:,} references created", end="", flush=True)
+                last_printed_refs = ref_count
+
     # ── TV Series ──
     if tv_cid is not None:
-        for raw_obj in raw_by_collection.get(tv_cid, []):
-            tv_id = raw_obj.get("id")
+        for ref_data in raw_by_collection.get(tv_cid, []):
+            tv_id = ref_data["id"]
             tv = index.get((tv_cid, tv_id))
             if tv is None:
                 continue
 
             # 1. created_by -> People
             if people_cid is not None:
-                for creator in raw_obj.get("created_by", []) or []:
-                    pid = creator.get("id")
-                    if pid is None:
-                        continue
+                for pid in ref_data.get("creators", []):
                     add_ref(tv, "Created by", pid, people_cid)
                     ref_count += 1
                     target = index.get((people_cid, pid))
@@ -410,10 +462,7 @@ def build_references(all_objects, raw_by_collection, col_id_by_name):
 
             # 2. networks -> Networks
             if networks_cid is not None:
-                for network in raw_obj.get("networks", []) or []:
-                    nid = network.get("id")
-                    if nid is None:
-                        continue
+                for nid in ref_data.get("networks", []):
                     add_ref(tv, "Broadcasted on", nid, networks_cid)
                     ref_count += 1
                     target = index.get((networks_cid, nid))
@@ -423,10 +472,7 @@ def build_references(all_objects, raw_by_collection, col_id_by_name):
 
             # 3. production_companies -> Companies
             if companies_cid is not None:
-                for company in raw_obj.get("production_companies", []) or []:
-                    cid = company.get("id")
-                    if cid is None:
-                        continue
+                for cid in ref_data.get("companies", []):
                     add_ref(tv, "Produced by", cid, companies_cid)
                     ref_count += 1
                     target = index.get((companies_cid, cid))
@@ -434,14 +480,9 @@ def build_references(all_objects, raw_by_collection, col_id_by_name):
                         add_ref(target, "Produced", tv_id, tv_cid)
                         ref_count += 1
 
-            credits = raw_obj.get("credits", {}) or {}
-
             # 4. credits.cast -> People
             if people_cid is not None:
-                for person in credits.get("cast", []) or []:
-                    pid = person.get("id")
-                    if pid is None:
-                        continue
+                for pid in ref_data.get("cast", []):
                     add_ref(tv, "Actor", pid, people_cid)
                     ref_count += 1
                     target = index.get((people_cid, pid))
@@ -449,16 +490,9 @@ def build_references(all_objects, raw_by_collection, col_id_by_name):
                         add_ref(target, "Actor", tv_id, tv_cid)
                         ref_count += 1
 
-            # 5. credits.crew (filtered by CREW_ROLES) -> People
+            # 5. credits.crew -> People
             if people_cid is not None:
-                for crew_member in credits.get("crew", []) or []:
-                    dept = crew_member.get("department")
-                    job = crew_member.get("job")
-                    pid = crew_member.get("id")
-                    if pid is None or dept not in CREW_ROLES:
-                        continue
-                    if job not in CREW_ROLES[dept]:
-                        continue
+                for pid, job in ref_data.get("crew", []):
                     add_ref(tv, job, pid, people_cid)
                     ref_count += 1
                     target = index.get((people_cid, pid))
@@ -466,7 +500,11 @@ def build_references(all_objects, raw_by_collection, col_id_by_name):
                         add_ref(target, job, tv_id, tv_cid)
                         ref_count += 1
 
-    print(f"  -> {ref_count} references created")
+            if ref_count - last_printed_refs >= 10000:
+                print(f"\r  -> {ref_count:,} references created", end="", flush=True)
+                last_printed_refs = ref_count
+
+    print(f"\r  -> {ref_count:,} references created")
 
 
 # ─── Main ────────────────────────────────────────────────────────────
@@ -516,16 +554,36 @@ def main():
     print(f"\nCleanup: removed {pruned} objects with no references and no metadata ({before} -> {len(all_objects)})")
 
     # ── Write output ──
-    output = {
-        "collections": out_collections,
-        "objects": all_objects
-    }
-
-    serializer = json_dumps if COMPACT_OUTPUT else json_dumps_pretty
+    print(f"\nWriting output to {OUTPUT_PATH} ...")
+    
     with open(OUTPUT_PATH, "w", encoding="utf-8", buffering=WRITE_BUFFER_SIZE) as out:
-        out.write(serializer(output))
+        if COMPACT_OUTPUT:
+            out.write(json_dumps({"collections": out_collections}) + '\n')
+            
+            for i, obj in enumerate(all_objects):
+                out.write(json_dumps(obj) + '\n')
+                if i % 10000 == 0:
+                    print(f"\r  -> Wrote {i:,} / {len(all_objects):,} objects", end="", flush=True)
+        else:
+            out.write('{\n  "collections": ')
+            out.write(json_dumps_pretty(out_collections))
+            out.write(',\n  "objects": [\n')
+            
+            for i, obj in enumerate(all_objects):
+                if i > 0:
+                    out.write(',\n')
+                # Indent internal object string by 4 spaces
+                obj_str = json_dumps_pretty(obj)
+                indented_obj = '\n'.join('    ' + line if line else line for line in obj_str.split('\n'))
+                out.write(indented_obj)
+                
+                if i % 10000 == 0:
+                    print(f"\r  -> Wrote {i:,} / {len(all_objects):,} objects", end="", flush=True)
+                    
+            out.write('\n  ]\n}')
 
-    print(f"\nDone! Wrote {len(all_objects)} objects to {OUTPUT_PATH}")
+    print(f"\r  -> Wrote {len(all_objects):,} / {len(all_objects):,} objects")
+    print(f"\nDone! Saved to {OUTPUT_PATH}")
 
 
 if __name__ == "__main__":

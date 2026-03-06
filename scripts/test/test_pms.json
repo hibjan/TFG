@@ -105,7 +105,19 @@
             ],
             "contents":{
                 "Name": "A3",
-                "Description": "Just an actor, and one time producer"
+                "Description": "Just an actor, and one time producer",
+                 "_resources": [
+                    {
+                        "type": "image",
+                        "label": "Photo",
+                        "url": "/api/resource/people/1/photo.jpg"
+                    },
+                    {
+                        "type": "link",
+                        "label": "Wikipedia",
+                        "url": "https://en.wikipedia.org/wiki/Example"
+                    }
+                ]
             }
         },
         {
