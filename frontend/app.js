@@ -729,6 +729,10 @@ async function viewEntity(entityId, collectionId) {
                 dom.modalResources.innerHTML = '';
                 const resources = parsed._resources;
                 if (Array.isArray(resources) && resources.length > 0) {
+                    // Resolve relative URLs against the backend host
+                    const backendOrigin = API_BASE.replace(/\/api$/, '');
+                    const resolveUrl = (url) => url.startsWith('/') ? backendOrigin + url : url;
+
                     const images = resources.filter(r => r.type === 'image');
                     const links = resources.filter(r => r.type === 'link');
 
@@ -739,12 +743,12 @@ async function viewEntity(entityId, collectionId) {
                             const figure = document.createElement('figure');
                             figure.className = 'modal-resource-figure';
                             const a = document.createElement('a');
-                            a.href = res.url;
+                            a.href = resolveUrl(res.url);
                             a.target = '_blank';
                             a.rel = 'noopener noreferrer';
                             const img = document.createElement('img');
                             img.className = 'modal-resource-image';
-                            img.src = res.url;
+                            img.src = resolveUrl(res.url);
                             img.alt = res.label;
                             img.loading = 'lazy';
                             a.appendChild(img);
@@ -763,7 +767,7 @@ async function viewEntity(entityId, collectionId) {
                         links.forEach(res => {
                             const a = document.createElement('a');
                             a.className = 'modal-resource-link';
-                            a.href = res.url;
+                            a.href = resolveUrl(res.url);
                             a.target = '_blank';
                             a.rel = 'noopener noreferrer';
                             a.textContent = res.label;
