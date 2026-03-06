@@ -64,6 +64,7 @@ const dom = {
     modalClose: $$('modal-close'),
     modalName: $$('modal-entity-name'),
     modalContents: $$('modal-entity-contents'),
+    modalResources: $$('modal-entity-resources'),
     modalMetadata: $$('modal-entity-metadata'),
     modalReferences: $$('modal-entity-references'),
 };
@@ -715,6 +716,7 @@ async function viewEntity(entityId, collectionId) {
                 const table = document.createElement('table');
                 table.className = 'modal-meta-table';
                 for (const [key, value] of Object.entries(parsed)) {
+                    if (key === '_resources') continue;
                     const row = table.insertRow();
                     const keyCell = row.insertCell();
                     keyCell.textContent = key;
@@ -722,6 +724,58 @@ async function viewEntity(entityId, collectionId) {
                     valCell.textContent = typeof value === 'object' ? JSON.stringify(value) : String(value);
                 }
                 dom.modalContents.appendChild(table);
+
+                // Render resources
+                dom.modalResources.innerHTML = '';
+                const resources = parsed._resources;
+                if (Array.isArray(resources) && resources.length > 0) {
+                    // Resolve relative URLs against the backend host
+                    const backendOrigin = API_BASE.replace(/\/api$/, '');
+                    const resolveUrl = (url) => url.startsWith('/') ? backendOrigin + url : url;
+
+                    const images = resources.filter(r => r.type === 'image');
+                    const links = resources.filter(r => r.type === 'link');
+
+                    if (images.length > 0) {
+                        const imagesContainer = document.createElement('div');
+                        imagesContainer.className = 'modal-resource-images';
+                        images.forEach(res => {
+                            const figure = document.createElement('figure');
+                            figure.className = 'modal-resource-figure';
+                            const a = document.createElement('a');
+                            a.href = resolveUrl(res.url);
+                            a.target = '_blank';
+                            a.rel = 'noopener noreferrer';
+                            const img = document.createElement('img');
+                            img.className = 'modal-resource-image';
+                            img.src = resolveUrl(res.url);
+                            img.alt = res.label;
+                            img.loading = 'lazy';
+                            a.appendChild(img);
+                            figure.appendChild(a);
+                            const caption = document.createElement('figcaption');
+                            caption.textContent = res.label;
+                            figure.appendChild(caption);
+                            imagesContainer.appendChild(figure);
+                        });
+                        dom.modalResources.appendChild(imagesContainer);
+                    }
+
+                    if (links.length > 0) {
+                        const linksContainer = document.createElement('div');
+                        linksContainer.className = 'modal-resource-links';
+                        links.forEach(res => {
+                            const a = document.createElement('a');
+                            a.className = 'modal-resource-link';
+                            a.href = resolveUrl(res.url);
+                            a.target = '_blank';
+                            a.rel = 'noopener noreferrer';
+                            a.textContent = res.label;
+                            linksContainer.appendChild(a);
+                        });
+                        dom.modalResources.appendChild(linksContainer);
+                    }
+                }
             } else {
                 dom.modalContents.textContent = typeof data.contents === 'string' ? data.contents : JSON.stringify(data.contents);
             }
