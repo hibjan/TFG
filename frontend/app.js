@@ -537,9 +537,8 @@ async function loadFacets() {
             });
         }
 
-        // Show/hide goback button (only when there's an active link)
-        dom.gobackBtn.classList.toggle('hidden', !data.activeFilters.activeLink);
-        // Restore is always visible in nav mode (backend handles empty stack)
+        // Goback and Restore are always visible in nav mode (backend handles empty stack)
+        dom.gobackBtn.classList.remove('hidden');
         dom.restoreBtn.classList.remove('hidden');
 
     } catch (err) {
