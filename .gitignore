@@ -32,4 +32,5 @@ apache-tomcat-*/
 
 .env
 
+# for raw data files and processed data files
 *.jsonl
