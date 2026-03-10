@@ -3,27 +3,27 @@
         {
             "name": "Movies",
             "id": 1,
-            "input_file": "scripts/TMDB/test/movies.jsonl"
+            "input_file": "scripts/TMDB/raw_data/movies.jsonl"
         },
         {
             "name": "TV Series",
             "id": 2,
-            "input_file": "scripts/TMDB/test/tv_series.jsonl"
+            "input_file": "scripts/TMDB/raw_data/tv_series.jsonl"
         },
         {
             "name": "People",
             "id": 3,
-            "input_file": "scripts/TMDB/test/people.jsonl"
+            "input_file": "scripts/TMDB/raw_data/people.jsonl"
         },
         {
             "name": "Companies",
             "id": 4,
-            "input_file": "scripts/TMDB/test/companies.jsonl"
+            "input_file": "scripts/TMDB/raw_data/companies.jsonl"
         },
         {
             "name": "Networks",
             "id": 5,
-            "input_file": "scripts/TMDB/test/tv_networks.jsonl"
+            "input_file": "scripts/TMDB/raw_data/tv_networks.jsonl"
         }
     ],
     "objects": [
