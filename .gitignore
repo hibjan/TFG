@@ -34,3 +34,4 @@ apache-tomcat-*/
 
 # for raw data files and processed data files
 *.jsonl
+*.nt*

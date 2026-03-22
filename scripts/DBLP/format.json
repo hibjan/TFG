@@ -1,0 +1,212 @@
+{
+    "collections": [
+        {
+            "name": "People",
+            "id": 1,
+            "uris": [
+                "https://dblp.org/rdf/schema#Person"
+            ]
+        },
+        {
+            "name": "Publications",
+            "id": 2,
+            "uris": [
+                "https://dblp.org/rdf/schema#Article",
+                "https://dblp.org/rdf/schema#Inproceedings",
+                "https://dblp.org/rdf/schema#Book",
+                "https://dblp.org/rdf/schema#Incollection"
+            ]
+        },
+        {
+            "name": "Venues",
+            "id": 3,
+            "uris": [
+                "https://dblp.org/rdf/schema#Journal",
+                "https://dblp.org/rdf/schema#Conference",
+                "https://dblp.org/rdf/schema#Series",
+                "https://dblp.org/rdf/schema#Repository"
+            ]
+        }
+    ],
+    "objects": [
+        {
+            "collection_id": 1,
+            "metadata": {
+                "Affiliation": {
+                    "type": "string",
+                    "uri": "https://dblp.org/rdf/schema#primaryAffiliation"
+                }
+            },
+            "contents": {
+                "Name": {
+                    "uri": "https://dblp.org/rdf/schema#primaryCreatorName"
+                },
+                "ORCID": {
+                    "uri": "https://dblp.org/rdf/schema#orcid"
+                }
+            },
+            "resources": {
+                "Homepage": {
+                    "uri": "https://dblp.org/rdf/schema#homepage",
+                    "type": "link"
+                },
+                "Wikipedia": {
+                    "uri": "https://dblp.org/rdf/schema#wikipedia",
+                    "type": "link"
+                },
+                "Wikidata": {
+                    "uri": "https://dblp.org/rdf/schema#wikidata",
+                    "type": "link"
+                },
+                "Award page": {
+                    "uri": "https://dblp.org/rdf/schema#awardWebpage",
+                    "type": "link"
+                }
+            },
+            "references": {
+                "Authored": {
+                    "uri": "https://dblp.org/rdf/schema#authorOf"
+                },
+                "Edited": {
+                    "uri": "https://dblp.org/rdf/schema#editorOf"
+                },
+                "CoAuthor": {
+                    "uri": "https://dblp.org/rdf/schema#coAuthorWith"
+                }
+            }
+        },
+        {
+            "collection_id": 2,
+            "metadata": {
+                "Year": {
+                    "type": "numeric",
+                    "uri": "https://dblp.org/rdf/schema#yearOfPublication",
+                    "range": 10
+                },
+                "Month": {
+                    "type": "string",
+                    "uri": "https://dblp.org/rdf/schema#monthOfPublication"
+                },
+                "BibtexType": {
+                    "type": "string",
+                    "uri": "https://dblp.org/rdf/schema#bibtexType"
+                },
+                "ISSN": {
+                    "type": "string",
+                    "uri": "https://dblp.org/rdf/schema#issn"
+                },
+                "NumberOfCreators": {
+                    "type": "numeric",
+                    "uri": "https://dblp.org/rdf/schema#numberOfCreators",
+                    "range": 5
+                },
+                "Volume": {
+                    "type": "string",
+                    "uri": "https://dblp.org/rdf/schema#publishedInJournalVolume"
+                },
+                "Issue": {
+                    "type": "string",
+                    "uri": "https://dblp.org/rdf/schema#publishedInJournalVolumeIssue"
+                },
+                "Publisher": {
+                    "type": "string",
+                    "uri": "https://dblp.org/rdf/schema#publishedBy"
+                }
+            },
+            "contents": {
+                "Name": {
+                    "uri": "https://dblp.org/rdf/schema#title"
+                },
+                "Pages": {
+                    "uri": "https://dblp.org/rdf/schema#pagination"
+                },
+                "ISBN": {
+                    "uri": "https://dblp.org/rdf/schema#isbn"
+                },
+                "Published in": {
+                    "uri": "https://dblp.org/rdf/schema#publishedIn"
+                }
+            },
+            "resources": {
+                "DOI": {
+                    "uri": "https://dblp.org/rdf/schema#doi",
+                    "type": "doi"
+                },
+                "Homepage": {
+                    "uri": "https://dblp.org/rdf/schema#homepage",
+                    "type": "link"
+                },
+                "Document page": {
+                    "uri": "https://dblp.org/rdf/schema#primaryDocumentPage",
+                    "type": "link"
+                }
+            },
+            "references": {
+                "Author": {
+                    "uri": "https://dblp.org/rdf/schema#authoredBy"
+                },
+                "PublishedInVenue": {
+                    "uri": "https://dblp.org/rdf/schema#publishedInStream"
+                },
+                "Editor": {
+                    "uri": "https://dblp.org/rdf/schema#editedBy"
+                },
+                "CitesPaper": {
+                    "uri": "http://purl.org/spar/cito/hasCitedEntity"
+                },
+                "PartOf": {
+                    "uri": "https://dblp.org/rdf/schema#publishedAsPartOf"
+                }
+            }
+        },
+        {
+            "collection_id": 3,
+            "metadata": {
+                "ISSN": {
+                    "type": "string",
+                    "uri": "https://dblp.org/rdf/schema#issn"
+                },
+                "ISO4": {
+                    "type": "string",
+                    "uri": "https://dblp.org/rdf/schema#iso4"
+                }
+            },
+            "contents": {
+                "Name": {
+                    "uri": "https://dblp.org/rdf/schema#primaryStreamTitle"
+                }
+            },
+            "resources": {
+                "Homepage": {
+                    "uri": "https://dblp.org/rdf/schema#homepage",
+                    "type": "link"
+                },
+                "Wikipedia": {
+                    "uri": "https://dblp.org/rdf/schema#wikipedia",
+                    "type": "link"
+                },
+                "Wikidata": {
+                    "uri": "https://dblp.org/rdf/schema#wikidata",
+                    "type": "link"
+                }
+            },
+            "references": {
+                "RelatedVenue": {
+                    "uri": "https://dblp.org/rdf/schema#relatedStream"
+                },
+                "ParentVenue": {
+                    "uri": "https://dblp.org/rdf/schema#superStream"
+                },
+                "SubVenue": {
+                    "uri": "https://dblp.org/rdf/schema#subStream"
+                },
+                "Predecessor": {
+                    "uri": "https://dblp.org/rdf/schema#predecessorStream"
+                },
+                "Successor": {
+                    "uri": "https://dblp.org/rdf/schema#successorStream"
+                }
+            }
+        }
+    ]
+}
