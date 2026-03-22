@@ -6,8 +6,8 @@ import sys
 from dotenv import load_dotenv
 
 # --- CONFIGURATION ---
-JSONL_FILE = "./scripts/TMDB/dataset1k.jsonl"
-DATASET_NAME = "TMDb 1k"
+JSONL_FILE = "./scripts/TMDB/dataset_top5k.jsonl"
+DATASET_NAME = "TMDb Top 5k"
 BATCH_SIZE = 5000  # Rows per bulk insert
 
 load_dotenv(".env")
