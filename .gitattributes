@@ -1,2 +1,2 @@
-docs/* linguist-detectable=true
-#scripts/* linguist-detectable=false
+docs/** linguist-detectable=true
+#scripts/** linguist-detectable=false
