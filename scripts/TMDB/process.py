@@ -3,7 +3,12 @@ import orjson
 
 # ─── Global variables ────────────────────────────────────────────────
 FORMAT_PATH = "scripts/TMDB/format.json"
-OUTPUT_PATH = "scripts/TMDB/dataset1k.jsonl"
+OUTPUT_PATH = "scripts/TMDB/dataset_top5k.jsonl"
+
+# Toggle: True = only include the top K most popular Movies and TV Series
+FILTER_TOP_K_POPULAR = True
+# Number of top popular Movies and TV Series to keep if FILTER_TOP_K_POPULAR is True
+TOP_K_COUNT = 5000
 
 # Toggle: True = range mode (numeric/date stored as ranges in metadata, raw in contents)
 #         False = raw mode  (numeric/date stored as raw values in metadata only)
@@ -537,6 +542,23 @@ def main():
 
         print(f"Processing collection: {coll['name']} ...")
         objs, raws = process_collection(coll, obj_cfg)
+
+        if FILTER_TOP_K_POPULAR and coll["name"] in ["Movies", "TV Series"]:
+            print(f"  Filtering top {TOP_K_COUNT} {coll['name']} by popularity...")
+            def get_popularity(x):
+                val = x.get("contents", {}).get("Popularity")
+                try:
+                    return float(val) if val is not None else 0.0
+                except ValueError:
+                    return 0.0
+
+            objs.sort(key=get_popularity, reverse=True)
+            objs = objs[:TOP_K_COUNT]
+            
+            # Keep only the raw reference tracker objects for the top K
+            kept_ids = {obj["id"] for obj in objs}
+            raws = [r for r in raws if r["id"] in kept_ids]
+
         all_objects.extend(objs)
         raw_by_collection[coll_id] = raws
 
@@ -547,11 +569,15 @@ def main():
     # Free raw data after references are built
     del raw_by_collection
 
-    # ── Third iteration: remove objects with no references AND no metadata ──
+    # ── Third iteration: remove objects based on settings ──
     before = len(all_objects)
-    all_objects = [o for o in all_objects if o["references"] or o["metadata"]]
+    if FILTER_TOP_K_POPULAR:
+        all_objects = [o for o in all_objects if o["references"] and o["metadata"]]
+    else:
+        all_objects = [o for o in all_objects if o["references"] or o["metadata"]]
+    
     pruned = before - len(all_objects)
-    print(f"\nCleanup: removed {pruned} objects with no references and no metadata ({before} -> {len(all_objects)})")
+    print(f"\nCleanup: removed {pruned} objects ({before} -> {len(all_objects)})")
 
     # ── Write output ──
     print(f"\nWriting output to {OUTPUT_PATH} ...")
