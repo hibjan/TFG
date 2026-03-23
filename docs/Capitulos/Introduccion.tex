@@ -1,55 +1,144 @@
 \chapter{Introducción}
 \label{cap:introduccion}
 
-\chapterquote{Frase célebre dicha por alguien inteligente}{Autor}
+\chapterquote{Sólo hay una victoria decisiva: la última}{Carl Von Clausewitz}
 
-Según la normativa  para Trabajos de Fin de Grado\footnote{\url{https://informatica.ucm.es/file/normativatfg-2021-2022?ver} (ver versión actualizada para cada curso académico)}, la memoria incluirá una portada normalizada con la siguiente información: título en castellano, título en inglés, autores, profesor director, codirector si es el caso, curso
-académico e identificación de la asignatura (Trabajo de fin de grado del Grado en -
-nombre del grado correspondiente-, Facultad de Informática, Universidad Complutense de Madrid). Los datos referentes al título y director (y codirector en su caso) deben corresponder a los publicados en la página web de TFG.
-
-La memoria debe incluir la descripción detallada de la propuesta hardware/software realizada y ha de contener:
-\begin{enumerate}
-\renewcommand{\theenumi}{\alph{enumi}}
-	\item un índice,
-	\item un resumen y una lista de no más de 10 palabras clave para su búsqueda bibliográfica, ambos en castellano e inglés,
-	\item una introducción con los antecedentes, objetivos y plan de trabajo,
-	\item resultados y discusión crítica y razonada de los mismos, con sus conclusiones,
-	\item bibliografía.
-\end{enumerate}
-Para facilitar la escritura de la memoria siguiendo esta estructura, el estudiante podrá usar las plantillas en LaTeX o Word preparadas al efecto y publicadas en la página web de TFG.
-
-La memoria constará de un mínimo de 25 páginas para los proyectos realizados por un único estudiante, y de al menos 5 páginas más por cada integrante adicional del grupo. En este número de páginas solo se tiene en cuenta el contenido correspondiente a los apartados c y d del punto anterior.
-
-La memoria puede estar escrita en castellano o inglés, pero en el primer caso la introducción y las conclusiones deben aparecer también en inglés. Las memorias de los TFG matriculados en el grupo I deberán estar escritas íntegramente en inglés, excepto por lo especificado en los puntos 1 y 2 anteriores (título, resumen y lista de palabras clave).
-
-En caso de trabajos no unipersonales, cada participante indicará en la memoria su contribución al proyecto con una extensión de al menos dos páginas por cada uno de los participantes.
-
-Todo el material no original, ya sea texto o figuras, deberá ser convenientemente citado y referenciado. En el caso de material complementario se deben respetar las licencias y \emph{copyrights} asociados al software y hardware que se emplee. En caso contrario no se autorizará la defensa, sin menoscabo de otras acciones que correspondan.
-
+...
 
 \section{Motivación}
-Introducción al tema del TFG.
+En los últimos tiempos hemos pasado por un gran cambio en el paradigma de consumo digital.
+El acúmulo cuantitativo de contenidos digitales ha sobrepasado su umbral cualitativo y hoy supone una 
+manera distinta de relacionarse con ello.
+La abundancia de información genera una "sobrecarga de información" (o \textit{information overload}), 
+en la cual todo y cualquier usuario necesita de una cantidad cada vez mayor de tiempo para navegar.
+Eso se hace especialmente evidente en las plataformas digitales, en particular las de streaming multimedia 
+(como Netflix, Disney+ y HBO Max), en las que difícilmente encontramos qué consumir sin invertir un tiempo sustancial 
+en ello.
 
+Ese cambio de paradigma, y el subsecuente problema, sigue siendo abordado con métodos tradicionales como: la
+búsqueda directa (por palabras clave), el filtrado clásico por género o medio y los sistemas de recomendación
+basados en algoritmos ocultos al consumidor.
+Estos abordajes son limitados y sirven poco al nuevo contexto de consumo digital.
+La búsqueda directa es determinista y no permite ninguna flexibilidad, especialmente al suponer que el usuario
+sabe exactamente lo que está buscando de antemano.
+El filtrado tradicional suele ser incompleto e inconsistente, usando taxonomías ocultas e inescrutables.
+Los algoritmos de recomendación suelen servir más como un propagador de la burbuja de filtros
+(o \textit{filter bubble}), al depender directamente del historial de consumo, o de lo que la plataforma
+desee promover, quitando la agencia del usuario en última instancia.
+
+Este problema, entretanto, no es exclusivo de experiencia de usuario, sino también supone un problema tecnológico 
+relacionado con la forma en la que se diseñan y utilizan las colecciones de información. 
+Los modelos relacionales de navegación y los sistemas de navegación sobre colecciones 
+\textit{(collection navigation systems)}, traen un enfoque distinto en el que los datos no se 
+representan como elementos aislados, sino como entidades conectadas mediante relaciones semánticas.
+Ese abordaje permite recoger colecciones de manera interactiva, con mecanimos de navegación más expresivos 
+en los que el usuario puede explorar progresivamente una colección compleja combinando filtros, relaciones y 
+transiciones entre entidades.
+
+Existe, por lo tanto, una necesidad declarada de que los sistemas de navegación acompañen ese cambio de paradigma.
+Eso solo se puede cumplir permitiendo a los usuarios herramientas de exploración interactiva más ricas y flexibles.
+Dichas herramientas deben combinar la precisión establecida por la búsqueda directa, pero con una mayor expresividad
+que el filtrado clásico sin quitar la agencia del usuario.
 
 \section{Objetivos}
 Descripción de los objetivos del trabajo.
 
-
 \section{Plan de trabajo}
-Aquí se describe el plan de trabajo a seguir para la consecución de los objetivos descritos en el apartado anterior.
+Hemos optado por una metodología ágil, basada en su mayor parte en el marco de trabajo \textbf{Scrum}, adaptada a un 
+proyecto en pareja. La adopción de ese método viene dada por la naturaleza exploratoria e innovadora del proyecto,
+ya que los requisitos y el motor de navegación necesitaban un refinamiento y optimización iterativos.
 
+El desarrollo fue organizado mediante \textit{sprints} (ciclos de trabajo entre 2 y 3 semanas), definiendo un
+backlog inicial (\textit{Product Backlog}) con los requisitos fundamentales del sistema. Además, se realizarían reuniones
+periódicas de seguimiento (\textit{Sprint Reviews}), que permiten evaluar cada incremento del software, adaptar la
+planificación de acuerdo con los problemas y obstáculos encontrados, en conjunto con la tutoría del profesor.
 
+Con respecto a la macroplanificación, el proyecto se estructuró en dos grandes fases secuenciales de desarrollo:
 
-\section{Explicaciones adicionales sobre el uso de esta plantilla}
-Si quieres cambiar el \textbf{estilo del título} de los capítulos del documento, edita el fichero \verb|TeXiS\TeXiS_pream.tex| y comenta la línea \verb|\usepackage[Lenny]{fncychap}| para dejar el estilo básico de \LaTeX.
+\subsection{Fase 1: Investigación y Prototipo en Java (Septiembre 2025 - Enero 2026)}
+Con el objetivo de validar completa y rigurosamente la viabilidad del motor de navegación y los algoritmos involucrados,
+se optó por desarrollar un prototipo en Java. Deliberadamente abandonando la implementación inicial de una interfaz gráfica,
+hemos centralizado los esfuerzos en su eficacia, eficiencia y robustez técnica de los componentes del sistema.
+Este enfoque permitió analizar en profundidad el comportamiento del algoritmo planteado y la correcta integración
+con la base de datos TMDB.
 
-Si no te gusta que no haya \textbf{espacios entre párrafos} y quieres dejar un pequeño espacio en blanco, no metas saltos de línea (\verb|\\|) al final de los párrafos. En su lugar, busca el comando  \verb|\setlength{\parskip}{0.2ex}| en \verb|TeXiS\TeXiS_pream.tex| y aumenta el valor de $0.2ex$ a, por ejemplo, $1ex$.
+\begin{itemize}
+\item \textbf{Estudio precedente y proceso de diseño arquitectónico:}
+Es ese momento hemos definido es estado de la cuestión basándonos en artículos de investigación previos, 
+seleccionamos los datasets pertinentes y de dominio público y diseñamos el modelo básico de datos relacional.
 
-TFGTeXiS se ha elaborado a partir de la plantilla de TeXiS\footnote{\url{http://gaia.fdi.ucm.es/research/texis/}}, creada por Marco Antonio y Pedro Pablo Gómez Martín para escribir su tesis doctoral. Para explicaciones más extensas y detalladas sobre cómo usar esta plantilla, recomendamos la lectura del documento \texttt{TeXiS-Manual-1.0.pdf} que acompaña a esta plantilla.
+\item \textbf{Desarrollo del motor de navegación (núcleo backend):}
+Siguiendo con la implementación de la lógica en Java, desarrollamos una máquina de estados 
+(\texttt{State}, \texttt{StateManager}) con capacidad para:
+gestionar el historial, los filtros de metadatos, los filtros relacionales y los saltos transversales \texttt{Link}.
 
-El siguiente texto se genera con el comando \verb|\lipsum[2-20]| que viene a continuación en el fichero .tex. El único propósito es mostrar el aspecto de las páginas usando esta plantilla. Quita este comando y, si quieres, comenta o elimina el paquete \textit{lipsum} al final de \verb|TeXiS\TeXiS_pream.tex|
+\item \textbf{Integración de TMBD:}
 
-\subsection{Texto de prueba}
+Para empezar la validación del motor de navegación, hemos optado por integrar la base de datos pública 
+TMBD (\textit{The Movie Database}), que permite obterner información sobre películas, series y personas.
+Además de consumir la API, se diseño un proceso de transformación y almacenamiento de los datos en nuestro modelo relacional,
+permitiendo adaptar la estructura de TMDB a las necesidades de navegación del motor.
+\end{itemize}
 
+\subsection{Fase 2: Desarrollo Web e Integración (Enero 2026 - Marzo 2026)}
+Con el núcleo del modelo de navegación funcional, hemos transladado el esfuerzo en exponer sus funcionalidades 
+a través de una arquictectura cliente-servidor, además de añadir una interfaz de usuario.
+\begin{itemize}
 
-\lipsum[2-20]
+\item \textbf{Exposición de API RESTful:}
+Hemos desarrollado una capa de controladores usando Servlets de Java (\textit{API RESTful}) para exponer, 
+con seguridad y de manera estructurada, las capacidades del motor (\texttt{FacetsServlet}, 
+\texttt{NavigationServlet}, \texttt{UnionServlet}, etc.) que gestiona el contexto mediante sesiones de usuario.
+
+\item \textbf{Desarrollo del Frontend:}
+
+Trás definir la API, se desarrolló una interfaz web para la interacción con el motor de navegación.
+Dentre sus principales componentes están: el área de resultados, sistema de filtrado dinámico de metadatos,
+controles de navegación de estados, conjunto de controles de filtros y exploración de relaciones. 
+Todo desde el paradigma de API RESTful con actualizacion dinámica.
+
+\item \textbf{Pruebas de Integración y Refinamiento:}
+Unimos todos los componentes, hemos hecho pruebas de carga con los \textit{datasets} completos y evaluado la experiencia
+de usuario (\textit{UX}).
+
+\end{itemize}
+
+\subsection{Cronograma de Ejecución y Diagrama Gantt}
+
+\begin{itemize}
+\item \textbf{Septiembre 2025: }
+Definición del proyecto, revisión de la literatura (estado del arte) y selección de datasets.
+
+\item \textbf{Octubre 2025: }
+Diseño del modelo de datos y desarrollo inicial del motor de navegación (Fase 1).
+
+\item \textbf{Noviembre 2025: }
+Implementación completa de la máquina de estados e historial de navegación.
+
+\item \textbf{Diciembre 2025: }
+Prototipado de la integración del dataset TMDB y cierre de la Fase 1.
+
+\item \textbf{Enero 2026: }
+Diseño e implementación de la API RESTful (controladores y enrutamiento) (Fase 2).
+
+\item \textbf{Febrero 2026: }
+Desarrollo del cliente web (Frontend) e integración con el backend.
+
+\item \textbf{Marzo 2026: }
+Pruebas de integración, resolución de bugs (obstáculos técnicos) y validación de casos de uso.
+
+\item \textbf{Abril 2026: }
+Redacción intensiva de la memoria del Trabajo de Fin de Grado.
+
+\item \textbf{Mayo 2026: }
+Revisiones finales de la memoria, preparación de la presentación, ensayo y defensa ante el tribunal universitario.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\makebox[\textwidth][c]{%
+\includegraphics[width=1.2\textwidth]{Imagenes/Diagramas/Gantt.png}
+}
+\caption{Diagrama Gantt TFG}
+\label{fig:diagramaGantt}
+\end{figure}

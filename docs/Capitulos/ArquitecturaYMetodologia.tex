@@ -1,0 +1,138 @@
+\chapter{Arquitectura y Metodología}
+\label{cap:arquitecturaMetodologia}
+
+Este capítulo centraliza el conjunto de decisiones de diseño técnico y estructural que sirven como fundamentos del proyecto. 
+En primer lugar, exponemos los marcos metodológicos utilizados para el manejo del propio ciclo de vida del software, 
+definiendo las herramientas, prácticas y técnicas de ingeniería aplicadas. 
+Luego, seguimos con el desglose de la arquitectura del sistema, delimitando expresamente la separación de responsabilidades 
+a través de las distintas capas de la aplicación: la capa de control y enrutamiento, la capa de persistencia y acceso a datos, 
+y finalmente, el mecanismo de integración con la interfaz de usuario. El principal objetivo de esta arquitectura fue garantiza 
+un sistema modular, escalable, mantenible y flexible en la integración de base de datos.
+
+\section{Metodología de Ingeniería del Software}
+
+Este Trabajo de Fin de Grado se ha organizado por principios de Ingeniería de Software fundamentados en el paradigma ágil.
+Como se estableció en el plan de trabajo, hemos optado por \textbf{Scrum} como referencia, adaptando sus características 
+a las particuladades de eun equipo reducido de dos personas. La adaptación resultó esencial para mantener la 
+disciplina y estructura ofrecida por el modelo ágil sin introducir una sobrecarga innecesaria.
+
+Por eso la aplicación de \textbf{Scrum} se centró principalmente en iclos de desarrollo iterativos (\textit{sprints}) 
+de corta duración, donde se planteaban objetivos concretos y alcanzables. En general, todo iteración coincidía con un 
+incremento funcional del sistema, con excepción de las fases iniciales, en lo cual la mayor parte del esfurzo se mantuvo
+en una especificación incial del motor de navegación. Este abordaje permitió ejecutar una validación progresiva de los componentes 
+críticos del proyecto. Especificamente, se ha notado un gran impacto en los \textit{milestones}: motor de 
+navegación en Java, la integración con la base de datos TMDB y la posterior exposición de funcionalidades 
+mediante una API REST.
+
+\subsection*{Desarrollo iterativo e incremental}
+
+A cambio de definir completa y decididamente la arquitectura desde del principio con un enfoque lineal y secuencial, 
+como la metodología cascada, el sistema se ha desarrollado de forma incremental. Es sus primeras iteraciones, hemos 
+priorizado la validación del propio modelo de navegación y la estructura de datos adyacente, al mismo tiempo que en 
+fases posteriores hemos incorporado progresivamente la capa de acceso a datos, la API y el \textit{frontendweb}. 
+Dicho tratamiento resultó significativamente relevante dedido a la naturaleza exploratoria del proyecto, ya que 
+permitió adaptar el diseño del motor de navegación al mismo paso en que se probaba con datos reales.
+
+\subsection*{Gestión de requisitos y backlog}
+
+Las funcionalidades más complejas iniciales, como el sistema de filtrado relacional, la gestión de estados de navegación 
+y la combinación de resultados, se desarrollaron mediante periodos de trabajo intensivo centrados en la implementación 
+y validación de cada componente. En cambio, el resto de tareas de menor complejidad o con menor dependencia técnica se 
+fueron abordando progresivamente siguiendo la prioridad establecida en el \textit{backlog}.
+
+Los criterios de priorización y la planificación de las tareas se realizaron en coordinación con la tutoría del proyecto, 
+llevando a cabo revisiones periódicas y ajustes continuos. De esta forma, los objetivos de cada iteración se adaptaban en 
+función de los resultados obtenidos y de los obstáculos técnicos que iban apareciendo durante el desarrollo.
+
+\subsection*{Trabajo colaborativo en un equipo reducido}
+
+Hemos adaptado las práticas de \textbf{Scrum} a un entorno de colaboración directa y continua, ya que el proyecto sería 
+desarrollado por un equipo de dos personas. En lugar de llevar a cabo reuniones formales, se optó por mantener una 
+comunicación frecuente entre los integrantes, manteniendo siempre una divisón clara y acordada de responsabilidades, 
+fundamental para la paralelización del desarrollo sin perder coherencia en el diseño global. Este método de comunicación 
+y organización facilitó una evolución más eficiente y dinámica del software, con una alta capacidad de reacción 
+frente los problemas técnicos.
+
+\subsection*{Control de versiones y gestión del código fuente}
+
+En virtude de la necesidad de mantener la integridad del código y facilitar el trabajo colaborativo, hemos 
+utilziado Git como sistema de control de versiones distribuido. El repositorio principal se alojó en GitHub 
+y se empleó una estrategia de ramificación sencilla : una rama principal (\texttt{main}) para el código 
+estable y funcional, y ramas de características (\textit{feature branches}) para el desarrollo de nuevos 
+componentes antes de su integración final. Con esa metodología, hemos podido trabajar en paralelo sin conflictos 
+significativos manteniendo siempre una versión funcional del sistema.
+
+\subsection*{Buenas prácticas de programación y diseño}
+
+Durante el desarrollo hemos dado especial atención a la aplicación de buenas prácticas de programación y 
+diseño software. Se siguieron principios de separación de responsabilidades (\textit{Separation of Concerns}) 
+y modularidad, lo está reflejado en la organización del código en distintos paquetes (por ejemplo, 
+\texttt{controller}, \texttt{model}, \texttt{dao}, \texttt{filter}, etc.). Dicha estructura tiende a facilitar 
+la legibilidad del código, su mantenimiento y la posibilidad de ampliación futura sin 
+necesidad de realizar modificaciones significativas o profundas en su arquitectura.
+
+\section{Arquitectura del Sistema}
+
+Para permitir la exposición de la lógica del motor de exploración y su respectivo consumo por parte de aplicaciones, 
+hemos diseñado una arquitectura fundamentada en el modelo Cliente-Servidor. Desde el lado del servidor (\textit{backend}), 
+la aplicación favorece el desacoplamiento al basarse en capas bien definidas. Esta sección se dedica a detallar la capa de 
+control, responsable por enrutar las distintas peticiones HTTP, y la capa de filtros, encargada de controlar las políticas 
+de acceso y seguridad.
+
+\subsection*{Diseño de la API y Controladores}
+
+% ----------------------------------------------------------------------------------------------------
+
+% La interfaz de comunicación entre el cliente web y el motor de navegación se ha implementado mediante una API de 
+% estilo REST. Para la construcción de los puntos de enlace (\textit{endpoints}), hemos utilizado la especificación de 
+% \textit{Servlets} de Jakarta EE (\texttt{HttpServlet}), lo que proporciona un control de bajo nivel robusto y eficiente 
+% sobre las peticiones y respuestas HTTP.
+
+% La capa de controladores actúa como un intermediario o fachada. Clases como \texttt{NavigationServlet}, 
+% \texttt{FacetsServlet} o \texttt{EntitiesServlet} se encargan exclusivamente de recibir los parámetros de la 
+% petición, delegar la lógica de procesamiento al modelo subyacente y formatear la respuesta. Para garantizar la 
+% interoperabilidad, toda la transferencia de datos entre el cliente y el servidor se realiza en formato JSON, 
+% empleando la biblioteca Jackson (\texttt{ObjectMapper}) para la serialización y deserialización automática de 
+% las estructuras de datos en Java.
+
+\subsection*{Gestión del Estado de Navegación (Enfoque \textit{Stateful})}
+
+% Una de las decisiones arquitectónicas más relevantes del proyecto radica en el manejo del contexto del usuario. Las 
+% arquitecturas REST tradicionales abogan por sistemas \textit{stateless} (sin estado), donde cada petición del 
+% cliente debe contener toda la información necesaria para ser procesada. Sin embargo, en nuestro caso de uso, 
+% la exploración multimedia se define como un proceso altamente iterativo y acumulativo.
+
+% Requerir que el cliente envíe en cada petición el historial completo de navegación, las listas de filtros 
+% aplicados, las exclusiones y los saltos relacionales supondría una sobrecarga de red inasumible y una 
+% complejidad excesiva en el \textit{frontend}. Por este motivo, hemos optado por un diseño \textit{stateful} (con estado).
+
+% A través del \texttt{SessionServlet}, el sistema inicializa una sesión de usuario (\texttt{HttpSession}) 
+% en el servidor al comenzar una exploración. Dentro de esta sesión se instancia y almacena un objeto 
+% \texttt{StateManager}, el cual encapsula la máquina de estados completa de esa búsqueda en concreto. De 
+% este modo, los sucesivos controladores (\texttt{NavigationServlet}, \texttt{UnionServlet}) únicamente 
+% necesitan recuperar el gestor de estado asociado a la sesión del usuario que realiza la petición, 
+% aplicando sobre él las nuevas acciones (como añadir un filtro o retroceder en el historial) de manera 
+% ágil y centralizada en el \textit{backend}.
+
+\subsection*{Componentes transversales de la arquitectura}
+
+% Debido a la separación física y lógica entre el cliente web (\textit{frontend}) y el servidor (\textit{backend}), 
+% resulta habitual que ambas aplicaciones se ejecuten en dominios o puertos distintos, especialmente durante las 
+% fases de desarrollo local. Para que los navegadores web modernos permitan estas peticiones sin bloquearlas 
+% por motivos de seguridad, ha sido indispensable implementar políticas de Intercambio de Recursos de 
+% Origen Cruzado (CORS, por sus siglas en inglés).
+
+% Para resolver esta necesidad sin contaminar la lógica interna de los controladores, hemos aplicado el 
+% patrón de diseño \textit{Intercepting Filter}. Se ha implementado la clase \texttt{CORSFilter}, que 
+% implementa la interfaz \texttt{Filter} de Jakarta EE. Este filtro intercepta todas las peticiones 
+% entrantes (\texttt{/*}) antes de que alcancen su \textit{Servlet} de destino, inyectando dinámicamente 
+% las cabeceras HTTP necesarias (como \texttt{Access-Control-Allow-Origin} y \texttt{Access-Control-Allow-Credentials}). 
+
+% Además, este componente se encarga de interceptar y resolver de forma anticipada las peticiones de 
+% tipo \texttt{OPTIONS} (\textit{preflight requests}), garantizando una comunicación fluida y segura 
+% entre el cliente y nuestra API REST, manteniendo el código de los controladores estrictamente 
+% enfocado en la lógica de dominio.
+
+\section{Persistencia y Acceso a Datos}
+
+\section{Integración API}
