@@ -1,0 +1,2 @@
+docs/**/*.tex linguist-documentation=false
+#scripts/** linguist-detectable=false
