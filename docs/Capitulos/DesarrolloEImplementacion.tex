@@ -1,9 +1,472 @@
+
+
 \chapter{Desarrollo e Implementación}
 \label{cap:desarrolloImplementacion}
 
 \section{Representación del contexto de exploración}
+
+Para comprender las decisiones de diseño del modelo de representación interno, es útil partir de un ejemplo
+concreto: la estructura del dataset de The Movie Database (TMDb), que fue la primera y principal fuente de datos
+utilizada durante el desarrollo. TMDb organiza su información en torno a cinco tipos
+de entidades: películas, series de televisión, personas, productoras y cadenas de televisión.
+Cada tipo de entidad posee atributos propios --- como el género o la fecha de estreno en el caso
+de las películas, o el género y la fecha de nacimiento --- y mantiene
+relaciones directas con entidades de otros tipos. Así, una película puede estar producida por
+una o varias productoras, contar con actores y miembros de equipo técnico de la colección de
+personas, una serie puede estar asociada a una cadena de televisión concreta, etc. O sea, al final tenemos una 
+base de datos suficientemente compleja, con atributos específicos al dominio de cada entidad, y posibles relaciones de 
+navegación, con aristas que conectan entidades de igual o distinta naturaleza.
+
+Estas relaciones son bidireccionales en el dataset procesado: si una película referencia a una
+persona como \textit{Director}, esa persona referencia a su vez a la película bajo la razón
+\textit{Director}. Esto permite recorrer el grafo de relaciones en ambas direcciones desde
+cualquier punto de partida.
+
+Al analizar esta estructura se infirieron las dos abstracciones fundamentales del modelo
+interno. Por un lado, los \textbf{metadatos}: atributos propios de cada entidad, representados
+como pares clave-valor, sobre los que el usuario puede establecer condiciones de inclusión o
+exclusión. Por otro lado, las \textbf{referencias}: vínculos entre entidades de distintas
+colecciones, etiquetados con un tipo de relación (\textit{reason}), que permiten tanto filtrar
+por asociación como navegar de una colección a otra siguiendo esos vínculos. Esta distinción
+--- metadatos para describir, referencias para relacionar --- es la que articula toda la
+representación del contexto de exploración.
+
+    \subsection{La clase \texttt{State}: filtros y contexto acumulado}
+
+La clase \texttt{State} representa el contexto de exploración de un usuario en un momento dado.
+Encapsula, por un lado, los filtros activos sobre la colección actual y, por otro, el historial
+de transiciones realizadas entre colecciones durante la sesión actual.
+
+Los filtros se organizan en cuatro estructuras \texttt{HashMap} anidadas. Los filtros de metadatos
+(\texttt{mfilters}) mapean cada atributo a un conjunto de valores seleccionados, expresando que las
+entidades resultantes deben satisfacer al menos uno de dichos valores por atributo. Su contraparte
+negativa (\texttt{notMfilters}) excluye las entidades que coincidan con los valores indicados.
+Los filtros de referencia (\texttt{rfilters}) operan sobre relaciones entre colecciones: para
+cada colección referenciada y tipo de relación, almacenan el conjunto de identificadores de
+entidades con los que debe existir vínculo. De igual modo, \texttt{notRfilters} excluye las
+entidades que presenten dichos vínculos. Todos estos mapas están indexados por el identificador
+de la colección activa, de forma que el mismo objeto \texttt{State} puede acumular filtros
+correspondientes a distintas colecciones visitadas a lo largo de la navegación.
+
+Junto a los filtros, \texttt{State} mantiene una lista de objetos \texttt{Link}. Cada
+\texttt{Link} registra una transición entre colecciones: almacena la dirección de la transición
+(bidireccional), la colección de origen, el tipo de relación seguida y una copia
+del estado en el momento de realizar la transición. Esta lista constituye el historial de
+navegación y es lo que permite reconstruir, a la hora de ejecutar una consulta, el camino
+completo que el usuario ha recorrido entre colecciones.
+
+\texttt{State} implementa \texttt{Serializable} y facilita un constructor de copia que realiza
+una copia profunda de todas sus estructuras internas, necesaria para preservar instantáneas
+del estado en distintos puntos de la sesión.
+
+    \subsection{\texttt{StateManager}: gestión del ciclo de vida del estado}
+
+\texttt{StateManager} es el punto de entrada a través del cual los controladores interactúan
+con el estado de navegación. Se instancia al inicio de la sesión, cuando el usuario selecciona
+un dataset y una colección de partida, y se almacena como atributo de la sesión HTTP bajo la
+clave \texttt{navState}.
+
+Internamente, \texttt{StateManager} coordina tres estructuras con ciclos de vida distintos.
+La primera es el estado activo (\texttt{cur}), que representa el contexto de exploración en
+curso y sobre el que se aplican todas las operaciones de filtrado y navegación. La segunda es
+una pila de historial (\texttt{historyStack}), una \texttt{Deque} que el
+\texttt{NavigationServlet} alimenta invocando \texttt{save()} antes de cada acción, lo que
+permite revertir el estado mediante \texttt{restore()}. La tercera es el \texttt{unionSet},
+una lista de estados congelados que acumula los contextos que el usuario ha marcado para
+combinar mediante unión; al invocar \texttt{union()}, el estado activo se añade al
+\texttt{unionSet} y \texttt{cur} se reinicializa con un estado limpio para continuar la
+exploración de manera independiente.
+
+Es responsabilidad íntegra de \texttt{StateManager} la gestión de coherencia entre estas tres estructuras. 
+Por ejemplo, al ejecutar \texttt{link()} o \texttt{union()}, es
+\texttt{StateManager} quien decide cuándo realizar una copia profunda del estado activo
+antes de cambiarlo, garantizando que los estados almacenados en el historial y en el
+\texttt{unionSet} no se vean afectados por operaciones posteriores. La API pública
+de \texttt{StateManager} refleja el vocabulario de acciones disponibles desde el
+frontend --- \texttt{addMetadataFilter}, \texttt{removeReferenceFilter}, \texttt{link},
+\texttt{goback}, \texttt{save}, \texttt{restore} y \texttt{union} --- delegando en
+\texttt{State} las operaciones sobre filtros, y aplicando directamente la lógica de
+coordinación cuando la operación afecta a más de una de sus estructuras internas.
+
 \section{Filtrado clásico y relacional}
+\label{sec:filtrado}
+
+En TMDb, la exploración de un dataset raramente se agota filtrando por atributos propios de
+una colección, por cuenta del tamaño y complejidad de la collección. Un caso de uso habitual es, por ejemplo, 
+encontrar películas de un género concreto dirigidas por una persona específica, o excluir series producidas por una 
+determinada compañía. El primer tipo de condición opera sobre los metadatos de la entidad; el segundo,
+sobre sus relaciones con entidades de otra colección. Esta distinción entre \textit{filtrado
+clásico} --- sobre atributos --- y \textit{filtrado relacional} --- sobre vínculos --- motivó el
+diseño de dos mecanismos de filtrado independientes y de naturaleza distinta pero que se aplican de forma 
+conjunta en cada consulta.
+
+Ambos mecanismos admiten además una variante por la negativa: es posible no solo incluir entidades
+que cumplan alguna condición, sino también excluir explícitamente las que la cumplan. La combinación de
+inclusiones y exclusiones, tanto sobre metadatos como sobre referencias, define el espacio de
+resultados que el usuario está explorando en cada momento.
+
+    \subsection{Construcción dinámica de queries SQL}
+
+El núcleo de la capa de acceso a datos es la traducción del estado de navegación a una query
+SQL ejecutable. Esta traducción se asembla de manera incremental: en cada petición, el
+\texttt{NavigationDAO} construye la query de forma incremental añadiendo cláusulas
+\texttt{AND} sobre una consulta base que selecciona entidades de la colección activa.
+
+El \texttt{appendFilterClauses} es el método central de este proceso, que recibe el  
+\texttt{StringBuilder} de la query en construcción, la lista de parámetros y el estado
+actual, y le añade todas las condiciones derivadas de los filtros acumulados. Para el caso
+más simple --- sin historial de navegación entre colecciones --- delega directamente en
+\texttt{appendStateFilters}, que itera sobre los cuatro mapas de filtros del estado
+(\texttt{mfilters}, \texttt{notMfilters}, \texttt{rfilters}, \texttt{notRfilters}) y
+genera una subconsulta \texttt{EXISTS} o \texttt{NOT EXISTS} por cada condición activa.
+Cuando el estado contiene además un historial de \textit{links}, \texttt{appendFilterClauses}
+actúa de forma recursiva, generando subconsultas anidadas que incorporan el contexto de
+cada transición previa; este mecanismo se describe en detalle en la
+sección~\ref{sec:navegacion_transversal}.
+
+Todas las queries se construyen con parámetros posicionales (\texttt{?}), nunca
+interpolando valores directamente en el SQL. Los valores se acumulan en una lista
+\texttt{params} y se asignan posteriormente mediante \texttt{stmt.setObject()}, lo que
+delega en el \texttt{PreparedStatement} de JDBC la responsabilidad de escapar los valores
+antes de enviarlos al motor, para prevenir inyecciones SQL. El coste de filtrado se traslada
+íntegramente a PostgreSQL, sin materializar subconjuntos intermedios de resultados en
+memoria.
+
+    \subsection{Filtros de metadatos}
+
+Los filtros de metadatos permiten restringir los resultados de una colección en función de los
+atributos clave-valor asociados a sus entidades. En el contexto de TMDb, por ejemplo, esto equivale a
+operaciones como seleccionar únicamente películas del género \textit{Action}, o excluir
+aquellas con idioma original distinto del inglés.
+
+Cada filtro de inclusión se traduce en una subconsulta \texttt{EXISTS} sobre la tabla
+\texttt{metadata}. Si el usuario ha seleccionado múltiples valores para el mismo atributo,
+se genera una cláusula \texttt{EXISTS} independiente por cada valor, lo que impone que la
+entidad deba satisfacer \textit{todos} ellos simultáneamente. Los filtros de exclusión
+(\texttt{notMfilters}) siguen la misma estructura pero con \texttt{NOT EXISTS}:
+
+\begin{lstlisting}[language=Java]
+for (var entry : state.getMfilters().entrySet()) {
+    String attr = entry.getKey();
+    for (String val : entry.getValue()) {
+        sql.append(" AND EXISTS (SELECT 1 FROM metadata " + m
+            + " WHERE " + m + ".entity_id = " + e + ".global_id"
+            + " AND " + m + ".key = ? AND " + m + ".value = ?) ");
+        params.add(attr);
+        params.add(val);
+    }
+}
+\end{lstlisting}
+
+Esta elección implica una semántica de conjunción estricta entre valores del mismo atributo,
+lo cual puede parecer contraintuitivo cuando los valores son mutuamente excluyentes
+--- como ocurre con \texttt{Genres} en TMDb, donde una película puede pertenecer a varios
+géneros a la vez. En ese caso, seleccionar \textit{Action} y \textit{Drama} devuelve
+las películas que tienen \textit{ambos} géneros, no las que tienen alguno de los dos.
+Esta semántica se mantuvo de forma deliberada para garantizar consistencia con el
+comportamiento del resto de filtros del sistema, y la describiremos como parte de los
+obstáculos encontrados en la sección~\ref{sec:obstaculos}.
+
+    \subsection{Filtros de referencia}
+
+Los filtros de referencia permiten restringir los resultados de una colección en función
+de sus vínculos con entidades concretas de otra colección. En TMDb, esto cubre casos como
+mostrar únicamente las películas en las que una persona determinada participó como
+\textit{Director}, o excluir series emitidas por una cadena específica.
+
+Cada filtro de referencia queda identificado por tres elementos: la colección referenciada,
+el tipo de relación (\textit{reason}) y el identificador de la entidad concreta. Al igual
+que con los metadatos, se genera una subconsulta \texttt{EXISTS} por cada combinación
+activa, realizando un \texttt{JOIN} entre la tabla \texttt{reference}, la tabla
+\texttt{entities} y la tabla \texttt{collections} para verificar la existencia del vínculo:
+
+\begin{lstlisting}[language=Java]
+sql.append(" AND EXISTS ("
+    + "SELECT 1 FROM reference " + r
+    + " JOIN entities " + re + " ON " + r + ".target_id = " + re + ".global_id"
+    + " JOIN collections " + rc + " ON " + re + ".collection_global_id = "
+    + rc + ".global_id"
+    + " WHERE " + r + ".source_id = " + e + ".global_id"
+    + " AND " + rc + ".original_id = ?"
+    + " AND " + rc + ".dataset_id = ?"
+    + " AND " + r + ".reason = ?"
+    + " AND " + re + ".original_id = ?) ");
+\end{lstlisting}
+
+Los filtros de exclusión (\texttt{notRfilters}) utilizan \texttt{NOT EXISTS} con la misma
+estructura. Todos los filtros activos --- de metadatos e de referencia, en sus variantes
+positiva y negativa --- se aplican conjuntamente sobre la misma consulta base, de forma
+que el resultado final es la intersección de todas las condiciones establecidas por el
+usuario en ese momento.
+
+    \subsection{Facetas: cómputo dinámico de valores disponibles}
+
+Las facetas son el mecanismo por el que el sistema informa al usuario de qué valores
+siguen siendo relevantes dado el contexto de filtrado actual: qué géneros tienen al
+menos una película entre los resultados visibles, qué directores aparecen en esas
+películas, o a qué cadenas están asociadas las series que quedan tras aplicar los filtros.
+Este cómputo es siempre dinámico: se recalcula en cada petición a partir del conjunto
+de entidades que satisfacen el estado actual.
+
+El sistema distingue dos tipos de facetas, servidas conjuntamente por \texttt{FacetsServlet}
+a través del endpoint \texttt{GET /api/facets}:
+
+Las \textbf{facetas de metadatos} se obtienen mediante \texttt{getFacets()}, que construye
+una subconsulta con los identificadores de las entidades actualmente visibles
+--- aplicando todos los filtros del estado --- y sobre ella ejecuta un \texttt{GROUP BY}
+sobre la tabla \texttt{metadata}:
+
+\begin{lstlisting}[language=Java, basicstyle=\small\ttfamily]
+String sql =
+    "SELECT m.key, m.value, COUNT(*) as cnt "
+    + "FROM metadata m "
+    + "WHERE m.entity_id IN (" + subquery + ") "
+    + "GROUP BY m.key, m.value "
+    + "ORDER BY m.key, cnt DESC";
+\end{lstlisting}
+
+El resultado es un mapa de atributo a lista de valores con su frecuencia, ordenados
+de mayor a menor dentro de cada atributo.
+
+Las \textbf{facetas de referencia} se obtienen mediante \texttt{getReferenceFacets()},
+que sobre la misma subconsulta de entidades visibles realiza un \texttt{JOIN} con la
+tabla \texttt{reference} para descubrir qué entidades de otras colecciones están
+vinculadas a los resultados actuales, agrupadas por colección y tipo de relación.
+El resultado expone, por ejemplo, qué personas concretas aparecen como \textit{Director}
+entre las películas visibles, junto con el número de películas en las que aparecen.
+
+Junto a las facetas, el mismo endpoint devuelve los \textit{links} disponibles
+--- obtenidos mediante \texttt{getAvailableLinks()} --- que indican a qué otras
+colecciones es posible navegar desde el conjunto actual, y los filtros activos en ese
+momento (\texttt{activeFilters}), permitiendo al frontend reflejar el estado de
+selección sin necesidad de mantener dicha información en el cliente.
+
 \section{Navegación transversal}
+\label{sec:navegacion_transversal}
+
+Hasta ahora, los mecanismos de filtrado descritos operan dentro de una única colección:
+dadas las entidades de \textit{Movies}, se restringe el conjunto según atributos propios
+o según vínculos con entidades concretas de otras colecciones. Sin embargo, el sistema
+permite también \textit{trasladarse} de una colección a otra siguiendo una relación,
+arrastrando el contexto de filtrado acumulado. Este mecanismo es lo que se denomina
+navegación transversal.
+
+Un ejemplo concreto en TMDb: el usuario está explorando películas con el filtro de género
+\textit{Action} activo. Desde ese contexto, decide navegar hacia la colección
+\textit{People} siguiendo la relación \textit{Actor}, para ver qué actores aparecen en
+esas películas de acción. Tras el salto, la colección activa pasa a ser \textit{People},
+pero el sistema debe recordar que solo interesan las personas vinculadas al subconjunto
+de películas que cumplían el filtro previo. El historial de transiciones es, por tanto,
+parte del contexto de exploración, no un simple registro de navegación.
+
+
+    \subsection{El mecanismo de \texttt{link} y \texttt{goback}}
+
+La transición entre colecciones se realiza mediante la operación \texttt{link}, que recibe
+el identificador de la colección destino y el tipo de relación a seguir. Su implementación
+en \texttt{StateManager} tiene tres efectos:
+
+\begin{lstlisting}[language=Java]
+public void link(int env, String reason) {
+    this.linkList.add(new Link(true, this.cur.getCurrentCollectionId(),
+                               reason, new State(this.cur)));
+    this.cur.link(env, reason);
+    this.cur.setLinks(new ArrayList<>(this.linkList));
+}
+\end{lstlisting}
+
+Primero, se añade un nuevo objeto \texttt{Link} al \texttt{linkList}, marcado como
+transición hacia delante (\texttt{forward = true}). Este objeto almacena la colección de
+origen, el tipo de relación seguida y una copia profunda del estado activo en el momento
+de la transición, preservando así los filtros que estaban activos antes del salto.
+Segundo, se actualiza la colección activa en \texttt{cur} a la colección destino.
+Tercero, se sincroniza la lista de links dentro del propio \texttt{State}, de forma que
+el \texttt{NavigationDAO} pueda accederla directamente al construir las queries.
+
+La operación \texttt{goback} invierte la última transición registrada en el
+\texttt{linkList}. En lugar de eliminar el último \texttt{Link}, añade uno nuevo con la
+dirección invertida respecto al anterior ---si el último era hacia delante, el nuevo es
+hacia atrás, y viceversa--- y restaura como colección activa la colección de origen
+almacenada en ese \texttt{Link}:
+
+\begin{lstlisting}[language=Java]
+public void goback() {
+    Link last = this.linkList.get(this.linkList.size() - 1);
+    if (last.isForward()) {
+        this.linkList.add(new Link(false, this.cur.getCurrentCollectionId(),
+                                   last.getReason(), new State(this.cur)));
+    } else {
+        this.linkList.add(new Link(true, this.cur.getCurrentCollectionId(),
+                                   last.getReason(), new State(this.cur)));
+    }
+    this.cur.goback(last.getEnv());
+    this.cur.setLinks(new ArrayList<>(this.linkList));
+}
+\end{lstlisting}
+
+El hecho de que \texttt{goback} añada un nuevo \texttt{Link} en lugar de eliminar el
+último tiene una consecuencia relevante: el historial es siempre creciente y nunca se
+borra. Esto significa que la query SQL resultante debe recorrer toda la cadena de
+transiciones acumuladas, incluyendo los retrocesos, para reconstruir fielmente el
+contexto de exploración.
+
+
+    \subsection{Subconsultas anidadas: traducción del historial de \textit{links} a SQL}
+
+Cuando el estado contiene un historial de transiciones, \texttt{appendFilterClauses}
+no puede limitarse a aplicar los filtros del estado activo: debe también expresar en SQL
+la restricción que impone cada transición previa. Para ello utiliza una sobrecarga
+recursiva que recorre el \texttt{linkList} desde el último \texttt{Link} hacia el primero,
+generando en cada nivel una subconsulta anidada.
+
+La estructura de la recursión es la siguiente: para cada nivel de profundidad, se aplican
+primero los filtros del estado en ese nivel mediante \texttt{appendStateFilters}, y a
+continuación se genera una cláusula \texttt{AND ... IN (SELECT ...)} que restringe las
+entidades del nivel actual a aquellas que, a través de la relación registrada en el
+\texttt{Link}, están vinculadas a entidades del nivel siguiente. La dirección del
+\texttt{Link} determina qué columna de la tabla \texttt{reference} actúa como origen y
+cuál como destino:
+
+\begin{lstlisting}[language=Java]
+if (link.isForward()) {
+    sql.append(" AND " + e + ".global_id IN ("
+        + "SELECT " + r_link + ".target_id FROM reference " + r_link
+        + " JOIN entities " + next_e + " ON " + r_link + ".source_id = "
+        + next_e + ".global_id"
+        + " JOIN collections " + next_c + " ON " + next_e
+        + ".collection_global_id = " + next_c + ".global_id"
+        + " WHERE " + next_c + ".dataset_id = ? AND " + next_c
+        + ".original_id = ? AND " + r_link + ".reason = ? ");
+} else {
+    sql.append(" AND " + e + ".global_id IN ("
+        + "SELECT " + r_link + ".source_id FROM reference " + r_link
+        + " JOIN entities " + next_e + " ON " + r_link + ".target_id = "
+        + next_e + ".global_id"
+        + " JOIN collections " + next_c + " ON " + next_e
+        + ".collection_global_id = " + next_c + ".global_id"
+        + " WHERE " + next_c + ".dataset_id = ? AND " + next_c
+        + ".original_id = ? AND " + r_link + ".reason = ? ");
+}
+appendFilterClauses(sql, params, link.getState(), linkList, index - 1, depth + 1);
+sql.append(") ");
+\end{lstlisting}
+
+Cada llamada recursiva abre una subconsulta que se cierra después de que la llamada
+interna haya completado su propio nivel, resultando en una estructura de paréntesis
+anidados que refleja fielmente la cadena de transiciones del usuario. Los alias de tabla
+(\texttt{e}, \texttt{e1}, \texttt{e2}, \texttt{rl0}, \texttt{rl1}\ldots) se generan
+dinámicamente a partir del parámetro \texttt{depth} para evitar colisiones entre niveles.
+
+Retomando el ejemplo anterior ---películas de acción, navegación hacia \textit{People}
+por la relación \textit{Actor}--- la query resultante para obtener los actores visibles
+tendría la forma:
+
+\begin{lstlisting}[language=SQL]
+SELECT DISTINCT e.original_id, e.name
+FROM entities e
+JOIN collections c ON e.collection_global_id = c.global_id
+WHERE c.dataset_id = ? AND c.original_id = ?   -- People
+AND e.global_id IN (
+    SELECT rl0.source_id FROM reference rl0
+    JOIN entities e1 ON rl0.target_id = e1.global_id
+    JOIN collections c1 ON e1.collection_global_id = c1.global_id
+    WHERE c1.dataset_id = ? AND c1.original_id = ?  -- Movies
+    AND rl0.reason = 'Actor'
+    AND EXISTS (SELECT 1 FROM metadata m0         -- Genres = Action
+                WHERE m0.entity_id = e1.global_id
+                AND m0.key = ? AND m0.value = ?)
+)
+\end{lstlisting}
+
+La subconsulta interior opera sobre la colección \textit{Movies} con sus filtros activos,
+y la consulta exterior recupera únicamente las personas de \textit{People} que aparecen
+como origen de una relación \textit{Actor} hacia alguna de esas películas.
+
 \section{Operaciones de conjuntos}
-%\section{Integración del LLM}
+\label{sec:operaciones_conjuntos}
+
+Los mecanismos de filtrado y navegación transversal descritos hasta ahora operan siempre
+sobre un único contexto de exploración activo. Sin embargo, hay casos de uso que requieren
+combinar los resultados de dos contextos construidos de forma independiente. Un ejemplo
+concreto en TMDb: el usuario quiere obtener todas las personas que han trabajado como
+\textit{Director} en películas de acción \textit{o} como \textit{Actor} en series de
+ciencia ficción. Ninguno de los dos conjuntos es subconjunto del otro, y construir ambas
+condiciones simultáneamente dentro de un único estado no es posible con la semántica
+conjuntiva del filtrado descrito en la sección~\ref{sec:filtrado}.
+
+Para cubrir este caso, el sistema incorpora una operación de unión: el usuario puede
+congelar el contexto actual, iniciar una nueva exploración desde cero y, al consultar
+los resultados, obtener las entidades que satisfacen cualquiera de los contextos
+acumulados.
+
+
+\subsection{Construcción del \texttt{unionSet}}
+
+La operación \texttt{union} en \texttt{StateManager} tiene cuatro efectos sobre el estado
+interno:
+
+\begin{lstlisting}[language=Java]
+public void union(int collectionId) {
+    this.cur.setLinks(new ArrayList<>(this.linkList));
+    this.unionSet.add(this.cur);
+    this.historyStack.clear();
+    this.linkList.clear();
+    this.cur = new State(this.datasetId, collectionId);
+}
+\end{lstlisting}
+
+Primero, sincroniza el historial de \textit{links} dentro del estado activo, de forma que
+el estado congelado que se va a preservar tenga acceso a la cadena de transiciones
+completa. Segundo, añade el estado activo actual al \texttt{unionSet} sin realizar ninguna
+copia: dado que \texttt{cur} va a ser reemplazado inmediatamente, no hay riesgo de que
+futuras modificaciones lo alteren. Tercero, vacía tanto la \texttt{historyStack} como el
+\texttt{linkList}, desvinculando completamente el nuevo contexto del anterior. Cuarto,
+inicializa \texttt{cur} con un estado limpio sobre la colección indicada, desde el que el
+usuario puede comenzar una exploración independiente.
+
+El \texttt{unionSet} puede acumular un número arbitrario de entradas repitiendo esta
+operación. Cada entrada es un estado completo e independiente, con su propia colección
+activa, sus propios filtros y su propio historial de transiciones.
+
+
+\subsection{Resolución de la unión en base de datos}
+
+La consulta del \texttt{unionSet} se realiza a través del endpoint
+\texttt{GET /api/union}, servido por \texttt{UnionServlet}, que delega en los métodos
+\texttt{getUnionEntities()} y \texttt{countUnionEntities()} del \texttt{NavigationDAO}.
+
+Ambos métodos construyen una única query que itera sobre todas las entradas del
+\texttt{unionSet} y concatena un bloque de condiciones por entrada, separados por
+\texttt{OR}:
+
+\begin{lstlisting}[language=Java]
+for (int i = 0; i < unionSet.size(); i++) {
+    State state = unionSet.get(i);
+    if (i > 0) sql.append(" OR ");
+    sql.append(" (c.dataset_id = ? AND c.original_id = ? ");
+    params.add(state.getDatasetId());
+    params.add(state.getCurrentCollectionId());
+    appendFilterClauses(sql, params, state);
+    sql.append(" ) ");
+}
+\end{lstlisting}
+
+Cada bloque es estructuralmente idéntico a la query que se generaría para ese estado en
+una consulta normal: aplica \texttt{appendFilterClauses} sobre el estado correspondiente,
+lo que incluye sus filtros de metadatos, sus filtros de referencia y, si procede, las
+subconsultas anidadas derivadas de su historial de transiciones. La unión entre bloques
+se expresa con \texttt{OR} a nivel de la cláusula \texttt{WHERE}, y el \texttt{DISTINCT}
+en el \texttt{SELECT} garantiza que las entidades presentes en más de un bloque no
+aparezcan duplicadas en el resultado.
+
+Una consecuencia de este diseño es que la unión puede combinar entradas sobre
+colecciones distintas. En el ejemplo anterior, el primer bloque opera sobre
+\textit{People} filtrado por películas de acción con relación \textit{Director}, y el
+segundo también sobre \textit{People} pero filtrado por series de ciencia ficción con
+relación \textit{Actor}. Que ambas entradas compartan colección activa no es un requisito
+del sistema: el campo \texttt{collection\_id} devuelto por \texttt{getUnionEntities()}
+indica a qué colección pertenece cada entidad del resultado, permitiendo al frontend
+distinguirlas si fuera necesario.
+
 \section{Obstáculos encontrados y soluciones implementadas}
+\label{sec:obstaculos}

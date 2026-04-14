@@ -5,7 +5,7 @@ Este capítulo centraliza el conjunto de decisiones de diseño técnico y estruc
 En primer lugar, exponemos los marcos metodológicos utilizados para el manejo del propio ciclo de vida del software, 
 definiendo las herramientas, prácticas y técnicas de ingeniería aplicadas. 
 Luego, seguimos con el desglose de la arquitectura del sistema, delimitando expresamente la separación de responsabilidades 
-a través de las distintas capas de la aplicación: la capa de control y enrutamiento, la capa de persistencia y acceso a datos, 
+a través de las distintas capas de la aplicación: la capa de control y exposición de la API, la capa de persistencia y acceso a datos, 
 y finalmente, el mecanismo de integración con la interfaz de usuario. El principal objetivo de esta arquitectura fue garantiza 
 un sistema modular, escalable, mantenible y flexible en la integración de base de datos.
 
@@ -24,7 +24,7 @@ críticos del proyecto. Especificamente, se ha notado un gran impacto en los \te
 navegación en Java, la integración con la base de datos TMDB y la posterior exposición de funcionalidades 
 mediante una API REST.
 
-\subsection*{Desarrollo iterativo e incremental}
+    \subsection*{Desarrollo iterativo e incremental}
 
 A cambio de definir completa y decididamente la arquitectura desde del principio con un enfoque lineal y secuencial, 
 como la metodología cascada, el sistema se ha desarrollado de forma incremental. Es sus primeras iteraciones, hemos 
@@ -33,7 +33,7 @@ fases posteriores hemos incorporado progresivamente la capa de acceso a datos, l
 Dicho tratamiento resultó significativamente relevante dedido a la naturaleza exploratoria del proyecto, ya que 
 permitió adaptar el diseño del motor de navegación al mismo paso en que se probaba con datos reales.
 
-\subsection*{Gestión de requisitos y backlog}
+    \subsection*{Gestión de requisitos y backlog}
 
 Las funcionalidades más complejas iniciales, como el sistema de filtrado relacional, la gestión de estados de navegación 
 y la combinación de resultados, se desarrollaron mediante periodos de trabajo intensivo centrados en la implementación 
@@ -44,7 +44,7 @@ Los criterios de priorización y la planificación de las tareas se realizaron e
 llevando a cabo revisiones periódicas y ajustes continuos. De esta forma, los objetivos de cada iteración se adaptaban en 
 función de los resultados obtenidos y de los obstáculos técnicos que iban apareciendo durante el desarrollo.
 
-\subsection*{Trabajo colaborativo en un equipo reducido}
+    \subsection*{Trabajo colaborativo en un equipo reducido}
 
 Hemos adaptado las práticas de \textbf{Scrum} a un entorno de colaboración directa y continua, ya que el proyecto sería 
 desarrollado por un equipo de dos personas. En lugar de llevar a cabo reuniones formales, se optó por mantener una 
@@ -53,7 +53,7 @@ fundamental para la paralelización del desarrollo sin perder coherencia en el d
 y organización facilitó una evolución más eficiente y dinámica del software, con una alta capacidad de reacción 
 frente los problemas técnicos.
 
-\subsection*{Control de versiones y gestión del código fuente}
+    \subsection*{Control de versiones y gestión del código fuente}
 
 En virtude de la necesidad de mantener la integridad del código y facilitar el trabajo colaborativo, hemos 
 utilziado Git como sistema de control de versiones distribuido. El repositorio principal se alojó en GitHub 
@@ -62,7 +62,7 @@ estable y funcional, y ramas de características (\textit{feature branches}) par
 componentes antes de su integración final. Con esa metodología, hemos podido trabajar en paralelo sin conflictos 
 significativos manteniendo siempre una versión funcional del sistema.
 
-\subsection*{Buenas prácticas de programación y diseño}
+    \subsection*{Buenas prácticas de programación y diseño}
 
 Durante el desarrollo hemos dado especial atención a la aplicación de buenas prácticas de programación y 
 diseño software. Se siguieron principios de separación de responsabilidades (\textit{Separation of Concerns}) 
@@ -79,60 +79,195 @@ la aplicación favorece el desacoplamiento al basarse en capas bien definidas. E
 control, responsable por enrutar las distintas peticiones HTTP, y la capa de filtros, encargada de controlar las políticas 
 de acceso y seguridad.
 
-\subsection*{Diseño de la API y Controladores}
+    \subsection*{Diseño de la API y Controladores}
 
-% ----------------------------------------------------------------------------------------------------
+Hemos optado por implementar la interfaz de comunicación entre el cliente web y el motor de navegación
+usando una API de estilo REST, siguiendo la especificación de \textit{Servlets} de Java (\texttt{HttpServlet}).
+Esta elección viene de priorizar un control directo sobre las peticiones y respuestas HTTP frente al uso de
+frameworks web de más alto nivel (como Spring Boot), que aunque facilitan el desarrollo de aplicaciones web
+tradicionales, introducen una mayor complejidad estructural y una capa adicional de abstracción que no resulta
+necesaria para los objetivos de este proyecto.
 
-% La interfaz de comunicación entre el cliente web y el motor de navegación se ha implementado mediante una API de 
-% estilo REST. Para la construcción de los puntos de enlace (\textit{endpoints}), hemos utilizado la especificación de 
-% \textit{Servlets} de Jakarta EE (\texttt{HttpServlet}), lo que proporciona un control de bajo nivel robusto y eficiente 
-% sobre las peticiones y respuestas HTTP.
+El uso directo de \texttt{HttpServlet} ha sido necesaria para implementar una capa de comunicación más compacta, donde
+cada controlador se encarga exclusivamente de recibir los parámetros de la petición, delegar la lógica en el
+motor de navegación y generar la respuesta correspondiente en formato JSON. Emplear esa estrategia fue importante 
+para mantener una separación explícita entre la lógica de navegación y la capa de acceso web. Además permitió un 
+control más preciso de la gestión de sesiones, el formato de las respuestas y el flujo de las peticiones HTTP.
 
-% La capa de controladores actúa como un intermediario o fachada. Clases como \texttt{NavigationServlet}, 
-% \texttt{FacetsServlet} o \texttt{EntitiesServlet} se encargan exclusivamente de recibir los parámetros de la 
-% petición, delegar la lógica de procesamiento al modelo subyacente y formatear la respuesta. Para garantizar la 
-% interoperabilidad, toda la transferencia de datos entre el cliente y el servidor se realiza en formato JSON, 
-% empleando la biblioteca Jackson (\texttt{ObjectMapper}) para la serialización y deserialización automática de 
-% las estructuras de datos en Java.
+Para ejecutar la aplicación se ha utilizado Apache Tomcat como contenedor de \textit{Servlets}. Nos hemos inclinado por 
+Tomcat frente a otras opciones principalmente por la naturaleza del proyecto. Tomcat es un contenedor
+considerablemente leve, enfocadoen la ejecución de aplicaciones basadas en \textit{Servlets} y JSP, lo que lo convierte en
+una solución adecuada para trabajar directamente con la API de Java sin generar dependencias adicionales.
 
-\subsection*{Gestión del Estado de Navegación (Enfoque \textit{Stateful})}
+Por motivos semejantes, hemos descartado servidores de aplicaciones completos como GlassFish, 
+ya que requiere tecnologías adicionales como EJB y gestión avanzada de recursos.
+Alternativas como Jetty también permiten ejecutar \textit{Servlets}, pero está más orientado a una 
+integración embebida dentro de otras aplicaciones/frameworks. Un contenedor independiente, 
+sencillo de configurar y con respaldo de experiencia en entornos académicos y de desarrollo hace que 
+Tomcat resulte la opción más estable encontrada.
 
-% Una de las decisiones arquitectónicas más relevantes del proyecto radica en el manejo del contexto del usuario. Las 
-% arquitecturas REST tradicionales abogan por sistemas \textit{stateless} (sin estado), donde cada petición del 
-% cliente debe contener toda la información necesaria para ser procesada. Sin embargo, en nuestro caso de uso, 
-% la exploración multimedia se define como un proceso altamente iterativo y acumulativo.
+Como contrapartida, esta decisión implica un mayor esfuerzo de implementación manual, especialmente en tareas
+como el enrutamiento de peticiones, la serialización de datos o la gestión de errores. Sin embargo, este
+\textit{trade-off} se ha asumido de forma consciente, ya que el objetivo principal del proyecto no es el
+desarrollo de una aplicación web en sí, sino el diseño e implementación de un motor de navegación sobre
+colecciones de datos, siendo la API web únicamente un mecanismo para exponer dicha funcionalidad.
 
-% Requerir que el cliente envíe en cada petición el historial completo de navegación, las listas de filtros 
-% aplicados, las exclusiones y los saltos relacionales supondría una sobrecarga de red inasumible y una 
-% complejidad excesiva en el \textit{frontend}. Por este motivo, hemos optado por un diseño \textit{stateful} (con estado).
+    \subsection*{Gestión del Estado de Navegación (Enfoque \textit{Stateful})}
 
-% A través del \texttt{SessionServlet}, el sistema inicializa una sesión de usuario (\texttt{HttpSession}) 
-% en el servidor al comenzar una exploración. Dentro de esta sesión se instancia y almacena un objeto 
-% \texttt{StateManager}, el cual encapsula la máquina de estados completa de esa búsqueda en concreto. De 
-% este modo, los sucesivos controladores (\texttt{NavigationServlet}, \texttt{UnionServlet}) únicamente 
-% necesitan recuperar el gestor de estado asociado a la sesión del usuario que realiza la petición, 
-% aplicando sobre él las nuevas acciones (como añadir un filtro o retroceder en el historial) de manera 
-% ágil y centralizada en el \textit{backend}.
+El manejo del contexto del usuario no es trivial, ya que, a diferencia de aplicaciones web tradicionales basadas 
+en peticiones independientes, la naturaleza de nuestro proyecto implica una navegación que consiste en una exploración 
+progresiva, donde cada acción del usuario modifica un estado acumulativo que condiciona las operaciones posteriores.
 
-\subsection*{Componentes transversales de la arquitectura}
+Las arquitecturas REST normalmente trabajan con sistemas \textit{stateless} (sin estado), donde cada petición del 
+cliente debe contener toda la información necesaria para ser procesada. En nuestro caso, dicha naturaleza es altamente 
+iterativa y acumulativa, de manera que hacer que cada petición esté completamente encapsulada y atomizada puede suponer 
+un problema.
 
-% Debido a la separación física y lógica entre el cliente web (\textit{frontend}) y el servidor (\textit{backend}), 
-% resulta habitual que ambas aplicaciones se ejecuten en dominios o puertos distintos, especialmente durante las 
-% fases de desarrollo local. Para que los navegadores web modernos permitan estas peticiones sin bloquearlas 
-% por motivos de seguridad, ha sido indispensable implementar políticas de Intercambio de Recursos de 
-% Origen Cruzado (CORS, por sus siglas en inglés).
+Requerir que el cliente envíe en cada petición el historial completo de navegación, las listas de filtros aplicados, 
+las operaciones realizadas y los saltos relacionales supondría una sobrecarga de red inasumible. Este estado no puede 
+considerarse independiente entre peticiones, sino que constituye una estructura dinámica que evoluciona a lo largo de 
+la sesión de usuario. Además, requerir la petición completa añadiría una complejidad excesiva en el \textit{frontend}, 
+aumentando el tamaño de cada \textit{request}, empeorando el rendimiento y dificultando considerablemente la escalabilidad.
 
-% Para resolver esta necesidad sin contaminar la lógica interna de los controladores, hemos aplicado el 
-% patrón de diseño \textit{Intercepting Filter}. Se ha implementado la clase \texttt{CORSFilter}, que 
-% implementa la interfaz \texttt{Filter} de Jakarta EE. Este filtro intercepta todas las peticiones 
-% entrantes (\texttt{/*}) antes de que alcancen su \textit{Servlet} de destino, inyectando dinámicamente 
-% las cabeceras HTTP necesarias (como \texttt{Access-Control-Allow-Origin} y \texttt{Access-Control-Allow-Credentials}). 
+Por este motivo, se ha optado por un diseño \textit{stateful}, en el que el contexto de navegación se mantiene en el 
+servidor. Al inicio de la interacción, se crea una sesión de usuario (\texttt{HttpSession}) en la que se almacena una 
+instancia de \texttt{StateManager}, encargada de gestionar el estado actual y las transiciones entre estados del usuario.
 
-% Además, este componente se encarga de interceptar y resolver de forma anticipada las peticiones de 
-% tipo \texttt{OPTIONS} (\textit{preflight requests}), garantizando una comunicación fluida y segura 
-% entre el cliente y nuestra API REST, manteniendo el código de los controladores estrictamente 
-% enfocado en la lógica de dominio.
+De este modo, los distintos controladores pueden operar sobre un contexto compartido y persistente, aplicando las 
+acciones del usuario (como añadir filtros, explorar relaciones o combinar resultados) de forma centralizada en 
+el \textit{backend}. Este enfoque permite simplificar la lógica del cliente, mejorar la eficiencia de las comunicaciones 
+y mantener una coherencia estricta con el modelo de navegación propuesto.
+
+    \subsection*{Componentes transversales de la arquitectura}
+
+El sistente contiene una serie de componentes transversales, para allá de la capa de controladores, que proporcionan 
+funcionalidades comunes que permiten separar claramente la lógica de dominio y los aspectos técnicos propios de la 
+infraestructura web.
+
+Como mencionado en la sección anterior, la gestión de sesiones es un elemento fundamental dentro de la arquitectura, pues 
+es el responsable por mantener el contexto de navegación del usuario entre peticiones distintas. A través del mecanismo de
+\texttt{HttpSession}, el sistema asocia cada usuario con una instancia de \texttt{StateManager}, lo que 
+garantiza la persistencia del estado de navegación y posibilita un modelo de interacción basado en estados.
+
+Por otro lado, la serialización de datos en formato JSON empleada de manera sistemática funciona como el mecanismo 
+clave para el intercambio de información entre el backend y el frontend. Este abordaje se ha hecho necesario principalmente 
+para desacoplar ambas capas, lo que facilita la evolución independiente de la interfaz de usuario y del motor de navegación
+como tal.
+
+Adicionalmente, hemos implementado un filtro encargado de gestionar aspectos técnicos de la comunicación HTTP,
+como el intercambio de recursos entre distintos orígenes - política CORS \textit{(Cross-Origin Resource Sharing)}. 
+Este componente intercepta las peticiones entrantes antes de que alcancen los controladores y añade 
+las cabeceras necesarias para permitir la comunicación entre cliente y servidor cuando se ejecutan en 
+dominios o puertos distintos, necesario para evitar las restricciones por defecto de seguridad del navegador. De este modo, 
+se evita introducir lógica técnica adicional en los controladores y se mantiene su enfoque en la lógica de dominio.
 
 \section{Persistencia y Acceso a Datos}
 
-\section{Integración API}
+La capa de persistencia y su respectivo diseño constituyen la base fundamental de la arquitectura del sistema, 
+puesto que el motor de navegación tiene una relación de depencia directa de la estructura y disponibilidad de los 
+datos sobre los que opera. Como el sistema no se limita a recuperación de la información, este proyecto los datos no 
+se consumen directamente, sino que pasan por una transformación y reorganización que permiten la exploración mediante 
+un modelo de navegación relacional.
+
+Para posibilitar dicha exploración y mantener un nivel razonable de independencia del dominio, hemos decidido desacoplar 
+completamentela lógica del motor de las fuentes de datos concretas. Para tanto, hemos definido un modelo interno de representación 
+que abstrae las entidades y relaciones relevantes del dominio, permitiendo trabajar de forma uniforme independientemente del origen de los
+datos. Este enfoque es particularmente relevante dado que el sistema integra conjuntos de datos heterogéneos, los cuales deben ser 
+"traducidos" bajo una misma estructura conceptual.
+
+Por ese misma razón, hemos optado por organizar el acceso a datos a través de una capa dedicada de abstracción \textit{(DAO)}, 
+que se encarga de aislar la lógica de acceso, traducción y recuperación de la información. Esta separación es lo que garantiza mantener 
+la independencia entre la lógica de navegación y los mecanismos de persistencia, permitiendo al mismo tiempo una evolución del proprio sistema 
+y posible cambios en las fuentes de datos o incluso en su forma de almacenamiento.
+
+    \subsection*{Modelo de datos y representación interna}
+
+El sistema se base en un modelo de datos interno diseñado específicamente para soportar la navegación
+sobre colecciones complejas, permitiendo representar relaciones cualitativamente distintas independiente del dominio asociado.  
+Decidimos no operar directamente sobre las estructuras proporcionadas por las fuentes de datos externas, y sí definir una representación 
+propia basada en entidades y relaciones, adaptada a las necesidades del motor de navegación.
+
+En dicho modelo, los elementos del dominio se representan como entidades independientes, caracterizadas
+por un conjunto de atributos (\textbf{metadatos}), mientras que las interacciones entre dichas entidades se
+expresan mediante relaciones explícitamente manifiestas. Esta separación permite tratar de forma homogénea tanto el
+filtrado por atributos (por ejemplo, características propias de una entidad) como la exploración
+relacional (navegación entre entidades conectadas).
+
+Al mismo tiempo, esta representación actúa como una capa de abstracción sobre las fuentes de
+datos, unificando conjuntos heterogéneos bajo una estructura común e independiente de su formato u origen.
+De este modo, el motor de navegación puede operar de forma desacoplada, garantizando tanto la extensibilidad
+del sistema como la coherencia en las operaciones realizadas sobre los datos.
+
+    \subsection*{Integración y adquisición de datos}
+
+Dado que el sistema utiliza y transforma fuentes de datos heterogéneas, una de las decisiones
+arquitectónicas principales ha sido definir un proceso de integración que permita desacoplar la
+adquisición de datos de su representación interna. En lugar de depender directamente de la estructura
+y organización de cada fuente, se ha establecido un mecanismo de transformación que adapta los datos
+externos al modelo común basado en entidades y relaciones descrito anteriormente.
+
+Este proceso de integración implica la extracción de la información relevante de cada fuente de datos,
+su normalización y su posterior adaptación a las estructuras internas del sistema. De este modo, se
+garantiza que, independientemente del formato, granularidad o semántica original de los datos, todos
+ellos puedan ser tratados de forma uniforme por el motor de navegación.
+
+Una de las consideraciones más importantes en este diseño ha sido la coexistencia de distintos conjuntos de datos
+con características complementarias. Antes de privilegiar una única fuente como referencia principal,
+hemos diseñado el sistema para permitir la incorporación de nuevas fuentes, siempre que estas
+puedan ser mapeadas al modelo interno. Este enfoque posibilita la extensibilidad del sistema y evita
+dependencias estríctas con tecnologías o fuentes concretas.
+
+Asimismo, se ha optado por un modelo de integración en el que la responsabilidad de adaptación recae en
+la capa de acceso a datos, evitando trasladar esta complejidad al motor de navegación. De este modo, el
+núcleo del sistema opera exclusivamente sobre estructuras homogéneas, manteniendo una separación clara
+entre la lógica de dominio y los detalles específicos de cada fuente de datos.
+
+    \subsection*{Capa de acceso a datos (DAO)}
+
+Para mantener una separación eficiente entre la lógica de navegación y los mecanismos de acceso
+a datos, hemos definido una capa específica de abstracción basada en el patrón \textit{Data Access Object} (DAO).
+La capa actúa como intermediaria entre el modelo interno del sistema y las distintas fuentes de datos,
+encapsulando toda la lógica necesaria para la recuperación y adaptación de la información.
+
+La principal responsabilidad de los componentes DAO es proporcionar una interfaz uniforme de acceso a los datos,
+independiente de su origen. De este modo, el motor de navegación no interactúa de manera directa con las fuentes externas,
+sino que opera sobre estructuras ya adaptadas al modelo interno. Hemos tomado esta decisión para aislar completamente el núcleo
+del sistema de detalles específicos (como el formato de los datos, los mecanismos de acceso o mismo las 
+particularidades de cada fuente).
+
+Además, esta capa facilita la integración de múltiples conjuntos de datos, ya que cada fuente puede ser gestionada
+mediante su propia implementación de acceso, de manera compleamente independiente, sin afectar al resto del sistema. 
+Esto resulta especialmente relevante en un contexto donde hay una coexistencia de datos heterogéneos, permitiendo 
+su incorporación de manera progresiva, controlada y sin grandes dependencias.
+
+Esta decisión también es relevante para hacer la mantenibilidad y evolución del sistema de manera flexible. Al centralizar
+la lógica de acceso a datos en una capa específica, es posible realizar cambios en las fuentes de información,
+en sus formatos o en las estrategias de recuperación sin necesidad de modificar el motor de navegación o la
+capa de control. Por lo tanto, se garantiza una arquitectura modular, robusta, preparada para futuras extensiones y 
+la incorporación de otras colecciones de datos.
+
+    \subsection*{Estrategias de gestión de datos}
+
+Como mencionado anteriormente, hemos priorizado el diseño del sistema a partir de una separación clara entre dos niveles de 
+gestión de datos: el estado de navegación del usuario y los datos del dominio. Esta distinción responde a criterios
+distintos de persistencia, mutabilidad y coste de acceso, y determina la arquitectura general del sistema.
+
+Los datos del dominio --- entidades, metadatos y relaciones --- se almacenan de forma persistente
+en una base de datos relacional. Esta decisión facilita que el sistema soporte datasets de tamaño
+potencialmente grandes sin imponer restricciones sobre la memoria disponible, y delega en el motor de base
+de datos la responsabilidad de ejecutar las operaciones de filtrado y recuperación de forma
+razonable.
+
+El estado de navegación, en cambio, es ligero, momentáneo y específico de cada usuario: recoge los
+filtros acumulados, el historial de transiciones entre colecciones y los conjuntos de resultados
+en construcción. Hemos decidido mantenerlo en memoria dentro de la sesión HTTP por su naturalidad, 
+dado su ciclo de vida acotado y su reducido tamaño, además de evitar serializar y deserializar el contexto de 
+navegación en cada petición.
+
+La consecuencia más relevante de esta separación es que el sistema no materializa subconjuntos
+intermedios de resultados: en cada petición, el estado en memoria se traduce directamente a una
+consulta sobre la base de datos. Esto simplifica el modelo de datos a costa de trasladar la
+complejidad al proceso de construcción dinámica de queries, que debe reflejar fielmente el
+contexto de navegación acumulado. Esta tensión --- entre simplicidad del modelo y complejidad de
+las consultas --- es una de las decisiones de diseño que hemos evaluado tener un gran impacto en la implementación,
+y se aborda en detalle en el capítulo siguiente.
