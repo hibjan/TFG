@@ -3,12 +3,18 @@ import orjson
 
 # ─── Global variables ────────────────────────────────────────────────
 FORMAT_PATH = "scripts/TMDB/format.json"
-OUTPUT_PATH = "scripts/TMDB/dataset_top5k.jsonl"
+OUTPUT_PATH = "scripts/TMDB/dataset_top500.jsonl"
 
-# Toggle: True = only include the top K most popular Movies and TV Series
-FILTER_TOP_K_POPULAR = True
-# Number of top popular Movies and TV Series to keep if FILTER_TOP_K_POPULAR is True
-TOP_K_COUNT = 5000
+# Toggle: True = filter Movies and TV Series using Bayesian average of ratings
+FILTER_BY_BAYESIAN_AVERAGE = True
+# Minimum number of votes required for Bayesian average calculation
+MIN_VOTES_THRESHOLD = 100
+# Minimum Bayesian average score to include an item (0-10 scale)
+MIN_BAYESIAN_SCORE = 5.0
+# Global minimum rating used in Bayesian average formula (typically the platform's average rating)
+GLOBAL_MIN_RATING = 5.0
+# Maximum number of top-rated Movies and TV Series to keep (applied per collection)
+TOP_K = 500
 
 # Toggle: True = range mode (numeric/date stored as ranges in metadata, raw in contents)
 #         False = raw mode  (numeric/date stored as raw values in metadata only)
@@ -107,6 +113,21 @@ def bucket_range(value, bucket_size):
 
     bucket_start = int(num // bucket_size) * bucket_size
     return f"{format_number(bucket_start)}-{format_number(bucket_start + bucket_size - 1)}"
+
+
+def calculate_bayesian_average(vote_count, vote_average):
+    """Calculate Bayesian average rating.
+    Formula: (vote_count * vote_average + MIN_VOTES_THRESHOLD * GLOBAL_MIN_RATING) / (vote_count + MIN_VOTES_THRESHOLD)
+    This gives more weight to items with more votes while preventing low-vote items from dominating.
+    """
+    try:
+        v_count = float(vote_count) if vote_count is not None else 0
+        v_avg = float(vote_average) if vote_average is not None else 0
+        if v_count < 0 or v_avg < 0 or v_avg > 10:
+            return 0.0
+        return (v_count * v_avg + MIN_VOTES_THRESHOLD * GLOBAL_MIN_RATING) / (v_count + MIN_VOTES_THRESHOLD)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 def precompute_code_dicts(metadata_fields):
@@ -543,19 +564,35 @@ def main():
         print(f"Processing collection: {coll['name']} ...")
         objs, raws = process_collection(coll, obj_cfg)
 
-        if FILTER_TOP_K_POPULAR and coll["name"] in ["Movies", "TV Series"]:
-            print(f"  Filtering top {TOP_K_COUNT} {coll['name']} by popularity...")
-            def get_popularity(x):
-                val = x.get("contents", {}).get("Popularity")
-                try:
-                    return float(val) if val is not None else 0.0
-                except ValueError:
-                    return 0.0
-
-            objs.sort(key=get_popularity, reverse=True)
-            objs = objs[:TOP_K_COUNT]
+        if FILTER_BY_BAYESIAN_AVERAGE and coll["name"] in ["Movies", "TV Series"]:
+            print(f"  Filtering {coll['name']} by Bayesian average (min_votes={MIN_VOTES_THRESHOLD}, min_score={MIN_BAYESIAN_SCORE})...")
             
-            # Keep only the raw reference tracker objects for the top K
+            def get_bayesian_score(obj):
+                metadata = obj.get("metadata", {})
+                # Extract vote_count and vote_average from metadata
+                # Assuming these are stored as lists in metadata (take first value)
+                vote_count_list = metadata.get("Vote Count", [])
+                vote_avg_list = metadata.get("Vote Average", [])
+                
+                vote_count = vote_count_list[0] if vote_count_list else 0
+                vote_avg = vote_avg_list[0] if vote_avg_list else 0
+                
+                return calculate_bayesian_average(vote_count, vote_avg)
+            
+            # Calculate Bayesian score for each object
+            scored_objs = [(obj, get_bayesian_score(obj)) for obj in objs]
+            # Filter by minimum score threshold
+            scored_objs = [(obj, score) for obj, score in scored_objs if score >= MIN_BAYESIAN_SCORE]
+            # Sort by Bayesian score (descending)
+            scored_objs.sort(key=lambda x: x[1], reverse=True)
+            # Keep only top K items
+            scored_objs = scored_objs[:TOP_K]
+            # Extract filtered objects
+            objs = [obj for obj, score in scored_objs]
+            
+            print(f"    -> Kept {len(objs)} {coll['name']} with Bayesian score >= {MIN_BAYESIAN_SCORE} (top {TOP_K})")
+            
+            # Keep only the raw reference tracker objects for the filtered set
             kept_ids = {obj["id"] for obj in objs}
             raws = [r for r in raws if r["id"] in kept_ids]
 
@@ -571,7 +608,7 @@ def main():
 
     # ── Third iteration: remove objects based on settings ──
     before = len(all_objects)
-    if FILTER_TOP_K_POPULAR:
+    if FILTER_BY_BAYESIAN_AVERAGE:
         all_objects = [o for o in all_objects if o["references"] and o["metadata"]]
     else:
         all_objects = [o for o in all_objects if o["references"] or o["metadata"]]
