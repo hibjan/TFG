@@ -23,6 +23,7 @@ Leonardo Prado de Souza
 - Apache Tomcat 10 (https://tomcat.apache.org/download-10.cgi - Only core)
 - Eclipse IDE for Enterprise Java and Web Developers
 - VS Code
+- Node.js (node -v)
 
 ### 1. Clone the repository
 
@@ -113,7 +114,9 @@ From now on, in Eclipse:
 
 ## 4. Frontend
 
-1. Install extension Live Server https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer
-2. Go to the extension settings and look for Live Server > Settings: Host (vscode://settings/liveServer.settings.host) and set it to localhost instead of 127.0.0.0
-3. Open frontend/index.html
-4. Click button "Go Live" on the bottom-dright
+In VS Code terminal:
+
+1. cd frontend
+2. npm install
+3. Duplicate the ".env.example" file, name it ".env.development.local", and fill it with the desired credentials.
+4. npm run dev
