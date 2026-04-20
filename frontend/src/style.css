@@ -657,11 +657,18 @@ body {
 }
 
 /* === Resource Rendering === */
-.modal-resource-images {
+.modal-resource-images,
+.modal-resource-videos {
     display: flex;
     flex-wrap: wrap;
     gap: 16px;
     margin-bottom: 14px;
+}
+
+.modal-resource-video {
+    max-width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
 .modal-resource-figure {
@@ -689,10 +696,12 @@ body {
     margin-top: 6px;
 }
 
+.modal-resource-pdfs,
 .modal-resource-links {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+    margin-bottom: 14px;
 }
 
 .modal-resource-link {

@@ -113,6 +113,16 @@
                         "url": "/api/resource/people/1/photo.jpg"
                     },
                     {
+                        "type": "video",
+                        "label": "Video",
+                        "url": "/api/resource/people/1/video.mp4"
+                    },
+                    {
+                        "type": "pdf",
+                        "label": "PDF",
+                        "url": "/api/resource/people/1/document.pdf"
+                    },
+                    {
                         "type": "link",
                         "label": "Wikipedia",
                         "url": "https://en.wikipedia.org/wiki/Example"

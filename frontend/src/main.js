@@ -733,6 +733,8 @@ async function viewEntity(entityId, collectionId) {
                     const resolveUrl = (url) => url.startsWith('/') ? backendOrigin + url : url;
 
                     const images = resources.filter(r => r.type === 'image');
+                    const videos = resources.filter(r => r.type === 'video');
+                    const pdfs = resources.filter(r => r.type === 'pdf');
                     const links = resources.filter(r => r.type === 'link');
 
                     if (images.length > 0) {
@@ -760,6 +762,43 @@ async function viewEntity(entityId, collectionId) {
                         dom.modalResources.appendChild(imagesContainer);
                     }
 
+                    if (videos.length > 0) {
+                        const videosContainer = document.createElement('div');
+                        videosContainer.className = 'modal-resource-videos';
+                        videos.forEach(res => {
+                            const figure = document.createElement('figure');
+                            figure.className = 'modal-resource-figure';
+                            const video = document.createElement('video');
+                            video.className = 'modal-resource-video';
+                            video.src = resolveUrl(res.url);
+                            video.controls = true;
+                            video.style.maxWidth = '100%';
+                            figure.appendChild(video);
+                            if (res.label) {
+                                const caption = document.createElement('figcaption');
+                                caption.textContent = res.label;
+                                figure.appendChild(caption);
+                            }
+                            videosContainer.appendChild(figure);
+                        });
+                        dom.modalResources.appendChild(videosContainer);
+                    }
+
+                    if (pdfs.length > 0) {
+                        const pdfsContainer = document.createElement('div');
+                        pdfsContainer.className = 'modal-resource-pdfs';
+                        pdfs.forEach(res => {
+                            const a = document.createElement('a');
+                            a.className = 'modal-resource-link modal-resource-pdf';
+                            a.href = resolveUrl(res.url);
+                            a.target = '_blank';
+                            a.rel = 'noopener noreferrer';
+                            a.textContent = `📄 ${res.label || 'PDF Document'}`;
+                            pdfsContainer.appendChild(a);
+                        });
+                        dom.modalResources.appendChild(pdfsContainer);
+                    }
+
                     if (links.length > 0) {
                         const linksContainer = document.createElement('div');
                         linksContainer.className = 'modal-resource-links';
@@ -769,7 +808,7 @@ async function viewEntity(entityId, collectionId) {
                             a.href = resolveUrl(res.url);
                             a.target = '_blank';
                             a.rel = 'noopener noreferrer';
-                            a.textContent = res.label;
+                            a.textContent = `🔗 ${res.label}`;
                             linksContainer.appendChild(a);
                         });
                         dom.modalResources.appendChild(linksContainer);

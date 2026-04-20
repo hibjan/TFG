@@ -5,8 +5,8 @@ import os
 from dotenv import load_dotenv
 
 # --- CONFIGURATION ---
-JSON_FILE = "./scripts/TMDB/output.json"
-DATASET_NAME = "TMDb 1k"
+JSON_FILE = "./scripts/test/test_pms.json"
+DATASET_NAME = "TEST PMS Dataset"
 
 load_dotenv(".env")
 
