@@ -140,5 +140,5 @@ In VS Code terminal:
 > 2. copy backend.war to webapps
 > 3. Docker container
 > 4. npm run build
-> 5. npm run dist
+> 5. npm run preview
 > 6. cloudfare tunnel
