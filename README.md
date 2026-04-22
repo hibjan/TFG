@@ -1,16 +1,20 @@
 # TFG
 
-[Memoria del TFG](./docs/TFGTeXiS.pdf)
+[Bachelor's Degree Thesis (Memoria del TFG)](./docs/TFGTeXiS.pdf)
 
----
+## Summary
 
-Juan Andrés Hibjan Cardona
+This application is designed for the exploration of large-scale multimedia collections. By leveraging rich metadata and relational links between objects, it allows users to navigate complex datasets intuitively.
 
-Leonardo Prado de Souza
+The mains components are: backend (Java/Tomcat), frontend (Vanilla JS) and the database (PostgreSQL). There is also an integration layer for public datasets available online, currently supporting TMDb and DBLP.
 
----
+Below you'll find some recommendations on how to work in this project ([Dev steps](#development-set-up)), and on how to deploy it ([Prod steps](#production-set-up)).
 
-## Production set-up
+## Team
+
+- Juan Andrés Hibjan Cardona
+
+- Leonardo Prado de Souza
 
 ## Development set-up
 
@@ -34,7 +38,7 @@ In VS Code Terminal:
 
 ### 2. Database
 
-Duplicate the ".env.example" file, name it ".env", and fill it with the desired credentials.
+Duplicate the ".env.db.example" file, name it ".env.db", and fill it with the desired credentials.
 
 Open Docker Desktop
 
@@ -51,12 +55,13 @@ In the Containers tab in Docker Desktop you can manually stop or start it.
 > 1. docker-compose down -v
 > 2. docker-compose up -d
 
-Open scripts/populate_db.py
+Now, to actually populate the database with some dataset, run the following:
 
-1. Make sure JSON_FILE and DATASET_NAME are set properly
-2. Run the python script
+1. cd scripts
+2. pip install -r requirements.txt
+3. python populate_db.py (Make sure JSON_FILE and DATASET_NAME are set properly)
 
-This will take the contents of the json file and insert them into the
+This will take the contents of the json file and insert them into the database
 
 ### 3. Backend
 
@@ -73,7 +78,6 @@ Go to $TOMCAT_HOME/conf/context.xml, and make sure to include the cookie process
   ...
 </Context>
 ```
-
 
 In VS Code Terminal:
 
@@ -105,6 +109,12 @@ From now on, in Eclipse:
 2. Right-click Tomcat -> Add and Remove
 3. Select backend
 
+#### 3.4. Set-up DB credentials
+
+1. Run -> Run Configurations...
+2. Environment -> Add...
+3. Create a new environment variable for each in the .env.db file
+
 **Right-click on the project -> Run on Server** will get the backend live
 
 > In case it doesn't work try:
@@ -112,11 +122,23 @@ From now on, in Eclipse:
 > 1. $TOMCAT_HOME/bin/shutdown.sh
 > 2. $TOMCAT_HOME/bin/startup.sh
 
-## 4. Frontend
+### 4. Frontend
+
+Duplicate the ".env.example" file, name it ".env.development.local", and fill it with the desired credentials.
 
 In VS Code terminal:
 
 1. cd frontend
 2. npm install
-3. Duplicate the ".env.example" file, name it ".env.development.local", and fill it with the desired credentials.
-4. npm run dev
+3. npm run dev
+
+## Production set-up
+
+> To do:
+>
+> 1. copy setenv to bin
+> 2. copy backend.war to webapps
+> 3. Docker container
+> 4. npm run build
+> 5. npm run dist
+> 6. cloudfare tunnel

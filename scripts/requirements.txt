@@ -1,0 +1,5 @@
+aiohttp
+aiolimiter
+orjson
+psycopg2-binary
+python-dotenv
