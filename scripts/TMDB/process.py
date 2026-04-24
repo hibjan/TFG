@@ -1,5 +1,6 @@
 import os
 import orjson
+import re
 
 # ─── Global variables ────────────────────────────────────────────────
 FORMAT_PATH = "scripts/TMDB/format.json"
@@ -194,6 +195,52 @@ def process_metadata_field(meta_name, field_type, field_cfg, raw_values):
             str_values = [str(v) for v in raw_values]
             if str_values:
                 metadata[meta_name] = str_values
+
+    elif field_type == "location":
+        def add_location_hierarchy(base_name, loc_string):
+            parts = [p.strip() for p in loc_string.split(',')]
+            num_parts = len(parts)
+
+            if num_parts == 1:
+                metadata.setdefault(f"{base_name} (Country)", []).append(parts[0])
+            elif num_parts == 2:
+                metadata.setdefault(f"{base_name} (City)", []).append(parts[0])
+                metadata.setdefault(f"{base_name} (Country)", []).append(parts[1])
+            elif num_parts == 3:
+                metadata.setdefault(f"{base_name} (City)", []).append(parts[0])
+                metadata.setdefault(f"{base_name} (Region)", []).append(parts[1])
+                metadata.setdefault(f"{base_name} (Country)", []).append(parts[2])
+            elif num_parts == 4:
+                metadata.setdefault(f"{base_name} (Locality)", []).append(parts[0])
+                metadata.setdefault(f"{base_name} (City)", []).append(parts[1])
+                metadata.setdefault(f"{base_name} (Region)", []).append(parts[2])
+                metadata.setdefault(f"{base_name} (Country)", []).append(parts[3])
+            elif num_parts >= 5:
+                metadata.setdefault(f"{base_name} (Sublocality)", []).append(parts[0])
+                metadata.setdefault(f"{base_name} (Locality)", []).append(parts[1])
+                metadata.setdefault(f"{base_name} (City)", []).append(parts[2])
+                metadata.setdefault(f"{base_name} (Region)", []).append(parts[3])
+                metadata.setdefault(f"{base_name} (Country)", []).append(parts[4])
+
+        for v in raw_values:
+            if v is None:
+                continue
+            loc_str = str(v).strip()
+            if not loc_str:
+                continue
+            
+            contents[f"{meta_name} (raw)"] = loc_str
+            
+            match = re.search(r'\[now (.*?)\]', loc_str, re.IGNORECASE)
+            if match:
+                current_loc = match.group(1)
+                hist_loc = re.sub(r'\s*\[now .*?\]', '', loc_str, flags=re.IGNORECASE).strip()
+                hist_prefix = f"Historical {meta_name.lower()}"
+                
+                add_location_hierarchy(hist_prefix, hist_loc)
+                add_location_hierarchy(meta_name, current_loc)
+            else:
+                add_location_hierarchy(meta_name, loc_str)
 
     elif field_type == "date":
         range_year = field_cfg.get("range_year", 10)

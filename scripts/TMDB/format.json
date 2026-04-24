@@ -295,6 +295,11 @@
                             "3": "Non-binary"
                         }
                     ]
+                },
+                "Place of birth": {
+                    "type": "location",
+                    "name": "place_of_birth",
+                    "multiple": false
                 }
             },
             "contents": {
@@ -303,9 +308,6 @@
                 },
                 "Biography": {
                     "name": "biography"
-                },
-                "Place of birth": {
-                    "name": "place_of_birth"
                 },
                 "Popularity": {
                     "name": "popularity"
