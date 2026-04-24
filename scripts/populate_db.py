@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 JSON_FILE = "./scripts/test/test_pms.json"
 DATASET_NAME = "TEST PMS Dataset"
 
-load_dotenv(".env")
+load_dotenv(".env.db")
 
 DB_HOST = os.getenv("DB_HOST")
 DB_NAME = os.getenv("DB_NAME")
