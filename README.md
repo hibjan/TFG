@@ -44,7 +44,7 @@ Open Docker Desktop
 
 In VS Code Terminal:
 
-1. docker compose up -d
+1. docker compose --env-file .env.db -f docker-compose.dev.yml up -d
 
 This will create the database container, initialize it with the files in the database folder and it will be running.
 
@@ -52,8 +52,8 @@ In the Containers tab in Docker Desktop you can manually stop or start it.
 
 > In case anything goes wrong, to wipe DB:
 >
-> 1. docker-compose down -v
-> 2. docker-compose up -d
+> 1. docker compose --env-file .env.db -f docker-compose.dev.yml down -v
+> 2. docker compose --env-file .env.db -f docker-compose.dev.yml up -d
 
 Now, to actually populate the database with some dataset, run the following:
 
@@ -134,11 +134,42 @@ In VS Code terminal:
 
 ## Production set-up
 
-> To do:
->
-> 1. copy setenv to bin
-> 2. copy backend.war to webapps
-> 3. Docker container
-> 4. npm run build
-> 5. npm run preview
-> 6. cloudfare tunnel
+The entire stack (PostgreSQL database, Tomcat Java backend, Nginx Vite frontend, and Cloudflare secure tunnel) is fully containerized for a one-click deployment.
+
+### 1. Configure Environment Variables
+Ensure your `.env.db` file is correctly filled out with your desired database credentials (you can duplicate `.env.db.example` if you haven't already).
+
+### 2. Deploy the Stack
+Spin up the entire production environment in the background by running:
+```bash
+docker-compose --env-file .env.db -f docker-compose.prod.yml up -d --build
+```
+
+### 3. Get your Public URL
+The `cloudflared` container automatically establishes a secure tunnel and generates a random public URL. This means your app is securely exposed to the internet without opening any ports!
+
+To easily extract your public URL from the logs, use the following command:
+
+**On Windows (PowerShell):**
+```powershell
+docker logs tfg-cloudflared 2>&1 | Select-String "https://.*\.trycloudflare\.com"
+```
+
+**On Mac / Linux / Git Bash:**
+```bash
+docker logs tfg-cloudflared 2>&1 | grep -o 'https://.*\.trycloudflare\.com'
+```
+
+Simply click the resulting `https://...trycloudflare.com` link to access your live production application. All backend requests are automatically handled and proxied via Nginx.
+
+### 4. Populate the Database
+
+To populate the database with some dataset, run the following:
+
+```bash
+cd scripts
+pip install -r requirements.txt
+python populate_db_jsonl.py (or populate_db.py)
+```
+
+This will take the contents of the json file and insert them into the database
