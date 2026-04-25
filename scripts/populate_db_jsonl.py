@@ -6,8 +6,8 @@ import sys
 from dotenv import load_dotenv
 
 # --- CONFIGURATION ---
-JSONL_FILE = "./scripts/TMDB/dataset_top500.jsonl"
-DATASET_NAME = "TMDb Top 500"
+JSONL_FILE = None
+DATASET_NAME = None
 BATCH_SIZE = 5000  # Rows per bulk insert
 
 load_dotenv(".env.db")
@@ -282,4 +282,17 @@ def populate():
 
 
 if __name__ == "__main__":
+    if len(sys.argv) == 1:
+        JSONL_FILE = "./scripts/TMDB/dataset_top500.jsonl"
+        DATASET_NAME = "TMDb Top 500"
+    elif len(sys.argv) == 3:
+        JSONL_FILE = sys.argv[1]
+        DATASET_NAME = sys.argv[2]
+    else:
+        print("Usage: python populate_db.py <path_to_json> \"<dataset_name>\"")
+        print("Example: python populate_db.py \"./scripts/TMDB/dataset_top500.jsonl\" \"TMDb Top 500\"")
+        sys.exit(1)
+
+    print( f"Starting population with file: {JSONL_FILE} and dataset name: '{DATASET_NAME}'")
+
     populate()
