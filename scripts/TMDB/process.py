@@ -313,6 +313,13 @@ def extract_references_data(raw_obj):
         if cid is not None and dept in CREW_ROLES and job in CREW_ROLES[dept]:
             crew.append((cid, job))
     if crew: refs["crew"] = crew
+
+    # parent_company (Companies collection) — skip self-references
+    parent = raw_obj.get("parent_company")
+    if parent is not None and isinstance(parent, dict):
+        pid = parent.get("id")
+        if pid is not None and pid != refs["id"]:
+            refs["parent_company"] = pid
     
     return refs if len(refs) > 1 else None
 
@@ -572,6 +579,27 @@ def build_references(all_objects, raw_by_collection, col_id_by_name):
                     if target is not None:
                         add_ref(target, job, tv_id, tv_cid)
                         ref_count += 1
+
+            if ref_count - last_printed_refs >= 10000:
+                print(f"\r  -> {ref_count:,} references created", end="", flush=True)
+                last_printed_refs = ref_count
+
+    # ── Companies (parent_company -> Companies) ──
+    if companies_cid is not None:
+        for ref_data in raw_by_collection.get(companies_cid, []):
+            company_id = ref_data["id"]
+            company = index.get((companies_cid, company_id))
+            if company is None:
+                continue
+
+            pid = ref_data.get("parent_company")
+            if pid is not None and pid != company_id:
+                add_ref(company, "Subsidiary of", pid, companies_cid)
+                ref_count += 1
+                parent = index.get((companies_cid, pid))
+                if parent is not None:
+                    add_ref(parent, "Parent of", company_id, companies_cid)
+                    ref_count += 1
 
             if ref_count - last_printed_refs >= 10000:
                 print(f"\r  -> {ref_count:,} references created", end="", flush=True)
