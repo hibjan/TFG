@@ -92,6 +92,10 @@ public class StateManager implements Serializable {
     public void union(int collectionId) {
         this.cur.setLinks(new ArrayList<>(this.linkList));
         this.unionSet.add(this.cur);
+        change(collectionId);
+    }
+
+    public void change(int collectionId) {
         this.historyStack.clear();
         this.linkList.clear();
         this.cur = new State(this.datasetId, collectionId);

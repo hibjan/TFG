@@ -483,6 +483,7 @@ body {
 .union-bar {
     display: flex;
     justify-content: center;
+    gap: 16px;
     padding: 10px 0;
 }
 
@@ -504,6 +505,26 @@ body {
     border-color: rgba(233, 196, 106, 0.7);
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(233, 196, 106, 0.2);
+}
+
+.change-btn {
+    padding: 14px 32px;
+    border: 2px solid rgba(42, 157, 143, 0.4);
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(42, 157, 143, 0.12), rgba(38, 70, 83, 0.12));
+    color: #2a9d8f;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s;
+}
+
+.change-btn:hover {
+    background: linear-gradient(135deg, rgba(42, 157, 143, 0.25), rgba(38, 70, 83, 0.25));
+    border-color: rgba(42, 157, 143, 0.7);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(42, 157, 143, 0.2);
 }
 
 /* === Empty state === */

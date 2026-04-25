@@ -58,6 +58,7 @@ const dom = {
     unionPageInfo: $$('union-page-info'),
 
     unionBtn: $$('union-btn'),
+    changeBtn: $$('change-btn'),
 
     // Modal
     modal: $$('entity-modal'),
@@ -254,6 +255,41 @@ function startUnion() {
     });
 
     showScreen('collections');
+}
+
+// ──────────────────────────────────────────────
+// Change flow (switch collection, reset state)
+// ──────────────────────────────────────────────
+function startChange() {
+    // Show collection picker — when a collection is picked
+    // we do "change" action (resets filters/links/history)
+    dom.collections.innerHTML = '';
+    state.collections.forEach(col => {
+        const btn = document.createElement('button');
+        btn.textContent = col.name;
+        btn.onclick = () => enterNavigationForChange(col.id, col.name);
+        dom.collections.appendChild(btn);
+    });
+
+    showScreen('collections');
+}
+
+async function enterNavigationForChange(id, name) {
+    state.collectionId = id;
+    state.collectionName = name;
+    state.page = 0;
+    state.unionPage = 0;
+
+    try {
+        await api('/navigation', {
+            method: 'POST',
+            body: { action: 'change', collectionId: id },
+        });
+
+        enterNavigation();
+    } catch (err) {
+        console.error('Failed to change collection:', err);
+    }
 }
 
 // ──────────────────────────────────────────────
@@ -903,6 +939,9 @@ function setupListeners() {
 
     // Union
     dom.unionBtn.onclick = startUnion;
+
+    // Change collection
+    dom.changeBtn.onclick = startChange;
 
     // Modal
     dom.modalClose.onclick = closeModal;
