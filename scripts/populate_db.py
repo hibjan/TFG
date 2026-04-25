@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 JSON_FILE = None
 DATASET_NAME = None
 
-load_dotenv(".env.db")
+load_dotenv("../.env.db")
 
 DB_HOST = os.getenv("DB_HOST")
 DB_NAME = os.getenv("DB_NAME")
@@ -137,16 +137,16 @@ def populate():
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
-        JSONL_FILE = "./scripts/test/test_pms.json"
+        JSON_FILE = "./test/test_pms.json"
         DATASET_NAME = "PMS Dataset"
     elif len(sys.argv) == 3:
-        JSONL_FILE = sys.argv[1]
+        JSON_FILE = sys.argv[1]
         DATASET_NAME = sys.argv[2]
     else:
         print("Usage: python populate_db.py <path_to_json> \"<dataset_name>\"")
-        print("Example: python populate_db.py \"./scripts/test/test_pms.json\" \"PMS Dataset\"")
+        print("Example: python populate_db.py \"./test/test_pms.json\" \"PMS Dataset\"")
         sys.exit(1)
 
-    print( f"Starting population with file: {JSONL_FILE} and dataset name: '{DATASET_NAME}'")
+    print( f"Starting population with file: {JSON_FILE} and dataset name: '{DATASET_NAME}'")
 
     populate()

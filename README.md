@@ -7,6 +7,7 @@
 This application is designed for the exploration of large-scale multimedia collections. By leveraging rich metadata and relational links between objects, it allows users to navigate complex datasets intuitively.
 
 ### Main Components
+
 - **Backend:** Java / Tomcat
 - **Frontend:** Vanilla JS / Vite
 - **Database:** PostgreSQL
@@ -20,6 +21,7 @@ This application is designed for the exploration of large-scale multimedia colle
 ---
 
 ## Table of Contents
+
 - [Development Set-up](#development-set-up)
 - [Production Set-up](#production-set-up)
 
@@ -54,26 +56,30 @@ cd TFG
    ```
    This will create the database container, initialize it with the files in the database folder, and start it.
 
-*Note: In the Containers tab in Docker Desktop, you can manually stop or start it.*
+_Note: In the Containers tab in Docker Desktop, you can manually stop or start it._
 
 > **Troubleshooting:**
 > In case anything goes wrong, to wipe the DB:
+>
 > ```bash
 > docker compose --env-file .env.db -f docker-compose.dev.yml down -v
 > docker compose --env-file .env.db -f docker-compose.dev.yml up -d
 > ```
 
 To populate the database with a dataset:
+
 ```bash
 cd scripts
 pip install -r requirements.txt
 python populate_db.py
 ```
-*(Make sure `JSON_FILE` and `DATASET_NAME` are set properly in the script before running)*
+
+_(Make sure `JSON_FILE` and `DATASET_NAME` are set properly set in the script or passed as arguments)_
 
 ### 3. Backend
 
 1. Go to `$TOMCAT_HOME/conf/context.xml`, and make sure to include the cookie processor for handling sessions:
+
    ```xml
    <Context>
      ...
@@ -83,6 +89,7 @@ python populate_db.py
    ```
 
 2. Compile the project, resolve dependencies, and build the WAR file:
+
    ```bash
    cd backend
    mvn clean package
@@ -91,22 +98,26 @@ python populate_db.py
 3. Open **Eclipse**. Make sure to have your workspace in a different location from where the repository is located, and create one specifically for this project.
 
 #### 3.1. Import the project
+
 1. `File` -> `Import`
 2. `Maven` -> `Existing Maven Projects`
 3. Select the `TFG/backend` folder.
 
 #### 3.2. Add Tomcat
+
 1. `Window` -> `Show View` -> `Servers`
 2. Click to create a new server.
 3. `Apache` -> `Tomcat v10.1 Server`
 4. Select the directory where Tomcat is installed.
 
 #### 3.3. Link project to Tomcat
+
 1. Open the `Servers` tab.
 2. Right-click Tomcat -> `Add and Remove...`
 3. Select the `backend` project and add it.
 
 #### 3.4. Set-up DB credentials
+
 1. `Run` -> `Run Configurations...`
 2. `Environment` -> `Add...`
 3. Create a new environment variable for each entry in your `.env.db` file.
@@ -115,6 +126,7 @@ To run the backend, **Right-click on the project -> Run on Server**.
 
 > **Troubleshooting:**
 > In case it doesn't work, try restarting Tomcat manually:
+>
 > ```bash
 > $TOMCAT_HOME/bin/shutdown.sh
 > $TOMCAT_HOME/bin/startup.sh
@@ -137,25 +149,31 @@ To run the backend, **Right-click on the project -> Run on Server**.
 The entire stack (PostgreSQL database, Tomcat Java backend, Nginx Vite frontend, and Cloudflare secure tunnel) is fully containerized for a one-click deployment.
 
 ### 1. Configure Environment Variables
+
 Ensure your `.env.db` file is correctly filled out with your desired database credentials (you can duplicate `.env.db.example` if you haven't already).
 
 ### 2. Deploy the Stack
+
 Spin up the entire production environment in the background by running:
+
 ```bash
 docker compose --env-file .env.db -f docker-compose.prod.yml up -d --build
 ```
 
 ### 3. Get your Public URL
+
 The `cloudflared` container automatically establishes a secure tunnel and generates a random public URL. This means your app is securely exposed to the internet without opening any ports!
 
 To easily extract your public URL from the logs, use the following command:
 
 **On Windows (PowerShell):**
+
 ```powershell
 docker logs tfg-cloudflared 2>&1 | Select-String "https://.*\.trycloudflare\.com"
 ```
 
 **On Mac / Linux / Git Bash:**
+
 ```bash
 docker logs tfg-cloudflared 2>&1 | grep -o 'https://.*\.trycloudflare\.com'
 ```
@@ -163,10 +181,13 @@ docker logs tfg-cloudflared 2>&1 | grep -o 'https://.*\.trycloudflare\.com'
 Simply click the resulting `https://...trycloudflare.com` link to access your live production application. All backend requests are automatically handled and proxied via Nginx.
 
 ### 4. Populate the Database
+
 To populate the database with a dataset, you must run the Python script locally from your host machine. Make sure your `.env.db` file is configured with `DB_HOST=localhost`, as port 5432 is mapped and exposed by the Postgres container:
+
 ```bash
 cd scripts
 pip install -r requirements.txt
 python populate_db_jsonl.py  # or python populate_db.py
 ```
+
 This will take the contents of the json/jsonl file and insert them into the database.
