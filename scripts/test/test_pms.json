@@ -442,6 +442,11 @@
                     "reason": "Production",
                     "reference_id": 3,
                     "reference_collection_id": 2
+                }, 
+                {
+                    "reason": "Parent of",
+                    "reference_id": 2,
+                    "reference_collection_id": 3
                 }
             ],
             "contents":{
@@ -482,6 +487,16 @@
                     "reason": "Production",
                     "reference_id": 5,
                     "reference_collection_id": 2
+                },
+                {
+                    "reason": "Subsidiary of",
+                    "reference_id": 1,
+                    "reference_collection_id": 3
+                },
+                {
+                    "reason": "Parent of",
+                    "reference_id": 3,
+                    "reference_collection_id": 3
                 }
             ],
             "contents":{
@@ -502,6 +517,11 @@
                     "reason": "Production",
                     "reference_id": 1,
                     "reference_collection_id": 2
+                },
+                {
+                    "reason": "Subsidiary of",
+                    "reference_id": 2,
+                    "reference_collection_id": 3
                 }
             ],
             "contents":{

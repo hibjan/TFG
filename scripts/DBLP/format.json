@@ -14,7 +14,9 @@
                 "https://dblp.org/rdf/schema#Article",
                 "https://dblp.org/rdf/schema#Inproceedings",
                 "https://dblp.org/rdf/schema#Book",
-                "https://dblp.org/rdf/schema#Incollection"
+                "https://dblp.org/rdf/schema#Incollection",
+                "https://dblp.org/rdf/schema#Editorship",
+                "https://dblp.org/rdf/schema#Informal"
             ]
         },
         {
@@ -34,7 +36,7 @@
             "metadata": {
                 "Affiliation": {
                     "type": "string",
-                    "uri": "https://dblp.org/rdf/schema#primaryAffiliation"
+                    "uri": "https://dblp.org/rdf/schema#affiliation"
                 }
             },
             "contents": {
@@ -72,6 +74,9 @@
                 },
                 "CoAuthor": {
                     "uri": "https://dblp.org/rdf/schema#coAuthorWith"
+                },
+                "CoEditor": {
+                    "uri": "https://dblp.org/rdf/schema#coEditorWith"
                 }
             }
         },
@@ -100,17 +105,13 @@
                     "uri": "https://dblp.org/rdf/schema#numberOfCreators",
                     "range": 5
                 },
-                "Volume": {
-                    "type": "string",
-                    "uri": "https://dblp.org/rdf/schema#publishedInJournalVolume"
-                },
-                "Issue": {
-                    "type": "string",
-                    "uri": "https://dblp.org/rdf/schema#publishedInJournalVolumeIssue"
-                },
                 "Publisher": {
                     "type": "string",
                     "uri": "https://dblp.org/rdf/schema#publishedBy"
+                },
+                "Published in": {
+                    "type": "string",
+                    "uri": "https://dblp.org/rdf/schema#publishedIn"
                 }
             },
             "contents": {
@@ -123,8 +124,11 @@
                 "ISBN": {
                     "uri": "https://dblp.org/rdf/schema#isbn"
                 },
-                "Published in": {
-                    "uri": "https://dblp.org/rdf/schema#publishedIn"
+                "Volume": {
+                    "uri": "https://dblp.org/rdf/schema#publishedInJournalVolume"
+                },
+                "Issue": {
+                    "uri": "https://dblp.org/rdf/schema#publishedInJournalVolumeIssue"
                 }
             },
             "resources": {

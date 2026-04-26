@@ -555,14 +555,6 @@ public class NavigationDAO {
         }
     }
 
-    private void appendFilterClauses(StringBuilder sql, List<Object> params, State state, List<Link> linkList) {
-        if (linkList != null && !linkList.isEmpty()) {
-            appendFilterClauses(sql, params, state, linkList, linkList.size() - 1, 0);
-        } else {
-            appendStateFilters(sql, params, state, 0);
-        }
-    }
-
     private void appendFilterClauses(StringBuilder sql, List<Object> params, State state, List<Link> linkList,
             int index, int depth) {
 

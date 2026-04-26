@@ -37,6 +37,9 @@ apache-tomcat-*/
 *.jsonl
 *.nt*
 
+!dblp_output_ucm.jsonl
+!dataset_top500.jsonl
+
 # for latex build
 *.aux
 *.bbl
