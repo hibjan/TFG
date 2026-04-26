@@ -113,6 +113,16 @@
                         "url": "/api/resource/people/1/photo.jpg"
                     },
                     {
+                        "type": "video",
+                        "label": "Video",
+                        "url": "/api/resource/people/1/video.mp4"
+                    },
+                    {
+                        "type": "pdf",
+                        "label": "PDF",
+                        "url": "/api/resource/people/1/document.pdf"
+                    },
+                    {
                         "type": "link",
                         "label": "Wikipedia",
                         "url": "https://en.wikipedia.org/wiki/Example"
@@ -432,6 +442,11 @@
                     "reason": "Production",
                     "reference_id": 3,
                     "reference_collection_id": 2
+                }, 
+                {
+                    "reason": "Parent of",
+                    "reference_id": 2,
+                    "reference_collection_id": 3
                 }
             ],
             "contents":{
@@ -472,6 +487,16 @@
                     "reason": "Production",
                     "reference_id": 5,
                     "reference_collection_id": 2
+                },
+                {
+                    "reason": "Subsidiary of",
+                    "reference_id": 1,
+                    "reference_collection_id": 3
+                },
+                {
+                    "reason": "Parent of",
+                    "reference_id": 3,
+                    "reference_collection_id": 3
                 }
             ],
             "contents":{
@@ -492,6 +517,11 @@
                     "reason": "Production",
                     "reference_id": 1,
                     "reference_collection_id": 2
+                },
+                {
+                    "reason": "Subsidiary of",
+                    "reference_id": 2,
+                    "reference_collection_id": 3
                 }
             ],
             "contents":{

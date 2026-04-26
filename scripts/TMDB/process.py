@@ -1,5 +1,6 @@
 import os
 import orjson
+import re
 
 # ─── Global variables ────────────────────────────────────────────────
 FORMAT_PATH = "scripts/TMDB/format.json"
@@ -195,6 +196,52 @@ def process_metadata_field(meta_name, field_type, field_cfg, raw_values):
             if str_values:
                 metadata[meta_name] = str_values
 
+    elif field_type == "location":
+        def add_location_hierarchy(base_name, loc_string):
+            parts = [p.strip() for p in loc_string.split(',')]
+            num_parts = len(parts)
+
+            if num_parts == 1:
+                metadata.setdefault(f"{base_name} (Country)", []).append(parts[0])
+            elif num_parts == 2:
+                metadata.setdefault(f"{base_name} (City)", []).append(parts[0])
+                metadata.setdefault(f"{base_name} (Country)", []).append(parts[1])
+            elif num_parts == 3:
+                metadata.setdefault(f"{base_name} (City)", []).append(parts[0])
+                metadata.setdefault(f"{base_name} (Region)", []).append(parts[1])
+                metadata.setdefault(f"{base_name} (Country)", []).append(parts[2])
+            elif num_parts == 4:
+                metadata.setdefault(f"{base_name} (Locality)", []).append(parts[0])
+                metadata.setdefault(f"{base_name} (City)", []).append(parts[1])
+                metadata.setdefault(f"{base_name} (Region)", []).append(parts[2])
+                metadata.setdefault(f"{base_name} (Country)", []).append(parts[3])
+            elif num_parts >= 5:
+                metadata.setdefault(f"{base_name} (Sublocality)", []).append(parts[0])
+                metadata.setdefault(f"{base_name} (Locality)", []).append(parts[1])
+                metadata.setdefault(f"{base_name} (City)", []).append(parts[2])
+                metadata.setdefault(f"{base_name} (Region)", []).append(parts[3])
+                metadata.setdefault(f"{base_name} (Country)", []).append(parts[4])
+
+        for v in raw_values:
+            if v is None:
+                continue
+            loc_str = str(v).strip()
+            if not loc_str:
+                continue
+            
+            contents[f"{meta_name} (raw)"] = loc_str
+            
+            match = re.search(r'\[now (.*?)\]', loc_str, re.IGNORECASE)
+            if match:
+                current_loc = match.group(1)
+                hist_loc = re.sub(r'\s*\[now .*?\]', '', loc_str, flags=re.IGNORECASE).strip()
+                hist_prefix = f"Historical {meta_name.lower()}"
+                
+                add_location_hierarchy(hist_prefix, hist_loc)
+                add_location_hierarchy(meta_name, current_loc)
+            else:
+                add_location_hierarchy(meta_name, loc_str)
+
     elif field_type == "date":
         range_year = field_cfg.get("range_year", 10)
         range_month = field_cfg.get("range_month", 1)
@@ -266,6 +313,13 @@ def extract_references_data(raw_obj):
         if cid is not None and dept in CREW_ROLES and job in CREW_ROLES[dept]:
             crew.append((cid, job))
     if crew: refs["crew"] = crew
+
+    # parent_company (Companies collection) — skip self-references
+    parent = raw_obj.get("parent_company")
+    if parent is not None and isinstance(parent, dict):
+        pid = parent.get("id")
+        if pid is not None and pid != refs["id"]:
+            refs["parent_company"] = pid
     
     return refs if len(refs) > 1 else None
 
@@ -525,6 +579,27 @@ def build_references(all_objects, raw_by_collection, col_id_by_name):
                     if target is not None:
                         add_ref(target, job, tv_id, tv_cid)
                         ref_count += 1
+
+            if ref_count - last_printed_refs >= 10000:
+                print(f"\r  -> {ref_count:,} references created", end="", flush=True)
+                last_printed_refs = ref_count
+
+    # ── Companies (parent_company -> Companies) ──
+    if companies_cid is not None:
+        for ref_data in raw_by_collection.get(companies_cid, []):
+            company_id = ref_data["id"]
+            company = index.get((companies_cid, company_id))
+            if company is None:
+                continue
+
+            pid = ref_data.get("parent_company")
+            if pid is not None and pid != company_id:
+                add_ref(company, "Subsidiary of", pid, companies_cid)
+                ref_count += 1
+                parent = index.get((companies_cid, pid))
+                if parent is not None:
+                    add_ref(parent, "Parent of", company_id, companies_cid)
+                    ref_count += 1
 
             if ref_count - last_printed_refs >= 10000:
                 print(f"\r  -> {ref_count:,} references created", end="", flush=True)

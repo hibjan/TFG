@@ -58,6 +58,7 @@ const dom = {
     unionPageInfo: $$('union-page-info'),
 
     unionBtn: $$('union-btn'),
+    changeBtn: $$('change-btn'),
 
     // Modal
     modal: $$('entity-modal'),
@@ -257,12 +258,49 @@ function startUnion() {
 }
 
 // ──────────────────────────────────────────────
+// Change flow (switch collection, reset state)
+// ──────────────────────────────────────────────
+function startChange() {
+    // Show collection picker — when a collection is picked
+    // we do "change" action (resets filters/links/history)
+    dom.collections.innerHTML = '';
+    state.collections.forEach(col => {
+        const btn = document.createElement('button');
+        btn.textContent = col.name;
+        btn.onclick = () => enterNavigationForChange(col.id, col.name);
+        dom.collections.appendChild(btn);
+    });
+
+    showScreen('collections');
+}
+
+async function enterNavigationForChange(id, name) {
+    state.collectionId = id;
+    state.collectionName = name;
+    state.page = 0;
+    state.unionPage = 0;
+
+    try {
+        await api('/navigation', {
+            method: 'POST',
+            body: { action: 'change', collectionId: id },
+        });
+
+        enterNavigation();
+    } catch (err) {
+        console.error('Failed to change collection:', err);
+    }
+}
+
+// ──────────────────────────────────────────────
 // Refresh everything in navigation mode
 // ──────────────────────────────────────────────
 async function refreshAll() {
     await Promise.all([
         loadEntities(),
-        loadFacets(),
+        loadMetadataFacets(),
+        loadReferenceFacets(),
+        loadLinkFacets(),
         loadUnion(),
     ]);
 }
@@ -343,13 +381,31 @@ function updatePagination(total, page, pageSize, prevBtn, nextBtn, infoEl) {
 }
 
 // ──────────────────────────────────────────────
-// Facets (filters, active filters, links)
+// Facets — three independent loaders
 // ──────────────────────────────────────────────
-async function loadFacets() {
-    try {
-        const data = await api('/facets');
 
-        // ── Metadata dropdowns ──
+// Clears all existing filter tags of a given category ('metadata' or 'reference')
+// so each loader can repopulate only its own slice of the active-filters bar.
+function clearFilterTagsByCategory(category) {
+    Array.from(dom.activeFilters.querySelectorAll(`.filter-tag[data-category="${category}"]`))
+        .forEach(el => el.remove());
+    // Remove the "no active filters" hint if tags are present
+    const hint = dom.activeFilters.querySelector('.empty-hint');
+    if (hint) hint.remove();
+}
+
+function refreshEmptyHint() {
+    if (dom.activeFilters.children.length === 0) {
+        dom.activeFilters.innerHTML = '<span class="empty-hint">No active filters</span>';
+    }
+}
+
+// ── Metadata facets ──────────────────────────────
+async function loadMetadataFacets() {
+    try {
+        const data = await api('/facets/metadata');
+
+        // Metadata dropdowns
         dom.metadataFilters.innerHTML = '';
         for (const [key, values] of Object.entries(data.metadata)) {
             const wrap = document.createElement('div');
@@ -381,13 +437,44 @@ async function loadFacets() {
             dom.metadataFilters.appendChild(wrap);
         }
 
-        // ── Reference filters (dropdowns from reference facets) ──
-        dom.referenceFilters.innerHTML = '';
+        // Active metadata filter tags
+        clearFilterTagsByCategory('metadata');
+
+        const activeMfilters = data.activeFilters.mfilters || {};
+        for (const [attr, values] of Object.entries(activeMfilters)) {
+            const list = Array.isArray(values) ? values : Object.values(values);
+            list.forEach(val => addFilterTag(attr, val, 'include', 'metadata'));
+        }
+
+        const activeNotMfilters = data.activeFilters.notMfilters || {};
+        for (const [attr, values] of Object.entries(activeNotMfilters)) {
+            const list = Array.isArray(values) ? values : Object.values(values);
+            list.forEach(val => addFilterTag(attr, val, 'exclude', 'metadata'));
+        }
+
+        refreshEmptyHint();
+
+        // Goback and Restore are always visible in nav mode
+        dom.gobackBtn.classList.remove('hidden');
+        dom.restoreBtn.classList.remove('hidden');
+
+    } catch (err) {
+        console.error('Failed to load metadata facets:', err);
+    }
+}
+
+// ── Reference facets ─────────────────────────────
+async function loadReferenceFacets() {
+    try {
+        const data = await api('/facets/references');
+        const refFacets = data.references || {};
         const activeRfilters = data.activeFilters.rfilters || {};
         const activeNotRfilters = data.activeFilters.notRfilters || {};
-        const refFacets = data.references || {};
+
         console.log('Reference facets data:', JSON.stringify(refFacets));
 
+        // Reference filter dropdowns
+        dom.referenceFilters.innerHTML = '';
         if (Object.keys(refFacets).length === 0) {
             dom.referenceFilters.innerHTML = '<span class="empty-hint">No reference filters available</span>';
         } else {
@@ -424,107 +511,56 @@ async function loadFacets() {
             }
         }
 
-        // ── Helper: Reference Lookup Map ──
-        // (collId:reason -> entityId -> entityName)
+        // Build lookup maps for display name resolution
         const refLookup = {};
-        // Also map (collId -> collName) just in case
         const collLookup = {};
-
-        if (refFacets) {
-            for (const [key, group] of Object.entries(refFacets)) {
-                // key is "collId:reason"
-                // group has { collectionId, collectionName, reason, entities: [...] }
-                collLookup[group.collectionId] = group.collectionName;
-
-                if (!refLookup[key]) refLookup[key] = {};
-                group.entities.forEach(ent => {
-                    refLookup[key][ent.id] = ent.name;
-                });
-            }
+        for (const [key, group] of Object.entries(refFacets)) {
+            collLookup[group.collectionId] = group.collectionName;
+            if (!refLookup[key]) refLookup[key] = {};
+            group.entities.forEach(ent => { refLookup[key][ent.id] = ent.name; });
         }
 
-        // ── Active filter tags ──
-        dom.activeFilters.innerHTML = '';
+        // Active reference filter tags
+        clearFilterTagsByCategory('reference');
 
-        // Metadata include filters
-        const activeMfilters = data.activeFilters.mfilters || {};
-        for (const [attr, values] of Object.entries(activeMfilters)) {
-            if (Array.isArray(values)) {
-                values.forEach(val => addFilterTag(attr, val, 'include', 'metadata'));
-            } else if (values instanceof Object) {
-                // It can come as Set serialized to array or object
-                Object.values(values).forEach(val => addFilterTag(attr, val, 'include', 'metadata'));
-            }
-        }
-
-        // Metadata exclude filters
-        const activeNotMfilters = data.activeFilters.notMfilters || {};
-        for (const [attr, values] of Object.entries(activeNotMfilters)) {
-            if (Array.isArray(values)) {
-                values.forEach(val => addFilterTag(attr, val, 'exclude', 'metadata'));
-            } else if (values instanceof Object) {
-                Object.values(values).forEach(val => addFilterTag(attr, val, 'exclude', 'metadata'));
-            }
-        }
-
-        // Reference include filters
         for (const [refColId, reasonsMap] of Object.entries(activeRfilters)) {
             for (const [reason, ids] of Object.entries(reasonsMap)) {
                 const idList = Array.isArray(ids) ? ids : Object.values(ids);
                 const compositeKey = `${refColId}:${reason}`;
-
-                // Try to resolve names
-                // collection name is tricky if we only have ID, but we might have it in collLookup
-                // reason is known
-                // entity name from refLookup
-
                 idList.forEach(id => {
-                    let displayLabel = compositeKey;
-                    let displayValue = String(id);
-
-                    // Resolve Collection Name
                     const colName = collLookup[refColId] || `Col #${refColId}`;
-                    displayLabel = `${colName} → ${reason}`;
-
-                    // Resolve Entity Name
-                    if (refLookup[compositeKey] && refLookup[compositeKey][id]) {
-                        displayValue = refLookup[compositeKey][id];
-                    }
-
+                    const displayLabel = `${colName} → ${reason}`;
+                    const displayValue = refLookup[compositeKey]?.[id] ?? String(id);
                     addFilterTag(compositeKey, id, 'include', 'reference', displayLabel, displayValue);
                 });
             }
         }
 
-        // Reference exclude filters
         for (const [refColId, reasonsMap] of Object.entries(activeNotRfilters)) {
             for (const [reason, ids] of Object.entries(reasonsMap)) {
                 const idList = Array.isArray(ids) ? ids : Object.values(ids);
                 const compositeKey = `${refColId}:${reason}`;
-
                 idList.forEach(id => {
-                    let displayLabel = compositeKey;
-                    let displayValue = String(id);
-
-                    // Resolve Collection Name
                     const colName = collLookup[refColId] || `Col #${refColId}`;
-                    displayLabel = `${colName} → ${reason}`;
-
-                    // Resolve Entity Name
-                    if (refLookup[compositeKey] && refLookup[compositeKey][id]) {
-                        displayValue = refLookup[compositeKey][id];
-                    }
-
+                    const displayLabel = `${colName} → ${reason}`;
+                    const displayValue = refLookup[compositeKey]?.[id] ?? String(id);
                     addFilterTag(compositeKey, id, 'exclude', 'reference', displayLabel, displayValue);
                 });
             }
         }
 
-        if (dom.activeFilters.children.length === 0) {
-            dom.activeFilters.innerHTML = '<span class="empty-hint">No active filters</span>';
-        }
+        refreshEmptyHint();
 
-        // ── Links ──
+    } catch (err) {
+        console.error('Failed to load reference facets:', err);
+    }
+}
+
+// ── Link facets ───────────────────────────────────
+async function loadLinkFacets() {
+    try {
+        const data = await api('/facets/links');
+
         dom.links.innerHTML = '';
         if (data.links.length === 0) {
             dom.links.innerHTML = '<span class="empty-hint">No links available</span>';
@@ -537,12 +573,8 @@ async function loadFacets() {
             });
         }
 
-        // Goback and Restore are always visible in nav mode (backend handles empty stack)
-        dom.gobackBtn.classList.remove('hidden');
-        dom.restoreBtn.classList.remove('hidden');
-
     } catch (err) {
-        console.error('Failed to load facets:', err);
+        console.error('Failed to load link facets:', err);
     }
 }
 
@@ -552,6 +584,7 @@ async function loadFacets() {
 function addFilterTag(name, value, type, category, displayLabel, displayValue) {
     const tag = document.createElement('span');
     tag.className = `filter-tag ${type === 'include' ? 'include-tag' : 'exclude-tag'}`;
+    tag.dataset.category = category;
 
     // Use provided display labels or fallback to name/value
     const labelText = displayLabel !== undefined ? displayLabel : name;
@@ -733,6 +766,8 @@ async function viewEntity(entityId, collectionId) {
                     const resolveUrl = (url) => url.startsWith('/') ? backendOrigin + url : url;
 
                     const images = resources.filter(r => r.type === 'image');
+                    const videos = resources.filter(r => r.type === 'video');
+                    const pdfs = resources.filter(r => r.type === 'pdf');
                     const links = resources.filter(r => r.type === 'link');
 
                     if (images.length > 0) {
@@ -760,6 +795,43 @@ async function viewEntity(entityId, collectionId) {
                         dom.modalResources.appendChild(imagesContainer);
                     }
 
+                    if (videos.length > 0) {
+                        const videosContainer = document.createElement('div');
+                        videosContainer.className = 'modal-resource-videos';
+                        videos.forEach(res => {
+                            const figure = document.createElement('figure');
+                            figure.className = 'modal-resource-figure';
+                            const video = document.createElement('video');
+                            video.className = 'modal-resource-video';
+                            video.src = resolveUrl(res.url);
+                            video.controls = true;
+                            video.style.maxWidth = '100%';
+                            figure.appendChild(video);
+                            if (res.label) {
+                                const caption = document.createElement('figcaption');
+                                caption.textContent = res.label;
+                                figure.appendChild(caption);
+                            }
+                            videosContainer.appendChild(figure);
+                        });
+                        dom.modalResources.appendChild(videosContainer);
+                    }
+
+                    if (pdfs.length > 0) {
+                        const pdfsContainer = document.createElement('div');
+                        pdfsContainer.className = 'modal-resource-pdfs';
+                        pdfs.forEach(res => {
+                            const a = document.createElement('a');
+                            a.className = 'modal-resource-link modal-resource-pdf';
+                            a.href = resolveUrl(res.url);
+                            a.target = '_blank';
+                            a.rel = 'noopener noreferrer';
+                            a.textContent = `📄 ${res.label || 'PDF Document'}`;
+                            pdfsContainer.appendChild(a);
+                        });
+                        dom.modalResources.appendChild(pdfsContainer);
+                    }
+
                     if (links.length > 0) {
                         const linksContainer = document.createElement('div');
                         linksContainer.className = 'modal-resource-links';
@@ -769,7 +841,7 @@ async function viewEntity(entityId, collectionId) {
                             a.href = resolveUrl(res.url);
                             a.target = '_blank';
                             a.rel = 'noopener noreferrer';
-                            a.textContent = res.label;
+                            a.textContent = `🔗 ${res.label}`;
                             linksContainer.appendChild(a);
                         });
                         dom.modalResources.appendChild(linksContainer);
@@ -864,6 +936,9 @@ function setupListeners() {
 
     // Union
     dom.unionBtn.onclick = startUnion;
+
+    // Change collection
+    dom.changeBtn.onclick = startChange;
 
     // Modal
     dom.modalClose.onclick = closeModal;

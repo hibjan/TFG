@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from aiolimiter import AsyncLimiter
 
-load_dotenv(".env")
+load_dotenv(".env.thirdparty")
 
 API_TOKEN = os.getenv("TMDB_API_KEY")
 if not API_TOKEN:

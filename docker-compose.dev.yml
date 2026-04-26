@@ -1,0 +1,14 @@
+name: tfg-dev
+services:
+  postgres:
+    image: postgres:16
+    env_file: .env.db
+    container_name: tfg-postgres-dev
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - ./database:/docker-entrypoint-initdb.d

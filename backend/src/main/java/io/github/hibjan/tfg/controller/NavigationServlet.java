@@ -108,6 +108,11 @@ public class NavigationServlet extends HttpServlet {
                     smanager.union(newCollectionId);
                 }
 
+                case "change" -> {
+                    int newCollectionId = getInt(body, "collectionId");
+                    smanager.change(newCollectionId);
+                }
+
                 default -> {
                     resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unknown action: " + action);
                     return;

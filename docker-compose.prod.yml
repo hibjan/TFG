@@ -1,0 +1,49 @@
+name: tfg-prod
+services:
+  postgres:
+    image: postgres:16
+    env_file: .env.db
+    container_name: tfg-postgres-prod
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - ./database:/docker-entrypoint-initdb.d
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tfg-backend-prod
+    ports:
+      - "8080:8080"
+    env_file: .env.db
+    environment:
+      # Override DB_HOST to point to the postgres service container
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - UPLOADS_DIR=/uploads
+    volumes:
+      - ./uploads:/uploads
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: tfg-frontend-prod
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: tfg-cloudflared
+    command: tunnel --url http://frontend:80
+    depends_on:
+      - frontend

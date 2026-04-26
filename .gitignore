@@ -30,11 +30,15 @@ apache-tomcat-*/
 .classpath
 .settings/
 
-.env
+.env.db
+.env.thirdparty
 
 # for raw data files and processed data files
 *.jsonl
 *.nt*
+
+!dblp_output_ucm.jsonl
+!dataset_top500.jsonl
 
 # for latex build
 *.aux
