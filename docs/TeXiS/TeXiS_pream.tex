@@ -773,3 +773,83 @@
 
 %%% Los nuestros:
 \usepackage{float}
+
+\usepackage{xcolor}
+
+% Definir estilos por lenguaje
+\lstdefinestyle{javaStyle}{
+    language=Java,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{red},
+    basicstyle=\small\ttfamily,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny,
+    frame=single,
+    backgroundcolor=\color{blue!5}
+}
+
+\lstdefinestyle{sqlStyle}{
+    language=SQL,
+    keywordstyle=\color{teal}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{red},
+    basicstyle=\small\ttfamily,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny,
+    frame=single,
+    backgroundcolor=\color{teal!5}
+}
+
+\lstdefinestyle{pythonStyle}{
+    language=Python,
+    keywordstyle=\color{violet}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{orange},
+    basicstyle=\small\ttfamily,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny,
+    frame=single,
+    backgroundcolor=\color{violet!5}
+}
+
+\lstdefinestyle{jsonStyle}{
+    language={},
+    morestring=[b]",
+    stringstyle=\color{red},
+    literate=
+        *{0}{{{\color{orange}0}}}{1}
+         {1}{{{\color{orange}1}}}{1}
+         {2}{{{\color{orange}2}}}{1}
+         {3}{{{\color{orange}3}}}{1}
+         {4}{{{\color{orange}4}}}{1}
+         {5}{{{\color{orange}5}}}{1}
+         {6}{{{\color{orange}6}}}{1}
+         {7}{{{\color{orange}7}}}{1}
+         {8}{{{\color{orange}8}}}{1}
+         {9}{{{\color{orange}9}}}{1}
+         {:}{{{\color{teal}{:}}}}{1}
+         {,}{{{\color{teal}{,}}}}{1},
+    basicstyle=\small\ttfamily,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny,
+    frame=single,
+    backgroundcolor=\color{yellow!5}
+}
+
+\lstdefinestyle{goStyle}{
+    language=Golang,
+    keywordstyle=\color{cyan!70!black}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{red},
+    basicstyle=\small\ttfamily,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny,
+    frame=single,
+    backgroundcolor=\color{cyan!5}
+}
