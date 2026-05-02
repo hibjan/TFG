@@ -1,0 +1,207 @@
+/* === Screens === */
+.screen {
+    animation: fadeIn 0.3s ease;
+}
+
+#screen-datasets,
+#screen-collections {
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#screen-datasets .pill-row,
+#screen-collections .pill-row {
+    justify-content: center;
+}
+
+#screen-datasets.hidden,
+#screen-collections.hidden {
+    display: none !important;
+}
+
+.screen-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 22px;
+    letter-spacing: -0.02em;
+}
+
+/* === Navigation Top Bar === */
+.nav-topbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.topbar-actions {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+    align-items: center;
+}
+
+/* === Breadcrumb === */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.15rem;
+    font-weight: 500;
+    flex: 1;
+    min-width: 0;
+}
+
+.breadcrumb-segment {
+    color: #8f9ba8;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 320px;
+}
+
+.breadcrumb-segment.current {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.breadcrumb-sep {
+    color: #5c6975;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+/* === Panels === */
+.panel {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 12px;
+    backdrop-filter: blur(12px);
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.panel-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #c5d0e6;
+}
+
+.collection-label {
+    font-weight: 400;
+    color: #8f9ba8;
+    font-size: 0.95rem;
+}
+
+/* === Space Panels === */
+.space-panel {
+    background: rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 12px;
+}
+
+.space-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.space-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.count-badge {
+    font-size: 0.82rem;
+    color: #90a4ae;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 4px 12px;
+    border-radius: 4px;
+}
+
+/* === Pagination Wrapper === */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    margin-top: 16px;
+}
+
+.pg-info {
+    color: #8f9ba8;
+    font-size: 0.85rem;
+}
+
+/* === Union Bar === */
+.union-bar {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    padding: 10px 0;
+}
+
+/* === Panel Drag & Drop === */
+[data-panel-id] {
+    transition: opacity 0.15s ease;
+}
+
+/* The header strip is the drag handle — grab anywhere except its action buttons. */
+[data-panel-id] > .panel-header,
+[data-panel-id] > .space-header {
+    cursor: grab;
+    user-select: none;
+}
+
+[data-panel-id] > .panel-header:active,
+[data-panel-id] > .space-header:active {
+    cursor: grabbing;
+}
+
+.panel-dragging {
+    opacity: 0.35;
+}
+
+.drop-indicator {
+    height: 3px;
+    background: #5c84c1;
+    border-radius: 2px;
+    margin: 4px 0;
+    pointer-events: none;
+    box-shadow: 0 0 8px rgba(92, 132, 193, 0.6);
+}
+
+/* === Responsive === */
+@media (max-width: 960px) {
+    .filter-sections {
+        grid-template-columns: 1fr;
+    }
+    /* .entity-grid intentionally not overridden here -- its auto-fill rule
+       already collapses to fewer columns / a single column on narrow screens. */
+}
+
+/* === Primary space-panel — used to mark the Filtered Collection as the
+   focal area of the screen (slightly stronger background, taller floor). */
+.space-panel.primary {
+    background: rgba(0, 0, 0, 0.22);
+    border-color: rgba(92, 132, 193, 0.18);
+}
+
+.space-panel.primary .entity-grid {
+    min-height: 320px;
+}

@@ -1,15 +1,17 @@
 import { $$ } from './utils.js';
 import { api } from './api.js';
 import PaginationHandler from './components/PaginationHandler.js';
-import { addFilterTag, clearFilterTagsByCategory, refreshEmptyHint } from './components/FilterTags.js';
+import { addFilterTag, clearTags } from './components/FilterTags.js';
 import { renderModalContent } from './components/Modal.js';
 import { initPanelDragOrder } from './components/PanelDragOrder.js';
+import { createCombobox } from './components/Combobox.js';
 import './styles/main.css';
 
 // ──────────────────────────────────────────────
 // State
 // ──────────────────────────────────────────────
 const state = {
+    datasets: [],        // all datasets (for breadcrumb resolution on resume)
     datasetId: null,
     datasetName: '',
     collectionId: null,
@@ -17,9 +19,14 @@ const state = {
     collections: [],     // all collections for current dataset
     notMode: false,      // false = include, true = exclude
     page: 0,
-    pageSize: 20,
+    pageSize: 40,        // Filtered Collection is the primary view -> show more per page
     unionPage: 0,
     unionPageSize: 20,
+    // Linear path of collections traversed via Links. The first entry is
+    // the starting collection (reason: null); each subsequent entry was
+    // reached by clicking the link with that `reason`.
+    linkHistory: [],
+    historyOpen: false,
 };
 
 // ──────────────────────────────────────────────
@@ -34,20 +41,24 @@ const dom = {
     collections: $$('collections'),
 
     exitNavBtn: $$('exit-nav-btn'),
-    navTitle: $$('nav-title'),
+    bcDataset: $$('bc-dataset'),
+    bcCollection: $$('bc-collection'),
 
     toggleNotBtn: $$('toggle-not-btn'),
+    clearAllFiltersBtn: $$('clear-all-filters-btn'),
     metadataFilters: $$('metadata-filters'),
     referenceFilters: $$('reference-filters'),
-    activeFilters: $$('active-filters'),
+    metadataActiveFilters: $$('metadata-active-filters'),
+    referenceActiveFilters: $$('reference-active-filters'),
 
     links: $$('links'),
     gobackBtn: $$('goback-btn'),
     restoreBtn: $$('restore-btn'),
+    historyToggleBtn: $$('history-toggle-btn'),
+    linkHistoryEl: $$('link-history'),
 
     entities: $$('entities'),
     entitiesCount: $$('entities-count'),
-    currentColLabel: $$('current-collection-label'),
     entitiesPaginationWrap: $$('entities-pagination'),
 
     unionEntities: $$('union-entities'),
@@ -104,12 +115,23 @@ async function init() {
             state.datasetId = session.datasetId;
             state.collectionId = session.collectionId;
 
+            // Resolve dataset name from the cached datasets list
+            const ds = state.datasets.find(d => d.id === session.datasetId);
+            state.datasetName = ds ? ds.name : '';
+
             // Load collections so we can resolve names
             const colData = await api(`/collections?datasetId=${session.datasetId}`);
             state.collections = colData.collections;
 
             const col = state.collections.find(c => c.id === session.collectionId);
             state.collectionName = col ? col.name : '';
+
+            // Seed link history with the current collection (no prior reason)
+            state.linkHistory = [{
+                collectionId: state.collectionId,
+                collectionName: state.collectionName,
+                reason: null,
+            }];
 
             enterNavigation();
             return;
@@ -127,8 +149,9 @@ async function init() {
 async function loadDatasets() {
     try {
         const data = await api('/datasets');
+        state.datasets = data.datasets || [];
         dom.datasets.innerHTML = '';
-        data.datasets.forEach(ds => {
+        state.datasets.forEach(ds => {
             const btn = document.createElement('button');
             btn.textContent = ds.name;
             btn.className = 'large-selection-btn';
@@ -171,6 +194,7 @@ async function selectCollection(id, name) {
     state.collectionName = name;
     state.page = 0;
     state.unionPage = 0;
+    resetLinkHistory();
 
     try {
         // Create a new session
@@ -190,6 +214,7 @@ async function enterNavigationForUnion(id, name) {
     state.collectionName = name;
     state.page = 0;
     state.unionPage = 0;
+    resetLinkHistory();
 
     try {
         // Perform union action (saves current filters + switches collection)
@@ -205,10 +230,84 @@ async function enterNavigationForUnion(id, name) {
 }
 
 function enterNavigation() {
-    dom.navTitle.textContent = `Navigating — ${state.collectionName}`;
-    dom.currentColLabel.textContent = `(${state.collectionName})`;
+    renderBreadcrumb();
+    renderLinkHistory();
+    updateNavButtons();
     showScreen('navigation');
     refreshAll();
+}
+
+// ──────────────────────────────────────────────
+// Breadcrumb / link-history rendering
+// ──────────────────────────────────────────────
+function renderBreadcrumb() {
+    dom.bcDataset.textContent = state.datasetName || 'Dataset';
+    dom.bcCollection.textContent = state.collectionName || 'Collection';
+}
+
+function resetLinkHistory() {
+    state.linkHistory = [{
+        collectionId: state.collectionId,
+        collectionName: state.collectionName,
+        reason: null,
+    }];
+}
+
+function renderLinkHistory() {
+    const el = dom.linkHistoryEl;
+    el.innerHTML = '';
+
+    if (!state.linkHistory || state.linkHistory.length === 0) {
+        el.innerHTML = '<span class="empty-hint">No history yet</span>';
+        return;
+    }
+
+    state.linkHistory.forEach((entry, i) => {
+        if (i > 0) {
+            const arrow = document.createElement('div');
+            arrow.className = 'history-arrow';
+
+            const reason = document.createElement('span');
+            reason.className = 'history-arrow-reason';
+            reason.textContent = entry.reason || '';
+            reason.title = entry.reason || '';
+
+            const line = document.createElement('span');
+            line.className = 'history-arrow-line';
+            line.textContent = '→'; // →
+
+            arrow.appendChild(reason);
+            arrow.appendChild(line);
+            el.appendChild(arrow);
+        }
+
+        const node = document.createElement('div');
+        node.className = 'history-node';
+        if (i === 0) node.classList.add('start');
+        if (i === state.linkHistory.length - 1) node.classList.add('current');
+        node.textContent = entry.collectionName || `Collection #${entry.collectionId}`;
+        node.title = node.textContent;
+        el.appendChild(node);
+    });
+}
+
+function toggleHistoryView() {
+    state.historyOpen = !state.historyOpen;
+    dom.linkHistoryEl.classList.toggle('hidden', !state.historyOpen);
+    dom.historyToggleBtn.classList.toggle('active', state.historyOpen);
+    dom.historyToggleBtn.setAttribute('aria-expanded', String(state.historyOpen));
+    dom.historyToggleBtn.innerHTML = state.historyOpen
+        ? 'History &#9662;'  // ▾
+        : 'History &#9656;'; // ▸
+    if (state.historyOpen) renderLinkHistory();
+}
+
+function updateNavButtons() {
+    // Goback is only meaningful when there's at least one link to undo
+    const canGoBack = state.linkHistory.length > 1;
+    dom.gobackBtn.disabled = !canGoBack;
+    dom.gobackBtn.classList.remove('hidden');
+    dom.restoreBtn.classList.remove('hidden');
 }
 
 function exitNavigation() {
@@ -221,10 +320,18 @@ function exitNavigation() {
     state.notMode = false;
     state.page = 0;
     state.unionPage = 0;
+    state.linkHistory = [];
+    state.historyOpen = false;
 
     // Reset toggle UI
     dom.toggleNotBtn.textContent = 'Include';
     dom.toggleNotBtn.className = 'mode-toggle include';
+
+    // Collapse the history panel back to its default state
+    dom.linkHistoryEl.classList.add('hidden');
+    dom.historyToggleBtn.classList.remove('active');
+    dom.historyToggleBtn.setAttribute('aria-expanded', 'false');
+    dom.historyToggleBtn.innerHTML = 'History &#9656;';
 
     showScreen('datasets');
 }
@@ -245,6 +352,10 @@ function startUnion() {
 }
 
 function startChange() {
+    if (!confirm('Switch to a different collection?\n\nThis clears your current filters and link history. The Union Set is kept.')) {
+        return;
+    }
+
     dom.collections.innerHTML = '';
     state.collections.forEach(col => {
         const btn = document.createElement('button');
@@ -261,6 +372,7 @@ async function enterNavigationForChange(id, name) {
     state.collectionName = name;
     state.page = 0;
     state.unionPage = 0;
+    resetLinkHistory();
 
     try {
         await api('/navigation', {
@@ -304,6 +416,7 @@ async function loadEntities() {
                 const card = document.createElement('div');
                 card.className = 'entity-card';
                 card.textContent = ent.name;
+                card.title = ent.name; // full name as native tooltip when ellipsized
                 card.onclick = () => viewEntity(ent.id);
                 dom.entities.appendChild(card);
             });
@@ -311,9 +424,9 @@ async function loadEntities() {
 
         const col = state.collections.find(c => c.id === data.collectionId);
         if (col) {
+            state.collectionId = col.id;
             state.collectionName = col.name;
-            dom.currentColLabel.textContent = `(${col.name})`;
-            dom.navTitle.textContent = `Navigating — ${col.name}`;
+            renderBreadcrumb();
         }
 
         dom.entitiesCount.textContent = `${totalEntities} entities`;
@@ -338,12 +451,13 @@ async function loadUnion() {
         dom.unionEntities.innerHTML = '';
 
         if (unionList.length === 0) {
-            dom.unionEntities.innerHTML = '<p class="empty-state">No union entries</p>';
+            dom.unionEntities.innerHTML = '<p class="empty-state">No entries yet &mdash; click <strong>+ Add current</strong> to save these results and explore another collection.</p>';
         } else {
             unionList.forEach(ent => {
                 const card = document.createElement('div');
                 card.className = 'entity-card';
                 card.textContent = ent.name;
+                card.title = ent.name; // full name as native tooltip when ellipsized
                 card.onclick = () => viewEntity(ent.id, ent.collection_id);
                 dom.unionEntities.appendChild(card);
             });
@@ -366,9 +480,29 @@ async function loadUnion() {
 async function loadMetadataFacets() {
     try {
         const data = await api('/facets/metadata');
+        const activeMfilters = data.activeFilters.mfilters || {};
+        const activeNotMfilters = data.activeFilters.notMfilters || {};
 
+        // Build a Set of already-applied values per attribute (include + exclude)
+        // so we can hide them from the combobox — same value can't be picked twice.
+        const usedByAttr = {};
+        const collectUsed = (source) => {
+            for (const [attr, values] of Object.entries(source)) {
+                const list = Array.isArray(values) ? values : Object.values(values);
+                if (!usedByAttr[attr]) usedByAttr[attr] = new Set();
+                list.forEach(v => usedByAttr[attr].add(String(v)));
+            }
+        };
+        collectUsed(activeMfilters);
+        collectUsed(activeNotMfilters);
+
+        // Render dropdowns, omitting consumed values (and the whole wrap if all consumed)
         dom.metadataFilters.innerHTML = '';
         for (const [key, values] of Object.entries(data.metadata)) {
+            const used = usedByAttr[key] || new Set();
+            const available = values.filter(v => !used.has(String(v.value)));
+            if (available.length === 0) continue;
+
             const wrap = document.createElement('div');
             wrap.className = 'filter-dropdown-wrap';
 
@@ -377,45 +511,38 @@ async function loadMetadataFacets() {
             label.textContent = key;
             wrap.appendChild(label);
 
-            const select = document.createElement('select');
-            const defaultOpt = document.createElement('option');
-            defaultOpt.value = '';
-            defaultOpt.textContent = '— select —';
-            select.appendChild(defaultOpt);
-
-            values.forEach(v => {
-                const opt = document.createElement('option');
-                opt.value = v.value;
-                opt.textContent = `${v.value} (${v.count})`;
-                select.appendChild(opt);
+            const combobox = createCombobox({
+                options: available.map(v => ({
+                    value: v.value,
+                    label: v.value,
+                    count: v.count,
+                })),
+                placeholder: '— select —',
+                onSelect: (value) => applyMetadataFilter(key, value),
             });
 
-            select.onchange = () => {
-                if (select.value) applyMetadataFilter(key, select.value);
-            };
-
-            wrap.appendChild(select);
+            wrap.appendChild(combobox);
             dom.metadataFilters.appendChild(wrap);
         }
 
-        clearFilterTagsByCategory(dom.activeFilters, 'metadata');
-
-        const activeMfilters = data.activeFilters.mfilters || {};
+        // Render the active tags inside the Metadata section itself
+        clearTags(dom.metadataActiveFilters);
         for (const [attr, values] of Object.entries(activeMfilters)) {
             const list = Array.isArray(values) ? values : Object.values(values);
-            list.forEach(val => addFilterTag(dom.activeFilters, attr, val, 'include', 'metadata', removeFilter));
+            list.forEach(val => addFilterTag(
+                dom.metadataActiveFilters, attr, val, 'include',
+                () => removeFilter(attr, val, 'include', 'metadata'),
+            ));
         }
-
-        const activeNotMfilters = data.activeFilters.notMfilters || {};
         for (const [attr, values] of Object.entries(activeNotMfilters)) {
             const list = Array.isArray(values) ? values : Object.values(values);
-            list.forEach(val => addFilterTag(dom.activeFilters, attr, val, 'exclude', 'metadata', removeFilter));
+            list.forEach(val => addFilterTag(
+                dom.metadataActiveFilters, attr, val, 'exclude',
+                () => removeFilter(attr, val, 'exclude', 'metadata'),
+            ));
         }
 
-        refreshEmptyHint(dom.activeFilters);
-
-        dom.gobackBtn.classList.remove('hidden');
-        dom.restoreBtn.classList.remove('hidden');
+        updateClearAllBtn();
 
     } catch (err) {
         console.error('Failed to load metadata facets:', err);
@@ -429,11 +556,32 @@ async function loadReferenceFacets() {
         const activeRfilters = data.activeFilters.rfilters || {};
         const activeNotRfilters = data.activeFilters.notRfilters || {};
 
+        // Build a Set of already-applied entity IDs per (refColId, reason) — so the
+        // same entity can't be picked twice in the same dropdown.
+        const usedByGroup = {};
+        const collectUsed = (source) => {
+            for (const [refColId, reasonsMap] of Object.entries(source)) {
+                for (const [reason, ids] of Object.entries(reasonsMap)) {
+                    const idList = Array.isArray(ids) ? ids : Object.values(ids);
+                    const compositeKey = `${refColId}:${reason}`;
+                    if (!usedByGroup[compositeKey]) usedByGroup[compositeKey] = new Set();
+                    idList.forEach(id => usedByGroup[compositeKey].add(String(id)));
+                }
+            }
+        };
+        collectUsed(activeRfilters);
+        collectUsed(activeNotRfilters);
+
+        // Render dropdowns
         dom.referenceFilters.innerHTML = '';
         if (Object.keys(refFacets).length === 0) {
             dom.referenceFilters.innerHTML = '<span class="empty-hint">No reference filters available</span>';
         } else {
             for (const [key, group] of Object.entries(refFacets)) {
+                const used = usedByGroup[key] || new Set();
+                const available = group.entities.filter(ent => !used.has(String(ent.id)));
+                if (available.length === 0) continue;
+
                 const wrap = document.createElement('div');
                 wrap.className = 'filter-dropdown-wrap';
 
@@ -442,30 +590,26 @@ async function loadReferenceFacets() {
                 label.textContent = `${group.collectionName} → ${group.reason}`;
                 wrap.appendChild(label);
 
-                const select = document.createElement('select');
-                const defaultOpt = document.createElement('option');
-                defaultOpt.value = '';
-                defaultOpt.textContent = '— select —';
-                select.appendChild(defaultOpt);
-
-                group.entities.forEach(ent => {
-                    const opt = document.createElement('option');
-                    opt.value = ent.id;
-                    opt.textContent = `${ent.name} (${ent.count})`;
-                    select.appendChild(opt);
+                const combobox = createCombobox({
+                    options: available.map(ent => ({
+                        value: ent.id,
+                        label: ent.name,
+                        count: ent.count,
+                    })),
+                    placeholder: '— select —',
+                    onSelect: (value) => applyReferenceFilter(
+                        group.collectionId,
+                        group.reason,
+                        parseInt(value),
+                    ),
                 });
 
-                select.onchange = () => {
-                    if (select.value) {
-                        applyReferenceFilter(group.collectionId, group.reason, parseInt(select.value));
-                    }
-                };
-
-                wrap.appendChild(select);
+                wrap.appendChild(combobox);
                 dom.referenceFilters.appendChild(wrap);
             }
         }
 
+        // Lookups for human-readable tag labels
         const refLookup = {};
         const collLookup = {};
         for (const [key, group] of Object.entries(refFacets)) {
@@ -474,35 +618,31 @@ async function loadReferenceFacets() {
             group.entities.forEach(ent => { refLookup[key][ent.id] = ent.name; });
         }
 
-        clearFilterTagsByCategory(dom.activeFilters, 'reference');
+        // Render active tags inside the References section
+        clearTags(dom.referenceActiveFilters);
 
-        for (const [refColId, reasonsMap] of Object.entries(activeRfilters)) {
-            for (const [reason, ids] of Object.entries(reasonsMap)) {
-                const idList = Array.isArray(ids) ? ids : Object.values(ids);
-                const compositeKey = `${refColId}:${reason}`;
-                idList.forEach(id => {
-                    const colName = collLookup[refColId] || `Col #${refColId}`;
-                    const displayLabel = `${colName} → ${reason}`;
-                    const displayValue = refLookup[compositeKey]?.[id] ?? String(id);
-                    addFilterTag(dom.activeFilters, compositeKey, id, 'include', 'reference', removeFilter, displayLabel, displayValue);
-                });
+        const renderRefTags = (source, type) => {
+            for (const [refColId, reasonsMap] of Object.entries(source)) {
+                for (const [reason, ids] of Object.entries(reasonsMap)) {
+                    const idList = Array.isArray(ids) ? ids : Object.values(ids);
+                    const compositeKey = `${refColId}:${reason}`;
+                    idList.forEach(id => {
+                        const colName = collLookup[refColId] || `Col #${refColId}`;
+                        const displayLabel = `${colName} → ${reason}`;
+                        const displayValue = refLookup[compositeKey]?.[id] ?? String(id);
+                        addFilterTag(
+                            dom.referenceActiveFilters, compositeKey, id, type,
+                            () => removeFilter(compositeKey, id, type, 'reference'),
+                            displayLabel, displayValue,
+                        );
+                    });
+                }
             }
-        }
+        };
+        renderRefTags(activeRfilters, 'include');
+        renderRefTags(activeNotRfilters, 'exclude');
 
-        for (const [refColId, reasonsMap] of Object.entries(activeNotRfilters)) {
-            for (const [reason, ids] of Object.entries(reasonsMap)) {
-                const idList = Array.isArray(ids) ? ids : Object.values(ids);
-                const compositeKey = `${refColId}:${reason}`;
-                idList.forEach(id => {
-                    const colName = collLookup[refColId] || `Col #${refColId}`;
-                    const displayLabel = `${colName} → ${reason}`;
-                    const displayValue = refLookup[compositeKey]?.[id] ?? String(id);
-                    addFilterTag(dom.activeFilters, compositeKey, id, 'exclude', 'reference', removeFilter, displayLabel, displayValue);
-                });
-            }
-        }
-
-        refreshEmptyHint(dom.activeFilters);
+        updateClearAllBtn();
 
     } catch (err) {
         console.error('Failed to load reference facets:', err);
@@ -562,32 +702,105 @@ async function applyReferenceFilter(collectionId, reason, entityId) {
 
 async function removeFilter(name, value, type, category) {
     try {
-        if (category === 'metadata') {
-            const action = type === 'include' ? 'rm_mfilter' : 'rm_not_mfilter';
-            await api('/navigation', {
-                method: 'POST',
-                body: { action, attribute: name, value: String(value) },
-            });
-        } else {
-            const splitIndex = name.indexOf(':');
-            if (splitIndex === -1) {
-                console.error('Invalid reference filter key:', name);
-                return;
-            }
-            const collectionId = name.substring(0, splitIndex);
-            const reason = name.substring(splitIndex + 1);
-            const action = type === 'include' ? 'rm_rfilter' : 'rm_not_rfilter';
-            
-            await api('/navigation', {
-                method: 'POST',
-                body: { action, collectionId: parseInt(collectionId), reason, entityId: value },
-            });
-        }
+        await removeFilterRaw(name, value, type, category);
         state.page = 0;
         await refreshAll();
     } catch (err) {
         console.error('Failed to remove filter:', err);
     }
+}
+
+// Same as removeFilter but without the refresh — used by clearAllFilters so
+// we can drop N filters and refresh once at the end instead of N times.
+async function removeFilterRaw(name, value, type, category) {
+    if (category === 'metadata') {
+        const action = type === 'include' ? 'rm_mfilter' : 'rm_not_mfilter';
+        await api('/navigation', {
+            method: 'POST',
+            body: { action, attribute: name, value: String(value) },
+        });
+    } else {
+        const splitIndex = name.indexOf(':');
+        if (splitIndex === -1) {
+            console.error('Invalid reference filter key:', name);
+            return;
+        }
+        const collectionId = name.substring(0, splitIndex);
+        const reason = name.substring(splitIndex + 1);
+        const action = type === 'include' ? 'rm_rfilter' : 'rm_not_rfilter';
+        await api('/navigation', {
+            method: 'POST',
+            body: { action, collectionId: parseInt(collectionId), reason, entityId: value },
+        });
+    }
+}
+
+// ──────────────────────────────────────────────
+// Clear All filters
+// ──────────────────────────────────────────────
+async function clearAllFilters() {
+    try {
+        // Get current active filters from both endpoints
+        const [mData, rData] = await Promise.all([
+            api('/facets/metadata'),
+            api('/facets/references'),
+        ]);
+
+        const removals = [];
+
+        const collectMeta = (source, type) => {
+            for (const [attr, vals] of Object.entries(source || {})) {
+                const list = Array.isArray(vals) ? vals : Object.values(vals);
+                list.forEach(v => removals.push({ name: attr, value: v, type, category: 'metadata' }));
+            }
+        };
+        collectMeta(mData?.activeFilters?.mfilters, 'include');
+        collectMeta(mData?.activeFilters?.notMfilters, 'exclude');
+
+        const collectRef = (source, type) => {
+            for (const [refColId, reasonsMap] of Object.entries(source || {})) {
+                for (const [reason, ids] of Object.entries(reasonsMap)) {
+                    const idList = Array.isArray(ids) ? ids : Object.values(ids);
+                    idList.forEach(id => removals.push({
+                        name: `${refColId}:${reason}`,
+                        value: id,
+                        type,
+                        category: 'reference',
+                    }));
+                }
+            }
+        };
+        collectRef(rData?.activeFilters?.rfilters, 'include');
+        collectRef(rData?.activeFilters?.notRfilters, 'exclude');
+
+        if (removals.length === 0) return;
+
+        // Sequential to avoid racing on the backend's session-scoped state
+        for (const r of removals) {
+            await removeFilterRaw(r.name, r.value, r.type, r.category);
+        }
+
+        state.page = 0;
+        await refreshAll();
+    } catch (err) {
+        console.error('Failed to clear all filters:', err);
+    }
+}
+
+// Toggle the Clear All button's enabled state based on whether any tags are rendered
+function updateClearAllBtn() {
+    if (!dom.clearAllFiltersBtn) return;
+    const total = dom.metadataActiveFilters.children.length
+                + dom.referenceActiveFilters.children.length;
+    dom.clearAllFiltersBtn.disabled = total === 0;
+}
+
+// Re-render the Include/Exclude toggle. When `previewOpposite` is true,
+// it shows what the user's next click would set (used during hover).
+function renderToggleBtn(previewOpposite = false) {
+    const isExclude = previewOpposite ? !state.notMode : state.notMode;
+    dom.toggleNotBtn.textContent = isExclude ? 'Exclude' : 'Include';
+    dom.toggleNotBtn.className = `mode-toggle ${isExclude ? 'exclude' : 'include'}`;
 }
 
 async function navigateLink(collectionId, reason) {
@@ -598,11 +811,16 @@ async function navigateLink(collectionId, reason) {
         });
 
         const col = state.collections.find(c => c.id === collectionId);
-        if (col) {
-            state.collectionId = collectionId;
-            state.collectionName = col.name;
-        }
+        const colName = col ? col.name : `Collection #${collectionId}`;
+
+        state.collectionId = collectionId;
+        state.collectionName = colName;
+        state.linkHistory.push({ collectionId, collectionName: colName, reason });
+
         state.page = 0;
+        renderBreadcrumb();
+        renderLinkHistory();
+        updateNavButtons();
         await refreshAll();
     } catch (err) {
         console.error('Failed to navigate link:', err);
@@ -610,12 +828,22 @@ async function navigateLink(collectionId, reason) {
 }
 
 async function goBackLink() {
+    if (state.linkHistory.length <= 1) return;
     try {
         await api('/navigation', {
             method: 'POST',
             body: { action: 'goback' },
         });
+
+        state.linkHistory.pop();
+        const top = state.linkHistory[state.linkHistory.length - 1];
+        state.collectionId = top.collectionId;
+        state.collectionName = top.collectionName;
+
         state.page = 0;
+        renderBreadcrumb();
+        renderLinkHistory();
+        updateNavButtons();
         await refreshAll();
     } catch (err) {
         console.error('Failed to go back:', err);
@@ -657,12 +885,24 @@ async function viewEntity(entityId, collectionId) {
 // ──────────────────────────────────────────────
 function setupListeners() {
     // Reattach listeners to static buttons like exitNavBtn, prevPage, etc.
-    if(dom.exitNavBtn) dom.exitNavBtn.onclick = exitNavigation;
-    if(dom.gobackBtn) dom.gobackBtn.onclick = goBackLink;
-    if(dom.restoreBtn) dom.restoreBtn.onclick = restoreState;
-    if(dom.unionBtn) dom.unionBtn.onclick = startUnion;
-    if(dom.changeBtn) dom.changeBtn.onclick = startChange;
-    // etc... 
+    if (dom.exitNavBtn)        dom.exitNavBtn.onclick        = exitNavigation;
+    if (dom.gobackBtn)         dom.gobackBtn.onclick         = goBackLink;
+    if (dom.restoreBtn)        dom.restoreBtn.onclick        = restoreState;
+    if (dom.unionBtn)          dom.unionBtn.onclick          = startUnion;
+    if (dom.changeBtn)         dom.changeBtn.onclick         = startChange;
+    if (dom.historyToggleBtn)  dom.historyToggleBtn.onclick  = toggleHistoryView;
+    if (dom.clearAllFiltersBtn) dom.clearAllFiltersBtn.onclick = clearAllFilters;
+
+    // Include/Exclude toggle: hover previews the opposite, click commits the swap.
+    if (dom.toggleNotBtn) {
+        dom.toggleNotBtn.onclick = () => {
+            state.notMode = !state.notMode;
+            // Mouse is still hovering after click → keep showing what *next* click would do.
+            renderToggleBtn(true);
+        };
+        dom.toggleNotBtn.addEventListener('mouseenter', () => renderToggleBtn(true));
+        dom.toggleNotBtn.addEventListener('mouseleave', () => renderToggleBtn(false));
+    }
 }
 
 // ──────────────────────────────────────────────

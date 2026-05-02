@@ -1,36 +1,22 @@
 // src/components/PanelDragOrder.js
 // Enables drag-to-reorder for panels inside a container.
-// Drag is only initiated from the grip icon (☰) injected into each panel's
-// top-right corner. Clicking anywhere else in the panel works normally.
+// Drag starts when the user mousedowns on a panel's header bar
+// — `.panel-header` for the Filters/Links panels, `.space-header`
+// for the Filtered/Union space panels — and excludes any interactive
+// child (button, input, select, anchor, etc.) so action buttons in
+// the header still work normally.
 // Order is persisted to localStorage.
 
 const STORAGE_KEY = 'panel-order';
+const HEADER_SELECTOR = '.panel-header, .space-header';
+const INTERACTIVE_SELECTOR = 'button, input, select, textarea, a, label, [role="button"]';
 
 export function initPanelDragOrder(container) {
-    injectGrips(container);
     restoreOrder(container);
     attachDragListeners(container);
 }
 
-// ── Grip injection ────────────────────────────────────────
-
-function injectGrips(container) {
-    container.querySelectorAll('[data-panel-id]').forEach(panel => {
-        const grip = document.createElement('div');
-        grip.className = 'panel-grip';
-        grip.title = 'Drag to reorder';
-        grip.innerHTML = `
-            <span></span>
-            <span></span>
-            <span></span>
-        `;
-        // Panels are position:relative (set in CSS), grip is absolute top-right
-        panel.appendChild(grip);
-    });
-}
-
 // ── Persistence ──────────────────────────────────────────
-
 function saveOrder(container) {
     const order = [...container.querySelectorAll('[data-panel-id]')]
         .map(el => el.dataset.panelId);
@@ -50,19 +36,20 @@ function restoreOrder(container) {
     } catch (_) { /* corrupt storage — ignore */ }
 }
 
-// ── Drag listeners ────────────────────────────────────────
-
+// ── Drag listeners ──────────────────────────────────────
 function attachDragListeners(container) {
     let dragging = null;
     let indicator = null;
-    let dragFromGrip = false;   // gate: only allow drag when grip was clicked
+    let dragFromHeader = false;
 
-    container.addEventListener('mousedown', e => {
-        dragFromGrip = !!e.target.closest('.panel-grip');
+    // Capture phase: decide as early as possible whether this mousedown
+    // qualifies as a header grab. If not, the upcoming dragstart is cancelled.
+    container.addEventListener('mousedown', (e) => {
+        dragFromHeader = isHeaderDragTarget(e.target);
     }, true);
 
-    container.addEventListener('dragstart', e => {
-        if (!dragFromGrip) { e.preventDefault(); return; }
+    container.addEventListener('dragstart', (e) => {
+        if (!dragFromHeader) { e.preventDefault(); return; }
 
         const panel = e.target.closest('[data-panel-id]');
         if (!panel) return;
@@ -76,12 +63,12 @@ function attachDragListeners(container) {
         if (!dragging) return;
         dragging.classList.remove('panel-dragging');
         dragging = null;
-        dragFromGrip = false;
+        dragFromHeader = false;
         removeIndicator();
         saveOrder(container);
     });
 
-    container.addEventListener('dragover', e => {
+    container.addEventListener('dragover', (e) => {
         e.preventDefault();
         if (!dragging) return;
         e.dataTransfer.dropEffect = 'move';
@@ -93,11 +80,11 @@ function attachDragListeners(container) {
         placeIndicator(container, target, e.clientY < rect.top + rect.height / 2);
     });
 
-    container.addEventListener('dragleave', e => {
+    container.addEventListener('dragleave', (e) => {
         if (!container.contains(e.relatedTarget)) removeIndicator();
     });
 
-    container.addEventListener('drop', e => {
+    container.addEventListener('drop', (e) => {
         e.preventDefault();
         if (!dragging) return;
 
@@ -112,7 +99,20 @@ function attachDragListeners(container) {
         saveOrder(container);
     });
 
-    // ── Helpers ──────────────────────────────────────────
+    // ── Helpers ────────────────────────────────────────
+    function isHeaderDragTarget(target) {
+        // Must be inside a header that lives directly inside a draggable panel.
+        const header = target.closest(HEADER_SELECTOR);
+        if (!header) return false;
+
+        const panel = header.closest('[data-panel-id]');
+        if (!panel || header.parentElement !== panel) return false;
+
+        // Action buttons / inputs inside the header don't initiate a drag.
+        if (target.closest(INTERACTIVE_SELECTOR)) return false;
+
+        return true;
+    }
 
     function dropTarget(el, container) {
         let node = el;
