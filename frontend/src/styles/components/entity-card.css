@@ -1,0 +1,31 @@
+/* === Entity Grid === */
+.entity-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    min-height: 180px;
+}
+
+.entity-card {
+    padding: 8px 12px;
+    background: rgba(43, 76, 126, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #cfd8dc;
+    display: block;
+    text-align: left;
+}
+
+.entity-card:hover {
+    background: rgba(43, 76, 126, 0.28);
+    border-color: rgba(92, 132, 193, 0.4);
+    color: #ffffff;
+    padding-left: 16px;
+}

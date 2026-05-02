@@ -58,7 +58,7 @@
         </div>
 
         <!-- Filters -->
-        <div class="panel filters-panel">
+        <div class="panel filters-panel" data-panel-id="filters" draggable="true">
           <div class="panel-header">
             <h2 class="panel-title">Filters</h2>
             <button id="toggle-not-btn" class="mode-toggle include">
@@ -84,50 +84,36 @@
         </div>
 
         <!-- Links -->
-        <div class="panel links-panel">
+        <div class="panel links-panel" data-panel-id="links" draggable="true">
           <h2 class="panel-title">Links</h2>
           <div id="links" class="pill-row"></div>
         </div>
 
         <!-- Spaces: Filtered + Union grids -->
-        <div class="spaces-row">
-          <!-- Filtered Collection -->
-          <div class="space-panel">
-            <div class="space-header">
-              <h2 class="panel-title">
-                Filtered Collection
-                <span
-                  id="current-collection-label"
-                  class="collection-label"
-                ></span>
-              </h2>
-              <span id="entities-count" class="count-badge"></span>
-            </div>
-            <div id="entities" class="entity-grid"></div>
-            <div class="pagination">
-              <button id="prev-page" class="pg-btn" disabled>
-                &#8592; Prev
-              </button>
-              <span id="page-info" class="pg-info">Page 1</span>
-              <button id="next-page" class="pg-btn">Next &#8594;</button>
-            </div>
+        <!-- Filtered Collection -->
+        <div class="space-panel" data-panel-id="filtered" draggable="true">
+          <div class="space-header">
+            <h2 class="panel-title">
+              Filtered Collection
+              <span
+                id="current-collection-label"
+                class="collection-label"
+              ></span>
+            </h2>
+            <span id="entities-count" class="count-badge"></span>
           </div>
+          <div id="entities" class="entity-grid"></div>
+          <div id="entities-pagination" class="pagination"></div>
+        </div>
 
-          <!-- Union Set -->
-          <div class="space-panel">
-            <div class="space-header">
-              <h2 class="panel-title">Union Set</h2>
-              <span id="union-count" class="count-badge"></span>
-            </div>
-            <div id="union-entities" class="entity-grid"></div>
-            <div class="pagination">
-              <button id="union-prev-page" class="pg-btn" disabled>
-                &#8592; Prev
-              </button>
-              <span id="union-page-info" class="pg-info">Page 1</span>
-              <button id="union-next-page" class="pg-btn">Next &#8594;</button>
-            </div>
+        <!-- Union Set -->
+        <div class="space-panel" data-panel-id="union" draggable="true">
+          <div class="space-header">
+            <h2 class="panel-title">Union Set</h2>
+            <span id="union-count" class="count-badge"></span>
           </div>
+          <div id="union-entities" class="entity-grid"></div>
+          <div id="union-pagination" class="pagination"></div>
         </div>
 
         <!-- Union & Change actions -->
