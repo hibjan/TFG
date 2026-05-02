@@ -123,8 +123,9 @@ The `populate_db.py` script contains our test dataset by default, which is a sma
 #### 3.4. Set-up DB credentials
 
 1. `Run` -> `Run Configurations...`
-2. `Environment` -> `Add...`
-3. Create a new environment variable for each entry in your `.env.db` file.
+2. `Apache Tomcat` -> `Tomcat Server`
+3. `Environment` -> `Add...`
+4. Create a new environment variable for each entry in your `.env.db` file.
 
 To run the backend, **Right-click on the project -> Run on Server**.
 
