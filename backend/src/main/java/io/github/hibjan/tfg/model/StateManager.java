@@ -17,6 +17,7 @@ public class StateManager implements Serializable {
     private List<State> unionSet = new ArrayList<>();
 
     private List<Link> linkList = new ArrayList<>();
+    private Deque<Link> linkStack = new ArrayDeque<>();
 
     public StateManager(int datasetID, int collectionID) {
         this.datasetId = datasetID;
@@ -64,16 +65,12 @@ public class StateManager implements Serializable {
         this.linkList.add(new Link(true, this.cur.getCurrentCollectionId(), reason, new State(this.cur)));
         this.cur.link(env, reason);
         this.cur.setLinks(new ArrayList<>(this.linkList));
+        this.linkStack.push(this.linkList.get(this.linkList.size() - 1));
     }
 
     public void goback() {
-        Link last = this.linkList.get(this.linkList.size() - 1);
-        if (last.isForward()) {
-            this.linkList
-                    .add(new Link(false, this.cur.getCurrentCollectionId(), last.getReason(), new State(this.cur)));
-        } else {
-            this.linkList.add(new Link(true, this.cur.getCurrentCollectionId(), last.getReason(), new State(this.cur)));
-        }
+        Link last = this.linkStack.pop();
+        this.linkList.add(new Link(false, this.cur.getCurrentCollectionId(), last.getReason(), new State(this.cur)));
         this.cur.goback(last.getEnv());
         this.cur.setLinks(new ArrayList<>(this.linkList));
     }
@@ -82,6 +79,7 @@ public class StateManager implements Serializable {
         if (this.historyStack.size() > 1) {
             this.historyStack.pop();
             this.cur = this.historyStack.pop();
+            this.linkList = new ArrayList<>(this.cur.getLinks());
         }
     }
 

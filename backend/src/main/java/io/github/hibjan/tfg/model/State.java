@@ -99,31 +99,56 @@ public class State implements Serializable {
     }
 
     public HashMap<String, HashSet<String>> getMfilters() {
-        if (!mfilters.containsKey(currentCollectionId)) {
+        return getMfilters(currentCollectionId);
+    }
+
+    public HashMap<String, HashSet<String>> getMfilters(int collectionId) {
+        if (!mfilters.containsKey(collectionId)) {
             return new HashMap<>();
         }
-        return mfilters.get(currentCollectionId);
+        return mfilters.get(collectionId);
     }
 
     public HashMap<String, HashSet<String>> getNotMfilters() {
-        if (!notMfilters.containsKey(currentCollectionId)) {
+        return getNotMfilters(currentCollectionId);
+    }
+
+    public HashMap<String, HashSet<String>> getNotMfilters(int collectionId) {
+        if (!notMfilters.containsKey(collectionId)) {
             return new HashMap<>();
         }
-        return notMfilters.get(currentCollectionId);
+        return notMfilters.get(collectionId);
     }
 
     public HashMap<Integer, HashMap<String, HashSet<Integer>>> getRfilters() {
-        if (!rfilters.containsKey(currentCollectionId)) {
+        return getRfilters(currentCollectionId);
+    }
+
+    public HashMap<Integer, HashMap<String, HashSet<Integer>>> getRfilters(int collectionId) {
+        if (!rfilters.containsKey(collectionId)) {
             return new HashMap<>();
         }
-        return rfilters.get(currentCollectionId);
+        return rfilters.get(collectionId);
     }
 
     public HashMap<Integer, HashMap<String, HashSet<Integer>>> getNotRfilters() {
-        if (!notRfilters.containsKey(currentCollectionId)) {
+        return getNotRfilters(currentCollectionId);
+    }
+
+    public HashMap<Integer, HashMap<String, HashSet<Integer>>> getNotRfilters(int collectionId) {
+        if (!notRfilters.containsKey(collectionId)) {
             return new HashMap<>();
         }
-        return notRfilters.get(currentCollectionId);
+        return notRfilters.get(collectionId);
+    }
+
+    public Set<Integer> getFilteredCollectionIds() {
+        Set<Integer> ids = new HashSet<>();
+        ids.addAll(mfilters.keySet());
+        ids.addAll(notMfilters.keySet());
+        ids.addAll(rfilters.keySet());
+        ids.addAll(notRfilters.keySet());
+        return ids;
     }
 
     // --- Helpers ---

@@ -48,12 +48,14 @@ cd TFG
 
 ### 2. Database
 
-1. Duplicate the `.env.db.example` file, name it `.env.db`, and fill it with your desired credentials.
+1. Duplicate the `.env.db.example` file that is in the root directory, name it `.env.db`, and fill it with your desired credentials.
 2. Open Docker Desktop.
 3. Start the database container:
+
    ```bash
    docker compose --env-file .env.db -f docker-compose.dev.yml up -d
    ```
+
    This will create the database container, initialize it with the files in the database folder, and start it.
 
 _Note: In the Containers tab in Docker Desktop, you can manually stop or start it._
@@ -71,14 +73,16 @@ To populate the database with a dataset:
 ```bash
 cd scripts
 pip install -r requirements.txt
-python populate_db.py
+python populate_db_jsonl.py  # or python populate_db.py
 ```
 
-_(Make sure `JSON_FILE` and `DATASET_NAME` are set properly set in the script or passed as arguments)_
+By default, `populate_db_jsonl.py` contains the `JSON_FILE` and `DATASET_NAME` parameters for the TMDb Top 500 sample dataset. For using different values, they can be passed as arguments to the script.
+
+The `populate_db.py` script contains our test dataset by default, which is a small dataset based on the TMDb dataset.
 
 ### 3. Backend
 
-1. Go to `$TOMCAT_HOME/conf/context.xml`, and make sure to include the cookie processor for handling sessions:
+1. Go to the file inside your Apache Tomcat instance `$TOMCAT_HOME/conf/context.xml`, and make sure to include the cookie processor for handling sessions:
 
    ```xml
    <Context>
@@ -119,13 +123,23 @@ _(Make sure `JSON_FILE` and `DATASET_NAME` are set properly set in the script or
 #### 3.4. Set-up DB credentials
 
 1. `Run` -> `Run Configurations...`
-2. `Environment` -> `Add...`
-3. Create a new environment variable for each entry in your `.env.db` file.
+2. `Apache Tomcat` -> `Tomcat Server`
+3. `Environment` -> `Add...`
+4. Create a new environment variable for each entry in your `.env.db` file.
 
 To run the backend, **Right-click on the project -> Run on Server**.
 
-> **Troubleshooting:**
-> In case it doesn't work, try restarting Tomcat manually:
+> **Troubleshooting 1:**
+> In case you see an error related to missing classes (e.g. ObjectMapper), make sure that Maven Dependencies are included in the Web Deployment Assembly:
+>
+> 1. Right-click on the project -> `Properties` -> `Deployment Assembly`
+> 2. Maven Dependencies should be under the Source column
+> 3. If not there, `Add` -> `Java Build Path Entries`
+> 4. Select `Maven dependencies` -> `Finish`
+> 5. `Apply and Close`
+
+> **Troubleshooting 2:**
+> In case it doesn't work, try restarting Eclipse manually, and restarting Tomcat by running the following scripts:
 >
 > ```bash
 > $TOMCAT_HOME/bin/shutdown.sh
@@ -134,7 +148,7 @@ To run the backend, **Right-click on the project -> Run on Server**.
 
 ### 4. Frontend
 
-1. Duplicate the `.env.example` file and name it `.env.development.local`. It contains the default backend endpoint (`VITE_API_BASE_URL`), which you only need to modify if your backend runs on a different port.
+1. Duplicate the `.env.example` file that is inside the frontend directory, and name it `.env.development.local`. It contains the default backend endpoint (`VITE_API_BASE_URL`), which you only need to modify if your backend runs on a different port.
 2. Install dependencies and run the development server:
    ```bash
    cd frontend
