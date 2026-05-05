@@ -11,3 +11,5 @@
 @import './components/entity-card.css';
 @import './components/modal.css';
 @import './components/link-history.css';
+@import './components/skeleton.css';
+@import './components/toast.css';

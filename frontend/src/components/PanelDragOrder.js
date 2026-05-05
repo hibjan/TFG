@@ -28,10 +28,14 @@ function restoreOrder(container) {
         const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
         if (!Array.isArray(saved) || saved.length === 0) return;
 
-        const unionBar = container.querySelector('.union-bar');
+        // Legacy: previously anchored against the bottom .union-bar. That bar
+        // is gone now, so we just re-append in the saved order at the end.
+        const anchor = container.querySelector('.union-bar') || null;
         saved.forEach(id => {
             const el = container.querySelector(`[data-panel-id="${id}"]`);
-            if (el && unionBar) container.insertBefore(el, unionBar);
+            if (!el) return;
+            if (anchor) container.insertBefore(el, anchor);
+            else container.appendChild(el);
         });
     } catch (_) { /* corrupt storage — ignore */ }
 }

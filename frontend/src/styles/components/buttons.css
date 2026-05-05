@@ -120,17 +120,6 @@
 .mode-toggle.exclude { background: transparent; border: 1px solid #d32f2f; color: #d32f2f; }
 .mode-toggle.exclude:hover { background: rgba(211, 47, 47, 0.12); }
 
-/* === Union & Change Buttons === */
-.union-btn, .change-btn {
-    padding: 12px 28px; border-radius: 6px; font-family: inherit; font-size: 0.9rem;
-    font-weight: 600; cursor: pointer; transition: all 0.2s ease;
-}
-
-.union-btn { border: 1px solid rgba(176, 190, 197, 0.3); background: rgba(176, 190, 197, 0.08); color: #cfd8dc; }
-.union-btn:hover { background: rgba(176, 190, 197, 0.15); border-color: rgba(176, 190, 197, 0.5); }
-.change-btn { border: 1px solid rgba(144, 164, 174, 0.3); background: rgba(144, 164, 174, 0.08); color: #b0bec5; }
-.change-btn:hover { background: rgba(144, 164, 174, 0.15); border-color: rgba(144, 164, 174, 0.5); }
-
 /* === Large Selection Buttons === */
 #datasets .large-selection-btn, #collections .large-selection-btn {
     font-size: 1.5rem; padding: 16px 24px; min-width: 200px;

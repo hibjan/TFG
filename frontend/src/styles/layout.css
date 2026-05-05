@@ -148,14 +148,6 @@
     font-size: 0.85rem;
 }
 
-/* === Union Bar === */
-.union-bar {
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-    padding: 10px 0;
-}
-
 /* === Panel Drag & Drop === */
 [data-panel-id] {
     transition: opacity 0.15s ease;

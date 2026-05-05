@@ -1,0 +1,704 @@
+================================================================================
+GUION DE EVALUACION DE USABILIDAD
+APLICACION DE NAVEGACION TFG
+================================================================================
+
+Version:                    1.0
+Duracion estimada / sesion: 35-45 minutos
+Participantes objetivo:     5-7
+Metodo:                     Think-aloud + observacion directa
+                            + cuestionarios pre/post
+
+
+================================================================================
+INFORMACION PARA EL FACILITADOR  (no leer al participante)
+================================================================================
+
+OBJETIVO DE LA EVALUACION
+-------------------------
+Evaluar la usabilidad de la aplicacion centrandose en:
+  - Facilidad de aprendizaje en la primera toma de contacto.
+  - Eficiencia al realizar tareas comunes de busqueda y navegacion.
+  - Comprension de los conceptos clave (filtros include/exclude, links,
+    Union Set, historial, restore vs goback).
+  - Recuperacion ante errores y manejo de acciones destructivas
+    (Exit, Change collection).
+  - Satisfaccion subjetiva (SUS).
+
+PERFIL DEL PARTICIPANTE
+-----------------------
+Cualquier persona con experiencia basica en navegadores web. No es
+necesario conocimiento previo del dominio del dataset cargado.
+
+MATERIAL NECESARIO
+------------------
+  [ ] Ordenador con la aplicacion ya arrancada en una pestaña.
+  [ ] Dataset cargado con varias colecciones, metadatos, referencias
+      y al menos un link entre colecciones.
+  [ ] Cronometro (movil sirve).
+  [ ] Plantilla de observacion (Anexo A).
+  [ ] Cuestionario SUS impreso o en formato digital.
+  [ ] Hoja de consentimiento informado.
+  [ ] Grabadora de audio o video (opcional, requiere consentimiento).
+
+CHECKLIST PREVIO A LA SESION
+----------------------------
+  [ ] Verificar que la aplicacion arranca sin errores en consola.
+  [ ] Limpiar localStorage (clave panel-order y otras preferencias).
+  [ ] Borrar la sesion del backend si la hubiera (cookies / DB).
+  [ ] Asegurar que existen al menos 2 datasets distintos.
+  [ ] Asegurar que la coleccion inicial tiene >50 entidades para que
+      la paginacion sea visible.
+  [ ] Verificar que existen al menos 2 atributos de metadatos y al
+      menos un grupo de referencias.
+  [ ] Verificar que hay al menos un link saliente a otra coleccion.
+  [ ] Asegurar que el backend responde (probar /datasets desde la URL).
+  [ ] Tener a mano la URL exacta de la aplicacion.
+
+PROTOCOLO GENERAL
+-----------------
+  - No interrumpir al participante salvo bloqueo total > 90 segundos.
+  - No dar pistas. Si el participante pregunta como hacer algo,
+    devolver con: "Que harias tu?" o "Por donde empezarias?".
+  - Tomar notas en silencio. Marcar tiempo de inicio y fin de cada tarea.
+  - Mantener un tono neutro: ni felicitar exitos ni lamentar fracasos.
+  - Si el participante quiere abandonar, agradecer y cerrar sin presionar.
+  - Recordar al participante (1-2 veces si hace falta) que piense en
+    voz alta.
+
+
+================================================================================
+1. INTRODUCCION AL PARTICIPANTE        (LEER EN VOZ ALTA)
+================================================================================
+
+"Hola, muchas gracias por participar. Vamos a estar aqui unos 40 minutos.
+
+El objetivo de esta sesion es evaluar la aplicacion, NO evaluarte a ti.
+No hay respuestas correctas o incorrectas. Si algo no funciona o te
+resulta confuso, es informacion muy valiosa para nosotros: significa que
+tenemos algo que mejorar.
+
+Te voy a pedir que realices una serie de tareas usando la aplicacion.
+Mientras las haces me gustaria que pensaras en voz alta: di lo que estas
+mirando, lo que esperas que pase, lo que te confunde, lo que te gusta
+o no te gusta. No tengas miedo de criticar; al contrario, cuanto mas
+honesto seas, mas util sera tu feedback.
+
+Yo voy a estar tomando notas y manteniendome en silencio la mayor parte
+del tiempo. Si te bloqueas, intenta resolverlo a tu manera. Solo
+intervendre si llevas mucho rato sin saber por donde seguir.
+
+Puedes parar la sesion en cualquier momento sin necesidad de explicar
+nada.
+
+Tienes alguna duda antes de empezar?"
+
+
+================================================================================
+2. CONSENTIMIENTO INFORMADO
+================================================================================
+
+"Antes de empezar te pido que leas y firmes este consentimiento.
+Resumido:
+
+  - Los datos recogidos en esta sesion seran usados unicamente para
+    mejorar la aplicacion.
+  - Tu identidad no aparecera en ningun informe.
+  - Podemos grabar audio y video si das tu permiso explicito; la
+    grabacion se borrara una vez analizada.
+  - Puedes retirarte en cualquier momento sin consecuencias.
+
+Estas de acuerdo?"
+
+  [ ] Consentimiento verbal
+  [ ] Consentimiento por escrito (firmado y archivado)
+  [ ] Permiso de grabacion         (S / N)
+
+
+================================================================================
+3. CUESTIONARIO PREVIO              (5 minutos)
+================================================================================
+
+3.1  Cual es tu rango de edad?
+     [ ] 18-24    [ ] 25-34    [ ] 35-44    [ ] 45-54    [ ] 55+
+
+3.2  Cual es tu ocupacion o area de estudios?
+     ____________________________________________________________
+
+3.3  Con que frecuencia usas aplicaciones web?
+     [ ] Varias horas al dia
+     [ ] A diario, ocasionalmente
+     [ ] Varias veces por semana
+     [ ] Esporadicamente
+
+3.4  Has usado antes herramientas de busqueda con filtros (Amazon,
+     Idealista, MercadoLibre, bibliotecas digitales, archivos online)?
+     [ ] Si, con frecuencia
+     [ ] Si, alguna vez
+     [ ] No
+
+3.5  Te dedicas o has estudiado algo relacionado con catalogacion,
+     bibliotecas, archivos, museos, bases de datos o similares?
+     [ ] Si, profesionalmente
+     [ ] Si, en estudios
+     [ ] No
+
+3.6  En una escala del 1 al 5, como de comodo te sientes aprendiendo
+     una herramienta nueva por tu cuenta?
+        1 -- 2 -- 3 -- 4 -- 5
+     (muy incomodo)        (muy comodo)
+
+
+================================================================================
+4. INSTRUCCIONES SOBRE EL METODO    (2 minutos)
+================================================================================
+
+"Antes de empezar las tareas:
+
+  - La aplicacion ya esta abierta en una pestaña del navegador. Empieza
+    siempre desde la pantalla de seleccion de dataset.
+
+  - Te leere cada tarea en voz alta y te dare un escenario realista.
+    No te dire los pasos exactos: tu decides como resolverla.
+
+  - Recuerda: piensa en voz alta. Cuanto mas digas, mejor.
+
+  - Cada tarea tiene un tiempo limite aproximado. Si te bloqueas no
+    pasa nada: pasamos a la siguiente.
+
+Listo para empezar?"
+
+
+================================================================================
+5. TAREAS
+================================================================================
+
+Para cada tarea, el facilitador anota en el Anexo A:
+  - Tiempo de inicio y fin.
+  - Si la completo (Si / No / Parcialmente).
+  - Errores observados.
+  - Caminos alternativos tomados.
+  - Comentarios espontaneos del participante.
+
+Despues de cada tarea, preguntar al participante:
+  (a) "En una escala del 1 (muy dificil) al 7 (muy facil),
+      como de facil te ha resultado?"   [SEQ: __ / 7]
+  (b) "Algun comentario sobre como ha ido?"
+
+
+--------------------------------------------------------------------------------
+TAREA 1  -  Empezar a navegar                       (limite: 2 min)
+--------------------------------------------------------------------------------
+
+ESCENARIO:
+  "Acabas de abrir la aplicacion. Quieres empezar a explorar uno de los
+  datasets disponibles. Elige el dataset que prefieras y, dentro de el,
+  una coleccion para empezar."
+
+CRITERIO DE EXITO:
+  El participante llega a la vista de navegacion (paneles Filtros, Links,
+  Filtered Collection y Union Set visibles).
+
+OBSERVAR:
+  - Entiende el flujo Dataset -> Coleccion?
+  - Lee los nombres antes de elegir o pulsa al azar?
+  - Reconoce el breadcrumb superior tras entrar?
+
+POST-TAREA:
+  SEQ: __ / 7        Comentarios: __________________________________
+
+
+--------------------------------------------------------------------------------
+TAREA 2  -  Filtrar por metadatos                   (limite: 3 min)
+--------------------------------------------------------------------------------
+
+ESCENARIO:
+  "Imagina que solo te interesan las entidades que cumplan un criterio
+  concreto (por ejemplo, de un determinado tipo, autor, año, etc.).
+  Aplica un filtro de metadatos para reducir el conjunto de resultados."
+
+CRITERIO DE EXITO:
+  Se aplica al menos un filtro de metadatos. El conteo de "Filtered
+  Collection" se reduce. Aparece la etiqueta verde con "+" en la
+  seccion de Metadata.
+
+OBSERVAR:
+  - Encuentra los desplegables de filtros sin ayuda?
+  - Usa la busqueda dentro del combobox o se desplaza?
+  - Comprende que la etiqueta verde con "+" representa un filtro activo?
+
+POST-TAREA:
+  SEQ: __ / 7        Comentarios: __________________________________
+
+
+--------------------------------------------------------------------------------
+TAREA 3  -  Combinar varios filtros                 (limite: 3 min)
+--------------------------------------------------------------------------------
+
+ESCENARIO:
+  "Añade dos filtros mas, combinando atributos diferentes. Comprueba
+  como el conteo de la coleccion se va reduciendo cada vez."
+
+CRITERIO DE EXITO:
+  Se aplican al menos 3 filtros activos en total.
+
+OBSERVAR:
+  - Nota el participante que los valores ya elegidos desaparecen del
+    desplegable en sucesivas elecciones?
+  - Le sorprende algun comportamiento?
+
+POST-TAREA:
+  SEQ: __ / 7        Comentarios: __________________________________
+
+
+--------------------------------------------------------------------------------
+TAREA 4  -  Filtros de exclusion                    (limite: 3 min)
+--------------------------------------------------------------------------------
+
+ESCENARIO:
+  "Ahora quieres lo contrario: hay un valor concreto que NO quieres
+  ver en los resultados. Excluye una opcion del conjunto."
+
+CRITERIO DE EXITO:
+  El participante cambia el modo a Exclude y aplica al menos un filtro
+  de exclusion (etiqueta roja con simbolo menos).
+
+OBSERVAR:
+  - Encuentra el toggle Include/Exclude?
+  - Entiende la previsualizacion al pasar el raton (texto/color cambian)?
+  - Sabe diferenciar visualmente entre filtro de inclusion y exclusion?
+
+POST-TAREA:
+  SEQ: __ / 7        Comentarios: __________________________________
+
+
+--------------------------------------------------------------------------------
+TAREA 5  -  Filtros de referencia                   (limite: 3 min)
+--------------------------------------------------------------------------------
+
+ESCENARIO:
+  "Ademas de los metadatos, hay filtros basados en referencias entre
+  entidades de otras colecciones. Aplica un filtro de referencia para
+  reducir el conjunto."
+
+(Si no hay referencias visibles para esta coleccion, el facilitador
+omite la tarea y lo anota en el Anexo A.)
+
+CRITERIO DE EXITO:
+  Se aplica al menos un filtro de referencia.
+
+OBSERVAR:
+  - Distingue entre la seccion Metadata y References?
+  - Le resulta clara la sintaxis "Coleccion -> motivo"?
+
+POST-TAREA:
+  SEQ: __ / 7        Comentarios: __________________________________
+
+
+--------------------------------------------------------------------------------
+TAREA 6  -  Quitar filtros                          (limite: 2 min)
+--------------------------------------------------------------------------------
+
+ESCENARIO:
+  "Has aplicado bastantes filtros. Quita primero solo uno (el que
+  prefieras) y comprueba que el conjunto se actualiza. Despues quita
+  todos los filtros activos a la vez."
+
+CRITERIO DE EXITO:
+  Quita un filtro individual con la x de la etiqueta. Despues encuentra
+  y usa "Clear all" para vaciar el resto.
+
+OBSERVAR:
+  - Ve la x de cada etiqueta sin ayuda?
+  - Encuentra el boton Clear all sin pista?
+  - Le resulta claro que el boton se desactiva cuando no hay filtros?
+
+POST-TAREA:
+  SEQ: __ / 7        Comentarios: __________________________________
+
+
+--------------------------------------------------------------------------------
+TAREA 7  -  Seguir un link a otra coleccion         (limite: 2 min)
+--------------------------------------------------------------------------------
+
+ESCENARIO:
+  "En el panel de Links hay accesos directos a otras colecciones
+  relacionadas. Sigue uno de los links para navegar a otra coleccion."
+
+CRITERIO DE EXITO:
+  El participante pulsa un link, ve que el breadcrumb cambia y aparece
+  el contenido de la nueva coleccion.
+
+OBSERVAR:
+  - Le queda claro que ha cambiado de coleccion?
+  - Comprende el papel del breadcrumb superior?
+
+POST-TAREA:
+  SEQ: __ / 7        Comentarios: __________________________________
+
+
+--------------------------------------------------------------------------------
+TAREA 8  -  Ver el historial de navegacion          (limite: 2 min)
+--------------------------------------------------------------------------------
+
+ESCENARIO:
+  "Has saltado entre colecciones. Te gustaria ver visualmente el camino
+  que has seguido. Encuentra la forma de mostrarlo."
+
+CRITERIO DE EXITO:
+  Pulsa "History >" en el panel de Links y ve el grafo horizontal de
+  cajas conectadas por flechas. Reconoce el nodo actual (resaltado).
+
+OBSERVAR:
+  - Encuentra el boton History o lo busca por otros sitios?
+  - Reconoce que los nodos representan colecciones y las flechas links?
+  - Vuelve a cerrar el historial?
+
+POST-TAREA:
+  SEQ: __ / 7        Comentarios: __________________________________
+
+
+--------------------------------------------------------------------------------
+TAREA 9  -  Volver atras un paso                    (limite: 1 min)
+--------------------------------------------------------------------------------
+
+ESCENARIO:
+  "Quieres deshacer el ultimo salto y volver a la coleccion donde
+  estabas antes."
+
+CRITERIO DE EXITO:
+  Pulsa "Go Back" en la barra superior y vuelve a la coleccion previa.
+
+OBSERVAR:
+  - Distingue Go Back del boton "atras" del propio navegador?
+  - Diferencia Go Back de Restore?
+
+POST-TAREA:
+  SEQ: __ / 7        Comentarios: __________________________________
+
+
+--------------------------------------------------------------------------------
+TAREA 10  -  Ver el detalle de una entidad          (limite: 2 min)
+--------------------------------------------------------------------------------
+
+ESCENARIO:
+  "Elige cualquier entidad de la coleccion y abre su ficha completa.
+  Echa un vistazo a la informacion que contiene."
+
+CRITERIO DE EXITO:
+  Abre el modal de detalle. Ve metadatos, referencias y recursos
+  (imagenes, PDFs, links) si los hay.
+
+OBSERVAR:
+  - Le sorprende el modal o es lo que esperaba?
+  - Encuentra como cerrarlo (x, click fuera, ESC)?
+  - Le resulta clara la informacion mostrada?
+
+POST-TAREA:
+  SEQ: __ / 7        Comentarios: __________________________________
+
+
+--------------------------------------------------------------------------------
+TAREA 11  -  Guardar en Union y cambiar de coleccion   (limite: 4 min)
+--------------------------------------------------------------------------------
+
+ESCENARIO:
+  "Tienes ahora un conjunto filtrado interesante que querrias conservar
+  mientras exploras OTRA coleccion en paralelo. Guarda los resultados
+  actuales en el conjunto Union y elige otra coleccion para seguir
+  explorando."
+
+CRITERIO DE EXITO:
+  Pulsa "+ Add current" en el panel Union Set, elige otra coleccion en
+  el selector que aparece y vuelve a la vista de navegacion. Comprueba
+  que el contador de Union > 0 y que las entidades anteriores aparecen
+  ahi.
+
+OBSERVAR:
+  - Entiende el concepto de Union sin pistas?
+  - Ve el toast verde de confirmacion?
+  - Reconoce que la coleccion principal ha cambiado pero Union conserva
+    lo anterior?
+  - Localiza facilmente el boton "+ Add current"?
+
+POST-TAREA:
+  SEQ: __ / 7        Comentarios: __________________________________
+
+
+--------------------------------------------------------------------------------
+TAREA 12  -  Reordenar paneles                      (limite: 2 min)
+--------------------------------------------------------------------------------
+
+ESCENARIO:
+  "Te gustaria tener la lista de Links arriba del todo, o reordenar
+  cualquier panel a tu gusto. Intenta mover los paneles."
+
+CRITERIO DE EXITO:
+  Arrastra al menos un panel a una nueva posicion. Comprueba que el
+  cambio se mantiene tras refrescar la pagina (F5).
+
+OBSERVAR:
+  - Descubre que las cabeceras son arrastrables?
+  - Cuanto tarda en darse cuenta?
+  - Hay gestos fallidos (click vs drag)?
+  - Le sorprende que se mantenga al refrescar?
+
+POST-TAREA:
+  SEQ: __ / 7        Comentarios: __________________________________
+
+
+--------------------------------------------------------------------------------
+TAREA 13  -  Cambiar de coleccion (sin Union)       (limite: 2 min)
+--------------------------------------------------------------------------------
+
+ESCENARIO:
+  "Quieres empezar de cero en una coleccion distinta, sin guardar nada
+  ni mantener los filtros actuales. Cambia de coleccion."
+
+CRITERIO DE EXITO:
+  Pulsa "Change collection" arriba, lee el dialogo de confirmacion y
+  acepta. Selecciona una nueva coleccion. Filtros e historial quedan
+  vacios.
+
+OBSERVAR:
+  - Lee el mensaje de confirmacion antes de aceptar?
+  - Diferencia "Change collection" del flujo de "Add to Union" del
+    paso anterior?
+  - Le parece adecuada la diferenciacion visual (color ambar) frente a
+    Goback / Restore (azul / gris)?
+
+POST-TAREA:
+  SEQ: __ / 7        Comentarios: __________________________________
+
+
+--------------------------------------------------------------------------------
+TAREA 14  -  Salir del modo navegacion              (limite: 1 min)
+--------------------------------------------------------------------------------
+
+ESCENARIO:
+  "Has terminado. Sal del modo navegacion y vuelve a la pantalla
+  inicial de seleccion de datasets."
+
+CRITERIO DE EXITO:
+  Pulsa el boton x de la barra superior, confirma el dialogo, vuelve
+  a la pantalla de seleccion de datasets.
+
+OBSERVAR:
+  - Encuentra el boton x facilmente?
+  - Le sorprende el dialogo de confirmacion?
+  - Diferencia "salir" de "cambiar de coleccion"?
+
+POST-TAREA:
+  SEQ: __ / 7        Comentarios: __________________________________
+
+
+================================================================================
+6. CUESTIONARIO POSTERIOR  (System Usability Scale - SUS, 5 min)
+================================================================================
+
+Indica tu grado de acuerdo con cada afirmacion en una escala de 1 a 5,
+donde 1 = totalmente en desacuerdo y 5 = totalmente de acuerdo.
+
+  1.  Creo que me gustaria usar este sistema con frecuencia.
+                                              1 -- 2 -- 3 -- 4 -- 5
+
+  2.  He encontrado el sistema innecesariamente complejo.
+                                              1 -- 2 -- 3 -- 4 -- 5
+
+  3.  He pensado que el sistema era facil de usar.
+                                              1 -- 2 -- 3 -- 4 -- 5
+
+  4.  Creo que necesitaria ayuda de un tecnico para poder usar este
+      sistema.                                1 -- 2 -- 3 -- 4 -- 5
+
+  5.  He encontrado que las distintas funciones del sistema estaban
+      bien integradas.                        1 -- 2 -- 3 -- 4 -- 5
+
+  6.  He pensado que habia demasiada inconsistencia en el sistema.
+                                              1 -- 2 -- 3 -- 4 -- 5
+
+  7.  Imagino que la mayoria de la gente aprenderia a usar este sistema
+      muy rapidamente.                        1 -- 2 -- 3 -- 4 -- 5
+
+  8.  He encontrado el sistema muy complicado de usar.
+                                              1 -- 2 -- 3 -- 4 -- 5
+
+  9.  Me he sentido muy seguro/a usando el sistema.
+                                              1 -- 2 -- 3 -- 4 -- 5
+
+ 10.  He necesitado aprender muchas cosas antes de poder empezar a
+      usar este sistema.                      1 -- 2 -- 3 -- 4 -- 5
+
+
+CALCULO DE LA PUNTUACION SUS  (uso interno):
+  - Items impares (1, 3, 5, 7, 9):  restar 1 al valor.
+  - Items pares   (2, 4, 6, 8, 10): restar el valor a 5.
+  - Sumar los 10 resultados y multiplicar por 2.5  ->  rango 0-100.
+  - Umbral aceptable: >= 68. Excelente: >= 80.
+
+
+================================================================================
+7. PREGUNTAS ABIERTAS DE CIERRE     (10 min)
+================================================================================
+
+  7.1  Que es lo que mas te ha gustado del sistema?
+       _____________________________________________________________
+
+  7.2  Que es lo que mas te ha confundido o frustrado?
+       _____________________________________________________________
+
+  7.3  Si pudieras cambiar UNA cosa, cual seria?
+       _____________________________________________________________
+
+  7.4  Hubo algun momento en el que no sabias que hacer?
+       _____________________________________________________________
+
+  7.5  Como describirias el sistema a un compañero/a?
+       _____________________________________________________________
+
+  7.6  Hay alguna funcionalidad que esperabas encontrar y no esta?
+       _____________________________________________________________
+
+  7.7  Te ha resultado claro el papel del Union Set? Explica con tus
+       palabras para que sirve.
+       _____________________________________________________________
+
+  7.8  Te resulto claro lo que hacia cada uno de los botones de la
+       barra superior (X, Change collection, Go Back, Restore)?
+       _____________________________________________________________
+
+
+================================================================================
+8. CIERRE Y AGRADECIMIENTO
+================================================================================
+
+"Hemos terminado. Muchas gracias por dedicar este tiempo. Tus
+comentarios son muy utiles para mejorar la aplicacion.
+
+Tienes alguna pregunta para mi antes de irnos?"
+
+  Hora de fin:      ____________________
+  Duracion total:   ___ min
+
+
+================================================================================
+ANEXO A. PLANTILLA DE OBSERVACION DEL FACILITADOR
+================================================================================
+
+DATOS DE LA SESION
+------------------
+ID participante:           ________________________
+Fecha:                     ________________________
+Hora inicio / fin:         ___ : ___    ___ : ___
+Facilitador:               ________________________
+Observador (si aplica):    ________________________
+Grabacion (S/N):           ________________________
+
+
+REGISTRO POR TAREA
+------------------
+
+  Tarea | Inicio | Fin  | Comp. (S/N/P) | SEQ | Errores / Notas
+  ------+--------+------+---------------+-----+----------------------
+    1   |        |      |               |     |
+    2   |        |      |               |     |
+    3   |        |      |               |     |
+    4   |        |      |               |     |
+    5   |        |      |               |     |
+    6   |        |      |               |     |
+    7   |        |      |               |     |
+    8   |        |      |               |     |
+    9   |        |      |               |     |
+   10   |        |      |               |     |
+   11   |        |      |               |     |
+   12   |        |      |               |     |
+   13   |        |      |               |     |
+   14   |        |      |               |     |
+
+
+INCIDENCIAS DESTACABLES (errores criticos, momentos de bloqueo)
+---------------------------------------------------------------
+
+  Tiempo  | Tarea | Lo que paso
+  --------+-------+--------------------------------------------------
+          |       |
+          |       |
+          |       |
+          |       |
+
+
+CITAS LITERALES DEL PARTICIPANTE
+--------------------------------
+
+  Tiempo  | Cita
+  --------+----------------------------------------------------------
+          |
+          |
+          |
+          |
+
+
+CONCLUSIONES PROPIAS DEL FACILITADOR
+(rellenar despues de la sesion)
+--------------------------------
+
+  Patrones observados:    _________________________________________
+
+  Hipotesis surgidas:     _________________________________________
+
+  Cambios sugeridos:      _________________________________________
+
+
+================================================================================
+ANEXO B. NOTAS METODOLOGICAS
+================================================================================
+
+NUMERO DE PARTICIPANTES
+-----------------------
+Nielsen (2000) sostiene que con 5 participantes se descubre el ~85% de
+los problemas de usabilidad. Para esta evaluacion proponemos 5-7 para
+absorber la variabilidad entre perfiles.
+
+PERFIL EQUILIBRADO RECOMENDADO
+------------------------------
+Reclutar al menos:
+  - 1 persona con experiencia en catalogacion / archivos / bibliotecas.
+  - 1 persona sin experiencia previa en busqueda facetada.
+  - 1 persona del entorno academico (potencial usuario real).
+  - 2-3 perfiles generalistas (usuarios web habituales).
+
+ANALISIS POSTERIOR
+------------------
+1. Calcular SUS por participante y media (umbral aceptable: >= 68).
+2. Para cada tarea, calcular:
+     - Tasa de exito (%).
+     - Tiempo medio (mediana mas robusta para muestras pequeñas).
+     - SEQ medio.
+3. Catalogar incidencias por gravedad (escala Nielsen):
+     0 = no es problema       1 = cosmetico
+     2 = menor                3 = mayor
+     4 = catastrofico
+4. Cruzar cada hallazgo con citas literales del participante.
+5. Priorizar correcciones por:
+     gravedad x frecuencia x impacto en tareas criticas.
+
+CRITERIOS DE EXITO POR TAREA
+----------------------------
+Considerar la tarea como:
+  - EXITO         si el participante completa el criterio de exito sin
+                  ayuda y en menos del limite de tiempo.
+  - PARCIAL       si la completa con ayuda o supera el tiempo.
+  - FALLO         si abandona o no consigue completarla.
+
+VARIABLES A CONTROLAR ENTRE SESIONES
+------------------------------------
+  - Mismo dataset y misma coleccion inicial.
+  - Mismas opciones de filtro disponibles.
+  - Mismo orden de paneles al arrancar (panel-order limpio).
+  - Misma version del software (tag/commit fijo).
+  - Mismo dispositivo si es posible (resolucion afecta al layout).
+
+
+================================================================================
+                              FIN DEL GUION
+================================================================================

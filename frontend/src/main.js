@@ -5,6 +5,8 @@ import { addFilterTag, clearTags } from './components/FilterTags.js';
 import { renderModalContent } from './components/Modal.js';
 import { initPanelDragOrder } from './components/PanelDragOrder.js';
 import { createCombobox } from './components/Combobox.js';
+import { Skeleton } from './components/Skeleton.js';
+import { showToast } from './components/Toast.js';
 import './styles/main.css';
 
 // ──────────────────────────────────────────────
@@ -147,6 +149,7 @@ async function init() {
 // Datasets
 // ──────────────────────────────────────────────
 async function loadDatasets() {
+    Skeleton.pillRow(dom.datasets, 4, { large: true });
     try {
         const data = await api('/datasets');
         state.datasets = data.datasets || [];
@@ -161,12 +164,16 @@ async function loadDatasets() {
     } catch (err) {
         console.error('Failed to load datasets:', err);
         dom.datasets.innerHTML = '<p class="empty-state">Failed to load datasets</p>';
+        showToast(`Failed to load datasets: ${err.message || err}`, 'error');
     }
 }
 
 async function selectDataset(id, name) {
     state.datasetId = id;
     state.datasetName = name;
+
+    Skeleton.pillRow(dom.collections, 6, { large: true });
+    showScreen('collections');
 
     try {
         const data = await api(`/collections?datasetId=${id}`);
@@ -176,13 +183,14 @@ async function selectDataset(id, name) {
         data.collections.forEach(col => {
             const btn = document.createElement('button');
             btn.textContent = col.name;
+            btn.className = 'large-selection-btn';
             btn.onclick = () => selectCollection(col.id, col.name);
             dom.collections.appendChild(btn);
         });
-
-        showScreen('collections');
     } catch (err) {
         console.error('Failed to load collections:', err);
+        dom.collections.innerHTML = '<p class="empty-state">Failed to load collections</p>';
+        showToast(`Failed to load collections: ${err.message || err}`, 'error');
     }
 }
 
@@ -206,6 +214,7 @@ async function selectCollection(id, name) {
         enterNavigation();
     } catch (err) {
         console.error('Failed to init session:', err);
+        showToast(`Failed to start session: ${err.message || err}`, 'error');
     }
 }
 
@@ -224,8 +233,10 @@ async function enterNavigationForUnion(id, name) {
         });
 
         enterNavigation();
+        showToast('Saved current results to Union', 'success', 2500);
     } catch (err) {
         console.error('Failed to perform union:', err);
+        showToast(`Failed to add to Union: ${err.message || err}`, 'error');
     }
 }
 
@@ -383,6 +394,7 @@ async function enterNavigationForChange(id, name) {
         enterNavigation();
     } catch (err) {
         console.error('Failed to change collection:', err);
+        showToast(`Failed to switch collection: ${err.message || err}`, 'error');
     }
 }
 
@@ -400,6 +412,7 @@ async function refreshAll() {
 }
 
 async function loadEntities() {
+    Skeleton.entityGrid(dom.entities, Math.min(state.pageSize, 18));
     try {
         const data = await api(`/entities?page=${state.page}&size=${state.pageSize}`);
 
@@ -434,13 +447,16 @@ async function loadEntities() {
         // Render Pagination safely
         const totalPages = Math.max(1, Math.ceil(totalEntities / state.pageSize));
         entitiesPagination.render(state.page + 1, totalPages);
-        
+
     } catch (err) {
         console.error('Failed to load entities:', err);
+        dom.entities.innerHTML = '<p class="empty-state">Failed to load entities</p>';
+        showToast(`Failed to load entities: ${err.message || err}`, 'error');
     }
 }
 
 async function loadUnion() {
+    Skeleton.entityGrid(dom.unionEntities, Math.min(state.unionPageSize, 8));
     try {
         const data = await api(`/union?page=${state.unionPage}&size=${state.unionPageSize}`);
 
@@ -468,9 +484,11 @@ async function loadUnion() {
         // Render Pagination safely
         const totalPages = Math.max(1, Math.ceil(totalUnion / state.unionPageSize));
         unionPagination.render(state.unionPage + 1, totalPages);
-        
+
     } catch (err) {
         console.error('Failed to load union:', err);
+        dom.unionEntities.innerHTML = '<p class="empty-state">Failed to load Union Set</p>';
+        showToast(`Failed to load Union Set: ${err.message || err}`, 'error');
     }
 }
 
@@ -478,6 +496,7 @@ async function loadUnion() {
 // Facet Loaders
 // ──────────────────────────────────────────────
 async function loadMetadataFacets() {
+    Skeleton.dropdowns(dom.metadataFilters, 3);
     try {
         const data = await api('/facets/metadata');
         const activeMfilters = data.activeFilters.mfilters || {};
@@ -546,10 +565,13 @@ async function loadMetadataFacets() {
 
     } catch (err) {
         console.error('Failed to load metadata facets:', err);
+        dom.metadataFilters.innerHTML = '<span class="empty-hint">Failed to load metadata filters</span>';
+        showToast(`Failed to load metadata filters: ${err.message || err}`, 'error');
     }
 }
 
 async function loadReferenceFacets() {
+    Skeleton.dropdowns(dom.referenceFilters, 3);
     try {
         const data = await api('/facets/references');
         const refFacets = data.references || {};
@@ -646,10 +668,13 @@ async function loadReferenceFacets() {
 
     } catch (err) {
         console.error('Failed to load reference facets:', err);
+        dom.referenceFilters.innerHTML = '<span class="empty-hint">Failed to load reference filters</span>';
+        showToast(`Failed to load reference filters: ${err.message || err}`, 'error');
     }
 }
 
 async function loadLinkFacets() {
+    Skeleton.pillRow(dom.links, 4);
     try {
         const data = await api('/facets/links');
 
@@ -666,6 +691,8 @@ async function loadLinkFacets() {
         }
     } catch (err) {
         console.error('Failed to load link facets:', err);
+        dom.links.innerHTML = '<span class="empty-hint">Failed to load links</span>';
+        showToast(`Failed to load links: ${err.message || err}`, 'error');
     }
 }
 
@@ -683,6 +710,7 @@ async function applyMetadataFilter(attribute, value) {
         await refreshAll();
     } catch (err) {
         console.error('Failed to apply filter:', err);
+        showToast(`Failed to apply filter: ${err.message || err}`, 'error');
     }
 }
 
@@ -697,6 +725,7 @@ async function applyReferenceFilter(collectionId, reason, entityId) {
         await refreshAll();
     } catch (err) {
         console.error('Failed to apply reference filter:', err);
+        showToast(`Failed to apply filter: ${err.message || err}`, 'error');
     }
 }
 
@@ -707,6 +736,7 @@ async function removeFilter(name, value, type, category) {
         await refreshAll();
     } catch (err) {
         console.error('Failed to remove filter:', err);
+        showToast(`Failed to remove filter: ${err.message || err}`, 'error');
     }
 }
 
@@ -782,8 +812,10 @@ async function clearAllFilters() {
 
         state.page = 0;
         await refreshAll();
+        showToast(`Cleared ${removals.length} filter${removals.length === 1 ? '' : 's'}`, 'success', 2500);
     } catch (err) {
         console.error('Failed to clear all filters:', err);
+        showToast(`Failed to clear filters: ${err.message || err}`, 'error');
     }
 }
 
@@ -824,6 +856,7 @@ async function navigateLink(collectionId, reason) {
         await refreshAll();
     } catch (err) {
         console.error('Failed to navigate link:', err);
+        showToast(`Failed to follow link: ${err.message || err}`, 'error');
     }
 }
 
@@ -847,6 +880,7 @@ async function goBackLink() {
         await refreshAll();
     } catch (err) {
         console.error('Failed to go back:', err);
+        showToast(`Failed to go back: ${err.message || err}`, 'error');
     }
 }
 
@@ -858,8 +892,10 @@ async function restoreState() {
         });
         state.page = 0;
         await refreshAll();
+        showToast('State restored', 'success', 2500);
     } catch (err) {
         console.error('Failed to restore:', err);
+        showToast(`Failed to restore: ${err.message || err}`, 'error');
     }
 }
 
@@ -877,6 +913,7 @@ async function viewEntity(entityId, collectionId) {
         renderModalContent(data, dom.modalRefs);
     } catch (err) {
         console.error('Failed to load entity details:', err);
+        showToast(`Failed to load entity details: ${err.message || err}`, 'error');
     }
 }
 

@@ -1,0 +1,60 @@
+/* === Skeleton placeholders === */
+/* A subtle shimmer rolls across each placeholder while data is in flight. */
+
+@keyframes skeletonShimmer {
+    0%   { background-position: -400px 0; }
+    100% { background-position:  400px 0; }
+}
+
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.04) 25%,
+        rgba(255, 255, 255, 0.10) 50%,
+        rgba(255, 255, 255, 0.04) 75%
+    );
+    background-size: 800px 100%;
+    animation: skeletonShimmer 1.4s infinite linear;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+/* ── Pill row (datasets / collections / links) ── */
+.skeleton-pill {
+    display: inline-block;
+    height: 36px;
+    width: 120px;
+    border-radius: 6px;
+}
+
+.skeleton-pill-large {
+    height: 56px;
+    width: 200px;
+    border-radius: 8px;
+}
+
+/* ── Entity grid card ── */
+.skeleton-entity-card {
+    height: 28px;
+    border-radius: 4px;
+}
+
+/* ── Filter dropdown (combobox + label) ── */
+.skeleton-dropdown-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.skeleton-dropdown-label {
+    height: 12px;
+    width: 70px;
+    margin-left: 4px;
+    border-radius: 3px;
+}
+
+.skeleton-dropdown {
+    height: 36px;
+    width: 180px;
+    border-radius: 4px;
+}
