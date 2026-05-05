@@ -6,8 +6,8 @@
 \section{Representación del contexto de exploración}
 
 Para comprender las decisiones de diseño del modelo de representación interno, es útil partir de un ejemplo
-concreto: la estructura del dataset de The Movie Database (TMDb), que fue la primera y principal fuente de datos
-utilizada durante el desarrollo. TMDb organiza su información en torno a cinco tipos
+concreto: la estructura del dataset de The Movie Database (TMDB), que fue la primera y principal fuente de datos
+utilizada durante el desarrollo. TMDB organiza su información en torno a cinco tipos
 de entidades: películas, series de televisión, personas, productoras y cadenas de televisión.
 Cada tipo de entidad posee atributos propios --- como el género o la fecha de estreno en el caso
 de las películas, o el género y la fecha de nacimiento --- y mantiene
@@ -91,8 +91,8 @@ coordinación cuando la operación afecta a más de una de sus estructuras inter
 \section{Filtrado clásico y relacional}
 \label{sec:filtrado}
 
-En TMDb, la exploración de un dataset raramente se agota filtrando por atributos propios de
-una colección, por cuenta del tamaño y complejidad de la collección. Un caso de uso habitual es, por ejemplo, 
+En TMDB, la exploración de un dataset raramente se agota filtrando por atributos propios de
+una colección, por cuenta del tamaño y complejidad de la colección. Un caso de uso habitual es, por ejemplo, 
 encontrar películas de un género concreto dirigidas por una persona específica, o excluir series producidas por una 
 determinada compañía. El primer tipo de condición opera sobre los metadatos de la entidad; el segundo,
 sobre sus relaciones con entidades de otra colección. Esta distinción entre \textit{filtrado
@@ -108,7 +108,7 @@ resultados que el usuario está explorando en cada momento.
     \subsection{Construcción dinámica de queries SQL}
 
 El núcleo de la capa de acceso a datos es la traducción del estado de navegación a una query
-SQL ejecutable. Esta traducción se asembla de manera incremental: en cada petición, el
+SQL ejecutable. Esta traducción se ensambla de manera incremental: en cada petición, el
 \texttt{NavigationDAO} construye la query de forma incremental añadiendo cláusulas
 \texttt{AND} sobre una consulta base que selecciona entidades de la colección activa.
 
@@ -135,7 +135,7 @@ memoria.
     \subsection{Filtros de metadatos}
 
 Los filtros de metadatos permiten restringir los resultados de una colección en función de los
-atributos clave-valor asociados a sus entidades. En el contexto de TMDb, por ejemplo, esto equivale a
+atributos clave-valor asociados a sus entidades. En el contexto de TMDB, por ejemplo, esto equivale a
 operaciones como seleccionar únicamente películas del género \textit{Action}, o excluir
 aquellas con idioma original distinto del inglés.
 
@@ -160,7 +160,7 @@ for (var entry : state.getMfilters().entrySet()) {
 
 Esta elección implica una semántica de conjunción estricta entre valores del mismo atributo,
 lo cual puede parecer contraintuitivo cuando los valores son mutuamente excluyentes
---- como ocurre con \texttt{Genres} en TMDb, donde una película puede pertenecer a varios
+--- como ocurre con \texttt{Genres} en TMDB, donde una película puede pertenecer a varios
 géneros a la vez. En ese caso, seleccionar \textit{Action} y \textit{Drama} devuelve
 las películas que tienen \textit{ambos} géneros, no las que tienen alguno de los dos.
 Esta semántica se mantuvo de forma deliberada para garantizar consistencia con el
@@ -170,7 +170,7 @@ obstáculos encontrados en la sección~\ref{sec:obstaculos}.
     \subsection{Filtros de referencia}
 
 Los filtros de referencia permiten restringir los resultados de una colección en función
-de sus vínculos con entidades concretas de otra colección. En TMDb, esto cubre casos como
+de sus vínculos con entidades concretas de otra colección. En TMDB, esto cubre casos como
 mostrar únicamente las películas en las que una persona determinada participó como
 \textit{Director}, o excluir películas con un \textit{Actor} específico.
 
@@ -256,10 +256,10 @@ Hasta ahora, hemos descrito los mecanismos de filtrado que operan dentro de una 
 dadas las entidades de \textit{Movies}, se restringe el conjunto según atributos propios
 o según vínculos con entidades concretas de otras colecciones. Entretanto, el sistema
 permite también \textit{trasladarse} de una colección a otra siguiendo una relación,
-manteniendo y llevandoel contexto de filtrado acumulado. Este mecanismo es lo que se 
-denomina navegación transversal.
+manteniendo y llevando el contexto de filtrado acumulado. Este mecanismo es lo que se 
+denomina \textit{navegación transversal}.
 
-Damos un ejemplo concreto en TMDb: el usuario está explorando películas con el filtro de género
+Damos un ejemplo concreto en TMDB: el usuario está explorando películas con el filtro de género
 \textit{Action} activo. Desde ese contexto, decide navegar hacia la colección
 \textit{People} siguiendo la relación \textit{Actor}, para ver qué actores aparecen en
 esas películas de acción. Tras el salto, la colección activa pasa a ser \textit{People},
@@ -394,7 +394,7 @@ como origen de una relación \textit{Actor} hacia alguna de esas películas.
 Los mecanismos de filtrado y navegación transversal descritos hasta ahora operan siempre
 sobre un único contexto de exploración activo. Sin embargo, hay casos de uso que requieren
 combinar los resultados de dos o más contextos construidos de manera independiente. Un posible 
-ejemplo concreto en TMDb: el usuario quiere obtener todas las personas que han trabajado como
+ejemplo concreto en TMDB: el usuario quiere obtener todas las personas que han trabajado como
 \textit{Director} en películas de acción o como \textit{Actor} en series de
 ciencia ficción. No sabemos si hay intersección entre ambos conjuntos, y construir ambas
 condiciones simultáneamente dentro de un único estado sería impracticable, y  posiblemente imposible con 
@@ -499,7 +499,7 @@ resultado directo de haber identificado y corregido esas imprecisiones del proto
 
     \subsection*{Tamaño de las colecciones y trabajo con subconjuntos}
 
-TMDb expone colecciones de tamaño considerable: solo en películas y series, el catálogo
+TMDB expone colecciones de tamaño considerable: solo en películas y series, el catálogo
 completo supera con holgura las decenas de miles de entidades. Trabajar con el dataset
 completo durante el desarrollo habría introducido tiempos de carga, poblado de base de
 datos y ejecución de queries que habrían dificultado la iteración rápida.
@@ -514,7 +514,7 @@ TOP_K_COUNT = 5000
 \end{lstlisting}
 
 Con este mecanismo activo, el script ordena las películas y series por su campo
-\texttt{popularity} de la API de TMDb y retiene únicamente las \texttt{TOP\_K\_COUNT}
+\texttt{popularity} de la API de TMDB y retiene únicamente las \texttt{TOP\_K\_COUNT}
 más populares antes de generar el dataset de salida. Esto permitió trabajar durante el
 desarrollo con un subconjunto representativo y manejable, manteniendo la opción de
 escalar al dataset completo simplemente desactivando el filtro o aumentando el límite.
@@ -522,7 +522,7 @@ escalar al dataset completo simplemente desactivando el filtro o aumentando el l
     \subsection*{Valores numéricos y de fecha en los metadatos: la decisión de usar rangos}
 
 Un obstáculo temprano en el diseño del filtrado fue la naturaleza de ciertos campos
-de metadatos en TMDb: presupuesto, recaudación, duración, fecha de estreno. Almacenarlos
+de metadatos en TMDB: presupuesto, recaudación, duración, fecha de estreno. Almacenarlos
 como valores exactos en la tabla \texttt{metadata} y filtrar por igualdad exacta habría
 resultado inútil desde el punto de vista exploratorio: es improbable que un usuario quiera
 películas con exactamente 157 minutos de duración o con un presupuesto de exactamente
