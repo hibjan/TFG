@@ -332,12 +332,14 @@
 
 \begin{large}
 \begin{center}
-{\Large \bfseries Autor}\\
+{\Large \bfseries Autores}\\
 \textbf{\autorPortadaVal}\\[0.5cm]
 {\Large \bfseries Director}\\
 \textbf{\directorPortadaVal}\\[0.5cm]
+\ifx\colaboradorPortadaVal\empty\else
 {\Large \bfseries Colaborador}\\
 \textbf{\colaboradorPortadaVal}\\[0.5cm]
+\fi
 \textbf{\institucionVal}\\[1em]
 %\textbf{\fechaPublicacionVal}
 \end{center}
@@ -403,9 +405,11 @@
 \textbf{\autorPortadaVal}\\[1.0cm]
 {\Large \bfseries Director}\\
 \textbf{\directorPortadaVal}\\[0.3cm]
+\ifx\colaboradorPortadaVal\empty\else
 {\Large \bfseries Colaborador}\\
 \textbf{\colaboradorPortadaVal}\\[0.3cm]
-\mbox{ } \\ \mbox{ } \\ 
+\fi
+\mbox{ } \\ \mbox{ } \\
 \textoSegundoSubtituloPortadaVal \\ [0.3em]
 \end{center}
 \end{large}
