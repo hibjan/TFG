@@ -10,7 +10,6 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="src/style.css" />
   </head>
 
   <body>
@@ -34,36 +33,61 @@
           <button
             id="exit-nav-btn"
             class="exit-btn"
-            title="Exit navigation mode"
+            title="Exit navigation and start over"
+            aria-label="Exit navigation"
           >
-            <span class="exit-arrow">&#8592;</span>
+            &#10005;
           </button>
-          <h1 class="screen-title" id="nav-title">Navigating</h1>
+
+          <nav class="breadcrumb" aria-label="Breadcrumb">
+            <span class="breadcrumb-segment" id="bc-dataset">Dataset</span>
+            <span class="breadcrumb-sep">&#8250;</span>
+            <span class="breadcrumb-segment current" id="bc-collection">Collection</span>
+          </nav>
+
           <div class="topbar-actions">
             <button
-              id="goback-btn"
-              class="topbar-btn hidden"
-              title="Undo last link navigation"
+              id="change-btn"
+              class="topbar-btn topbar-btn-destructive"
+              title="Switch to a different collection (clears current filters and link history)"
             >
-              &#8592; Go Back
+              &#8646; Change collection
+            </button>
+            <span class="topbar-divider" aria-hidden="true"></span>
+            <button
+              id="goback-btn"
+              class="topbar-btn topbar-btn-primary hidden"
+              title="Undo the last link navigation (one step back through the link history)"
+            >
+              &#8630; Go Back
             </button>
             <button
               id="restore-btn"
-              class="topbar-btn hidden"
-              title="Restore previous saved state"
+              class="topbar-btn topbar-btn-quiet hidden"
+              title="Restore the filters and link history saved before the last Union"
             >
-              &#x21A9; Restore
+              &#10226; Restore
             </button>
           </div>
         </div>
 
         <!-- Filters -->
-        <div class="panel filters-panel">
+        <div class="panel filters-panel" data-panel-id="filters" draggable="true">
           <div class="panel-header">
             <h2 class="panel-title">Filters</h2>
-            <button id="toggle-not-btn" class="mode-toggle include">
-              Include
-            </button>
+            <div class="filters-actions">
+              <button
+                id="clear-all-filters-btn"
+                class="topbar-btn topbar-btn-quiet clear-all-btn"
+                title="Remove every active filter"
+                disabled
+              >
+                Clear all
+              </button>
+              <button id="toggle-not-btn" class="mode-toggle include">
+                Include
+              </button>
+            </div>
           </div>
 
           <div class="filter-sections">
@@ -71,73 +95,62 @@
             <div class="filter-section">
               <h3 class="filter-section-label">Metadata</h3>
               <div id="metadata-filters" class="filter-dropdowns"></div>
+              <div id="metadata-active-filters" class="active-tags"></div>
             </div>
             <!-- References -->
             <div class="filter-section">
               <h3 class="filter-section-label">References</h3>
               <div id="reference-filters" class="filter-dropdowns"></div>
+              <div id="reference-active-filters" class="active-tags"></div>
             </div>
           </div>
-
-          <!-- Active Filters -->
-          <div id="active-filters" class="active-filters"></div>
         </div>
 
         <!-- Links -->
-        <div class="panel links-panel">
-          <h2 class="panel-title">Links</h2>
+        <div class="panel links-panel" data-panel-id="links" draggable="true">
+          <div class="panel-header">
+            <h2 class="panel-title">Links</h2>
+            <button
+              id="history-toggle-btn"
+              class="topbar-btn history-toggle"
+              title="Show the path of links you've followed"
+              aria-expanded="false"
+            >
+              History &#9656;
+            </button>
+          </div>
           <div id="links" class="pill-row"></div>
+          <div id="link-history" class="link-history hidden"></div>
         </div>
 
         <!-- Spaces: Filtered + Union grids -->
-        <div class="spaces-row">
-          <!-- Filtered Collection -->
-          <div class="space-panel">
-            <div class="space-header">
-              <h2 class="panel-title">
-                Filtered Collection
-                <span
-                  id="current-collection-label"
-                  class="collection-label"
-                ></span>
-              </h2>
-              <span id="entities-count" class="count-badge"></span>
-            </div>
-            <div id="entities" class="entity-grid"></div>
-            <div class="pagination">
-              <button id="prev-page" class="pg-btn" disabled>
-                &#8592; Prev
-              </button>
-              <span id="page-info" class="pg-info">Page 1</span>
-              <button id="next-page" class="pg-btn">Next &#8594;</button>
-            </div>
+        <!-- Filtered Collection -->
+        <div class="space-panel primary" data-panel-id="filtered" draggable="true">
+          <div class="space-header">
+            <h2 class="panel-title">Filtered Collection</h2>
+            <span id="entities-count" class="count-badge"></span>
           </div>
-
-          <!-- Union Set -->
-          <div class="space-panel">
-            <div class="space-header">
-              <h2 class="panel-title">Union Set</h2>
-              <span id="union-count" class="count-badge"></span>
-            </div>
-            <div id="union-entities" class="entity-grid"></div>
-            <div class="pagination">
-              <button id="union-prev-page" class="pg-btn" disabled>
-                &#8592; Prev
-              </button>
-              <span id="union-page-info" class="pg-info">Page 1</span>
-              <button id="union-next-page" class="pg-btn">Next &#8594;</button>
-            </div>
-          </div>
+          <div id="entities" class="entity-grid"></div>
+          <div id="entities-pagination" class="pagination"></div>
         </div>
 
-        <!-- Union & Change actions -->
-        <div class="union-bar">
-          <button id="union-btn" class="union-btn">
-            &#x2795; Add to Union &amp; Switch Collection
-          </button>
-          <button id="change-btn" class="change-btn">
-            &#x21C4; Change Collection
-          </button>
+        <!-- Union Set -->
+        <div class="space-panel" data-panel-id="union" draggable="true">
+          <div class="space-header">
+            <h2 class="panel-title">Union Set</h2>
+            <div class="space-header-actions">
+              <span id="union-count" class="count-badge"></span>
+              <button
+                id="union-btn"
+                class="topbar-btn topbar-btn-primary union-add-btn"
+                title="Save the current filtered results to Union, then pick another collection to explore"
+              >
+                &#43; Add current
+              </button>
+            </div>
+          </div>
+          <div id="union-entities" class="entity-grid"></div>
+          <div id="union-pagination" class="pagination"></div>
         </div>
       </section>
     </div>
@@ -153,6 +166,9 @@
         <div id="modal-entity-references" class="modal-section"></div>
       </div>
     </div>
+
+    <!-- Toast notifications mount point -->
+    <div id="toasts" class="toasts" aria-live="polite" aria-atomic="false"></div>
 
     <script type="module" src="src/main.js"></script>
   </body>

@@ -1,0 +1,110 @@
+/* === Filters panel header — Clear All + Include/Exclude grouped on the right === */
+.filters-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* === Filter Sections === */
+.filter-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
+
+.filter-section {
+    background: rgba(0, 0, 0, 0.15); border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 6px; padding: 10px 12px;
+}
+
+.filter-section-label {
+    font-size: 0.82rem; font-weight: 600; color: #8f9ba8;
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px;
+}
+
+/* === Dropdowns === */
+.filter-dropdowns { display: flex; flex-wrap: wrap; gap: 10px; }
+.filter-dropdown-wrap { display: flex; flex-direction: column; gap: 4px; }
+
+.filter-dropdown-name {
+    font-size: 0.75rem; font-weight: 600; color: #90a4ae;
+    text-transform: uppercase; letter-spacing: 0.04em; padding-left: 4px;
+}
+
+/* === Active Filter Tags (lives inside its own filter-section) === */
+.active-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Hide the entire area (and its divider) when there are no active tags */
+.active-tags:empty {
+    display: none;
+}
+
+.filter-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 8px 6px 12px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left-width: 4px;
+    animation: fadeIn 0.2s ease;
+}
+
+.filter-tag .tag-glyph {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.filter-tag .tag-label {
+    color: #b0bec5;
+    font-weight: 500;
+}
+
+.filter-tag .tag-sep {
+    color: #5c6975;
+    font-weight: 700;
+}
+
+.filter-tag .tag-value {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.filter-tag.include-tag {
+    border-left-color: #4caf50;
+    background: rgba(76, 175, 80, 0.08);
+}
+
+.filter-tag.include-tag .tag-glyph {
+    color: #66bb6a;
+}
+
+.filter-tag.exclude-tag {
+    border-left-color: #ef5350;
+    background: rgba(239, 83, 80, 0.08);
+}
+
+.filter-tag.exclude-tag .tag-glyph {
+    color: #ef5350;
+}
+
+.filter-tag .tag-remove {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0 2px;
+    line-height: 1;
+    transition: color 0.15s;
+}
+
+.filter-tag .tag-remove:hover {
+    color: #ff5252;
+}

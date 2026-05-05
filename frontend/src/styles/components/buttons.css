@@ -1,0 +1,156 @@
+/* === Pill Row (dataset / collection / link buttons) === */
+.pill-row { display: flex; flex-wrap: wrap; gap: 12px; }
+
+.pill-row button {
+    padding: 14px 28px; border: none; border-radius: 6px;
+    background: linear-gradient(135deg, #2b4c7e 0%, #1c3256 100%);
+    color: #ffffff; font-size: 0.95rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s ease; letter-spacing: 0.01em;
+}
+
+.pill-row button:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(43, 76, 126, 0.4); }
+.pill-row button:active { transform: translateY(0); }
+
+/* === Specific Buttons === */
+.exit-btn {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.15); background: rgba(255, 255, 255, 0.04);
+    color: #e0e0e0; font-size: 1.3rem; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+.exit-btn:hover { background: rgba(211, 47, 47, 0.15); border-color: #d32f2f; color: #d32f2f; }
+
+.topbar-btn, .link-goback-btn, .pg-btn {
+    padding: 8px 18px; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 6px;
+    background: rgba(255, 255, 255, 0.04); color: #cccccc; font-family: inherit;
+    font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+}
+
+.topbar-btn:hover:not(:disabled), .link-goback-btn:hover, .pg-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1); color: #ffffff;
+}
+
+.topbar-btn:disabled, .pg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.link-goback-btn { margin-top: 12px; }
+
+/* ── Topbar variants — differentiate Goback (primary) vs Restore (quiet) ── */
+.topbar-btn-primary {
+    border-color: rgba(92, 132, 193, 0.45);
+    background: rgba(43, 76, 126, 0.16);
+    color: #c5d0e6;
+    font-weight: 600;
+}
+
+.topbar-btn-primary:hover:not(:disabled) {
+    background: rgba(43, 76, 126, 0.3);
+    border-color: rgba(92, 132, 193, 0.7);
+    color: #ffffff;
+}
+
+.topbar-btn-quiet {
+    padding: 7px 14px;
+    border-color: rgba(255, 255, 255, 0.08);
+    background: transparent;
+    color: #90a4ae;
+    font-size: 0.8rem;
+    font-weight: 400;
+}
+
+.topbar-btn-quiet:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: #cfd8dc;
+}
+
+/* ── Destructive variant — used by Change collection (wipes filters/history) ── */
+.topbar-btn-destructive {
+    border-color: rgba(255, 152, 0, 0.4);
+    background: rgba(255, 152, 0, 0.08);
+    color: #ffb74d;
+    font-weight: 600;
+}
+
+.topbar-btn-destructive:hover:not(:disabled) {
+    background: rgba(255, 152, 0, 0.18);
+    border-color: rgba(255, 152, 0, 0.65);
+    color: #ffffff;
+}
+
+/* ── Vertical separator inside the topbar actions group ── */
+.topbar-divider {
+    display: inline-block;
+    width: 1px;
+    height: 22px;
+    background: rgba(255, 255, 255, 0.12);
+    margin: 0 4px;
+}
+
+/* ── Add current (in the Union Set space-header) ── */
+.union-add-btn {
+    font-size: 0.82rem;
+    padding: 6px 14px;
+}
+
+/* ── History toggle in the Links panel header ── */
+.history-toggle {
+    margin-left: auto;
+    font-size: 0.8rem;
+    padding: 6px 14px;
+}
+
+.history-toggle.active {
+    background: rgba(92, 132, 193, 0.18);
+    border-color: rgba(92, 132, 193, 0.45);
+    color: #ffffff;
+}
+
+/* Links Panel Overrides */
+.links-panel .pill-row button { background: linear-gradient(135deg, #455a64 0%, #263238 100%); }
+.links-panel .pill-row button:hover { box-shadow: 0 6px 16px rgba(69, 90, 100, 0.3); }
+
+/* === Mode Toggle === */
+.mode-toggle {
+    padding: 7px 20px; border-radius: 4px; font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; transition: all 0.25s; text-transform: uppercase; letter-spacing: 0.06em;
+}
+
+.mode-toggle.include { background: transparent; border: 1px solid #388e3c; color: #388e3c; }
+.mode-toggle.include:hover { background: rgba(56, 142, 60, 0.12); }
+.mode-toggle.exclude { background: transparent; border: 1px solid #d32f2f; color: #d32f2f; }
+.mode-toggle.exclude:hover { background: rgba(211, 47, 47, 0.12); }
+
+/* === Large Selection Buttons === */
+#datasets .large-selection-btn, #collections .large-selection-btn {
+    font-size: 1.5rem; padding: 16px 24px; min-width: 200px;
+}
+
+/* === Pagination Buttons === */
+.pg-numbers {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Specific styling for page numbers so they are square-ish */
+.pg-num-btn {
+    padding: 8px 12px;
+    min-width: 36px;
+}
+
+/* The currently selected page */
+.pg-btn.active {
+    background: rgba(92, 132, 193, 0.3);
+    border-color: #5c84c1;
+    color: #ffffff;
+    font-weight: 700;
+    pointer-events: none; /* Prevent clicking the current page */
+}
+
+/* Ellipsis for skipped pages (e.g., 1 2 ... 8 9) */
+.pg-ellipsis {
+    color: #8f9ba8;
+    padding: 0 4px;
+    font-weight: 600;
+    user-select: none;
+}
