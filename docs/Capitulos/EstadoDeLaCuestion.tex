@@ -1,16 +1,317 @@
 \chapter{Estado de la Cuestión}
 \label{cap:estadoDeLaCuestion}
 
-En el estado de la cuestión es donde aparecen gran parte de las referencias bibliográficas del trabajo. Una de las formas más cómodas de gestionar la bibliografía en {\LaTeX} es utilizando \textbf{bibtex}. Las entradas bibliográficas deben estar en un fichero con extensión \textit{.bib} (con esta plantilla se proporciona el fichero biblio.bib, donde están las entradas referenciadas más abajo). Cada entrada bibliográfica tiene una clave que permite referenciarla desde cualquier parte del texto con los siguiente comandos:
+\chapterquote{En primer lugar, nada nace de la nada; pues, si así fuera, cualquier cosa nacería de cualquier otra, sin necesidad de semilla alguna.}{Epicuro}
 
-\begin{itemize}
-\item Referencia bibliografica con cite: \cite{ldesc2e}
-\item Referencia bibliográfica con citep: \citep{notsoshort}
-\item Referencia bibliográfica con citet: \citet{latexAPrimer}
-\end{itemize}
+El motor de exploración descrito en este trabajo se apoya en una tradición de
+décadas de investigación, las cuales indagan en cómo permitir que un usuario explore colecciones digitales de tamaño
+considerable sin conocer de antemano lo que busca, y se inscribe igualmente en la línea de los modelos
+de hipermedia que articularon, mucho antes de la web tal y como la conocemos, las primitivas básicas
+para representar información interconectada. Este capítulo recorre ese marco con dos objetivos
+complementarios. En primer lugar, identificar qué decisiones técnicas del proyecto son herederas
+directas de aportaciones previas, y cuáles otras se separan deliberadamente de ellas. En segundo lugar,
+delimitar el espacio dejado por los trabajos relacionados para justificar la existencia de una nueva
+propuesta. La sección~\ref{sec:marcoTeorico} desarrolla el marco teórico, distinguiendo la navegación
+basada en etiquetas de los modelos de hipermedia más estructurados. La sección~\ref{sec:trabajosRelacionados}
+revisa los proyectos con los que el sistema está en diálogo más estrecho, en particular la plataforma Clavy
+y propuestas recientes basadas en grandes modelos del lenguaje.
 
-Es posible citar más de una fuente, como por ejemplo \citep{latexCompanion,LaTeXLamport,texKnuth}
+\section{Marco teórico}
+\label{sec:marcoTeorico}
 
-Después, \LaTeX se ocupa de rellenar la sección de bibliografía con las entradas \textbf{que hayan sido citadas} (es decir, no con todas las entradas que hay en el .bib, sino sólo con aquellas que se hayan citado en alguna parte del texto).
+La pregunta de fondo que recorre este capítulo es cómo organizar una colección de objetos heterogénea
+de manera que un usuario pueda acercarse a ella de forma exploratoria, sin formular una consulta
+exacta de antemano y sin depender exclusivamente de un sistema de recomendación opaco. El recorrido
+histórico de esa pregunta se ha articulado, a grandes rasgos, en torno a dos paradigmas. El primero, de
+inspiración bibliotecaria, organiza los objetos a través de descripciones controladas (etiquetas, atributos,
+metadatos) y permite recorrerlos refinando progresivamente esas descripciones. El segundo, nacido en el
+ámbito de la documentación interconectada, modela la colección como un grafo de fragmentos enlazados
+y cuyo mecanismo primario de exploración se centra en la transición entre nodos. Nuestro motor toma
+elementos de ambos. Aplica filtrado por metadatos en el sentido del primer paradigma, y permite saltar
+entre colecciones siguiendo relaciones tipadas, en línea con el segundo.
 
-Bibtex es un programa separado de latex, pdflatex o cualquier otra cosa que se use para compilar los .tex, de manera que para que se rellene correctamente la sección de bibliografía es necesario compilar primero el trabajo (a veces es necesario compilarlo dos veces), compilar después con bibtex, y volver a compilar otra vez el trabajo (de nuevo, puede ser necesario compilarlo dos veces). 
+\subsection{Navegación basada en etiquetas de grandes colecciones de objetos}
+\label{subsec:tagBasedBrowsing}
+
+La navegación basada en etiquetas, o \textit{tag-based browsing}, parte de un principio sencillo. Cada
+objeto de la colección se describe mediante un conjunto de pares atributo-valor, también llamados
+etiquetas, y la interacción del usuario consiste en seleccionar una o varias de esas etiquetas para
+restringir progresivamente el conjunto de objetos visibles. La selección de una etiqueta no solo filtra
+los resultados, sino que reduce también el espacio de etiquetas disponibles, presentando al usuario
+únicamente aquellas que pueden seguir refinando el conjunto activo. Este patrón tiene su origen formal
+en el trabajo seminal de \citet{godin1986lattice}, que modela el espacio de navegación como un retículo
+de conceptos, donde cada estado de exploración corresponde a un par formado por un conjunto de
+objetos y un conjunto de etiquetas que los caracteriza, y las transiciones entre estados se obtienen
+añadiendo o eliminando etiquetas. Esta intuición resurge con fuerza en los \textit{semantic file systems}
+descritos por \citet{gifford1991semantic}, donde el sistema de ficheros abandona la jerarquía rígida de
+directorios y la sustituye por una organización plana de etiquetas que se combinan a demanda para
+generar vistas consultables como si fueran carpetas virtuales.
+
+Sobre estas dos referencias se construye buena parte de la literatura posterior. La idea común es que el
+usuario opera sobre un \textit{estado de navegación} caracterizado por el conjunto de etiquetas activas en
+ese momento, al que se asocian dos derivados: el conjunto de objetos filtrados por dichas etiquetas, y el
+conjunto de etiquetas seleccionables que pueden añadirse para reducir aún más esos objetos sin
+vaciarlos. Cada acción del usuario, ya sea añadir o eliminar una etiqueta, transforma el estado y obliga
+a recalcular ambos conjuntos derivados. La formalización de este modelo y su materialización
+algorítmica han sido el objeto de un cuerpo notable de trabajo, en el que se sitúa de forma directa
+la línea de investigación que dio lugar a la plataforma Clavy \citep{gayoso2016siie}, predecesora más
+inmediata de nuestra propuesta. Los autores formalizan la exploración como un autómata de navegación cuyos 
+estados son conjuntos de objetos y cuyas transiciones están etiquetadas con pares atributo-valor.
+
+Este modelo tiene una propiedad relevante para nuestro trabajo, y que conviene subrayar antes de seguir.
+La caracterización del filtrado como una conjunción acumulativa de condiciones se traduce de forma
+natural a una consulta sobre una base de datos relacional o sobre un índice invertido, dado que cada
+etiqueta seleccionada corresponde a una condición \texttt{AND} adicional. Nuestra implementación
+hereda exactamente esa estructura. Los filtros de metadatos descritos en el capítulo de
+desarrollo se construyen como cláusulas \texttt{EXISTS} encadenadas, y el conjunto de etiquetas
+seleccionables, que en nuestro sistema denominamos \textit{facetas}, se computa de manera dinámica
+agregando los valores presentes en los objetos visibles. La diferencia, sin embargo, es que la literatura
+clásica de navegación por etiquetas se ha centrado mayoritariamente en colecciones planas, en las que
+todos los objetos son del mismo tipo y comparten un único espacio de etiquetas. En escenarios de
+mayor riqueza semántica, donde conviven entidades de naturaleza distinta (películas y personas, libros
+y autores, productos y fabricantes), el modelo plano resulta limitado. Allí donde la literatura propone
+una única colección descrita por etiquetas heterogéneas, nuestro motor distingue colecciones múltiples
+descritas cada una por sus propios atributos y conectadas entre sí por relaciones explícitas, lo que abre
+la puerta al segundo paradigma del que hablábamos al inicio de la sección.
+
+\subsection{Modelos de hipermedia y navegación estructurada}
+\label{subsec:hypermedia}
+
+La tradición de la navegación por etiquetas describe el qué (qué condiciones se cumplen, qué objetos
+las satisfacen) pero deja en segundo plano el cómo (cómo el usuario llega de un objeto al siguiente, qué
+relaciones explícitas existen entre ellos). Este vacío lo cubre la tradición de la hipermedia, una línea de
+investigación que ha producido una colección de modelos de referencia cuyo objetivo común era
+proporcionar un vocabulario formal para describir documentos interconectados. \citet{gruzman2000hypermedia}
+ofrecen una revisión panorámica de esta familia de modelos que conviene resumir aquí, porque
+varias de sus categorías son directamente trasladables a las decisiones de diseño de nuestro sistema.
+
+El primero y más antiguo de estos modelos es el HAM (\textit{Hypertext Abstract Machine}), concebido
+como una máquina servidor de propósito general para almacenar sistemas de hipertexto. Su modelo de
+memoria distingue cinco objetos básicos: grafos, contextos, nodos, enlaces entre nodos y atributos
+semánticos. La correspondencia entre estas cinco abstracciones y los componentes de nuestro sistema
+es notablemente directa, lo que justifica con detalle la afirmación de que el HAM puede leerse como un
+antepasado conceptual del diseño aquí presentado. El \textit{grafo} del HAM, entendido como la red
+global de información que da soporte al hiperdocumento, encuentra su equivalente en la combinación
+de las tablas \texttt{collections} y \texttt{reference} de nuestra base de datos, que en conjunto definen
+el universo de las entidades disponibles y de los vínculos tipados que las conectan. Los \textit{nodos},
+unidades indivisibles de contenido en el HAM, se corresponden con las filas de la tabla
+\texttt{entities}, cada una de las cuales representa una película, una serie, una persona o cualquier otra
+unidad atómica del dominio. Los \textit{enlaces} entre nodos son la traducción literal de las filas de la
+tabla \texttt{reference}, que registran asociaciones bidireccionales entre entidades acompañadas de una
+\textit{razón} (\textit{Director}, \textit{Actor}, etc.) que tipifica la naturaleza del vínculo. Los
+\textit{atributos semánticos} del HAM, expresados en aquel modelo como pares clave-valor adheridos
+a nodos y enlaces, tienen un reflejo casi idéntico en nuestra tabla \texttt{metadata}, que asocia a cada
+entidad un conjunto de pares atributo-valor sobre los que opera el filtrado clásico.
+
+El paralelismo se completa, y resulta especialmente revelador, en el caso del \textit{contexto}.
+El contexto del HAM se concibe como un fragmento de datos del grafo que recoge una vista parcial
+pertinente para una sesión de usuario, separada del grafo persistente y susceptible de modificarse sin
+alterar la información subyacente. Esa es exactamente la función que cumple la clase \texttt{State} de
+nuestro sistema. \texttt{State} encapsula los filtros activos, el historial de transiciones y la colección
+sobre la que se está operando en un momento dado, viviendo en memoria dentro de la sesión HTTP y
+articulando una vista del grafo persistente que es específica de cada usuario. La distinción entre datos
+del dominio, persistentes y compartidos, y contexto de exploración, momentáneo y por sesión, una
+decisión que se detalla en el capítulo de arquitectura, encuentra aquí su raíz conceptual.
+
+El segundo modelo de referencia, conceptualmente posterior y más elaborado, es el modelo Dexter
+(\textit{Dexter Hypertext Reference Model}). Dexter organiza el sistema de hipermedia en tres capas
+con interfaces bien definidas. Una capa de almacenamiento, donde residen los componentes
+persistentes y sus enlaces. Una capa de ejecución, que coordina las sesiones de usuario y la
+instanciación de los componentes activos. Y una capa intracomponente, que describe la estructura
+interna de cada componente y se conecta con el resto a través de un mecanismo explícito de
+\textit{anclajes} (\textit{anchors}). Esta triple separación encuentra paralelismos en la arquitectura de
+nuestro sistema, donde la capa de persistencia (PostgreSQL y la capa DAO), la capa de ejecución
+(\texttt{StateManager} y los \textit{servlets} que orquestan la sesión) y la capa de presentación
+(\textit{frontend}) cumplen funciones análogas. Más relevante aún es la noción de \textit{enlace} en
+Dexter, donde un enlace no es una propiedad implícita de un nodo sino un componente de primera
+clase, dotado de identidad propia, posiblemente multidireccional y susceptible de ser él mismo
+referenciado. Nuestro objeto \texttt{Link}, que representa una transición entre colecciones e incluye la
+dirección, la razón de la relación y una copia del estado en el momento de realizarla, se inscribe en
+esta misma tradición. La transición no es un efecto secundario opaco de hacer clic en un elemento,
+sino un objeto explícito y persistente, cuya cadena conforma el historial de exploración y se integra
+literalmente en la consulta SQL que se construye en cada petición.
+
+Una tercera línea, mucho más reciente y específicamente vinculada al desarrollo web moderno, es la
+recuperación de la idea de \textit{Hypermedia As The Engine Of Application State} (HATEOAS),
+formulada originalmente por Fielding como uno de los principios constitutivos del estilo arquitectónico
+REST. \citet{vepsalainen2024hypermedia} señala que HATEOAS, pese a haber sido el motor conceptual
+detrás de REST, es probablemente la parte menos implementada del modelo, y que los sistemas web
+mayoritarios (basados en arquitecturas de página única que mantienen el estado en el cliente) han
+desplazado el espíritu original. La idea fundamental de HATEOAS es que la representación que el
+servidor envía al cliente no contiene únicamente datos, sino también las acciones que el usuario puede
+ejecutar a continuación, codificadas como controles hipermedia. El cliente, por tanto, no necesita
+conocer de antemano la estructura completa de la API, sino que descubre el espacio de acciones
+disponibles a partir de la respuesta a su petición actual. \citet{vepsalainen2024hypermedia} destaca
+también la noción de \textit{transclusión}, esto es, la sustitución parcial de fragmentos de una página
+por contenido nuevo recibido del servidor, como una de las primitivas características de los
+\textit{frameworks} hipermedia recientes (htmx, Datastar, Hotwire), frente a la actualización completa
+o al renderizado en cliente.
+
+Examinado bajo esta lente, nuestro sistema satisface el principio en sentido estricto. El
+\textit{endpoint} \texttt{GET /api/facets} devuelve, junto a los objetos visibles, el conjunto completo
+de acciones legales en ese estado: valores de metadatos seleccionables, entidades disponibles como
+filtros de referencia y relaciones tipadas que habilitan saltos a otras colecciones. El cliente no codifica
+internamente el modelo de datos ni el espacio de transiciones, sino que presenta lo recibido y traduce
+las elecciones del usuario en peticiones a los \textit{endpoints} que el servidor indica, mientras el
+contexto de exploración acumulado, motor real del estado de la aplicación, reside íntegramente en el
+\texttt{StateManager}. La transclusión, por su parte, se materializa mediante actualizaciones dinámicas
+que reemplazan únicamente las regiones afectadas tras cada acción.
+
+Estos dos paradigmas, el de la navegación por etiquetas y el de los modelos hipermedia, se han
+mantenido tradicionalmente en compartimentos separados de la literatura. Los sistemas que filtran
+colecciones mediante etiquetas raramente describen sus enlaces entre objetos como elementos de
+primera clase, y los sistemas hipermedia tienden a primar la navegación entre nodos sobre el
+filtrado dentro de un nodo. La síntesis de ambos paradigmas, que es donde se sitúa nuestra
+contribución, no está extensamente cubierta en la literatura. Los trabajos que sí han abordado esa
+intersección, y de los que nuestro proyecto es heredero, en mayor o menor medida, son los que se revisan
+en la siguiente sección.
+
+\section{Trabajos relacionados}
+\label{sec:trabajosRelacionados}
+
+Los modelos discutidos en la sección anterior forman el sustrato conceptual sobre el que se asienta
+nuestro motor, pero no son trabajos directamente comparables. En esta sección se revisan dos
+proyectos cuya distancia con nuestra propuesta es lo suficientemente corta como para que la
+comparación sea inevitable. El primero, Clavy, es la línea de investigación que más profundamente
+ha explorado la combinación de filtrado por etiquetas y reconfiguración dinámica de esquemas en
+colecciones digitales, y constituye nuestro referente inmediato. El segundo, Knowledge Navigator,
+representa una corriente reciente que ataca el mismo problema (la exploración de colecciones
+extensas) desde una perspectiva radicalmente distinta, basada en grandes modelos del lenguaje. Una
+revisión de estos dos polos basta para situar el espacio que nuestra propuesta pretende ocupar.
+
+\subsection{Clavy}
+\label{subsec:clavy}
+
+Clavy es una plataforma experimental para la gestión de repositorios de objetos de aprendizaje con
+estructuras dinámicamente reconfigurables, desarrollada a lo largo de la última década en la Universidad
+Complutense de Madrid \citep{gayoso2016siie}. Su rasgo distintivo, frente a las propuestas estándar
+de repositorios de objetos de aprendizaje basadas en esquemas fijos como LOM o IMS CP, es
+permitir que cada repositorio defina su propio esquema de metadatos, que ese esquema se construya
+de forma inductiva a medida que se cataloga la colección, y que sea reconfigurable en cualquier momento
+por los usuarios. Esta filosofía bottom-up acerca a Clavy a las folksonomías y, más en general, a los
+sistemas en los que la organización de la información emerge del uso colaborativo y no se impone de
+antemano \citep{gayoso2016wise}.
+
+El núcleo conceptual de Clavy, el que más interesa a nuestra discusión, es su modelo de navegación.
+Internamente, Clavy abstrae cada objeto del repositorio como un conjunto de pares elemento-valor que
+funcionan como etiquetas. Sobre esa abstracción, la plataforma implementa un modelo de
+\textit{tag-based browsing} en el sentido descrito en la
+sección~\ref{subsec:tagBasedBrowsing}: el usuario añade y elimina etiquetas, el sistema mantiene un
+estado caracterizado por las etiquetas activas, y por cada acción se actualizan tanto el conjunto de
+objetos filtrados como el conjunto de etiquetas que siguen siendo seleccionables. La originalidad de
+Clavy reside en que la jerarquía de elementos del esquema, presentada al usuario como una organización
+facetada del espacio de navegación, puede modificarse en cualquier momento sin necesidad de
+reorganizar la colección \citep{gayoso2016isd}. Para hacer compatibles ambos requisitos, los autores
+demostraron que el comportamiento del sistema podía caracterizarse como un autómata de navegación
+finito independiente de la jerarquía. Dado que ese autómata puede, en el peor caso, crecer
+exponencialmente con respecto al tamaño de la colección, la línea posterior de la plataforma se ha
+dedicado a desarrollar estrategias de indexación y de \textit{caching} que aproximan el comportamiento
+deseado sin materializar el autómata por completo. Este conjunto de técnicas incluye una estrategia
+basada en la identificación de estados equivalentes (estados que filtran exactamente el mismo conjunto
+de objetos, aunque procedan de combinaciones distintas de etiquetas), que permite reducir
+sustancialmente el coste de las operaciones de navegación \citep{gayoso2019smartcache}.
+
+En paralelo a la consolidación del modelo de navegación, Clavy ha evolucionado para acomodar
+necesidades expresivas más sofisticadas. La incorporación de elementos multivaluados, esto es, de
+elementos del esquema que pueden aparecer múltiples veces en la descripción del mismo objeto,
+fue un paso importante en escenarios reales como las bibliotecas digitales humanísticas, donde un
+objeto típicamente representa una obra con varios contribuidores, cada uno con sus propios atributos
+\citep{gayoso2023siie}. La caracterización de estos esquemas como un tipo restringido de gramática
+EBNF abre además la posibilidad de extender el modelo a estructuras alternativas y recursivas,
+acercándolo al espíritu de los lenguajes generalizados de marcado. La aplicabilidad práctica de la
+plataforma se ha demostrado en repositorios reales de humanidades, lingüística y, recientemente,
+medicina, donde Clavy ha servido como soporte para generar paquetes de contenido educativo
+estandarizado a partir de colecciones médicas existentes \citep{buendia2019medsys}.
+
+La proximidad de Clavy con nuestro proyecto es evidente, y esa proximidad nos obliga a hacer explícitas las
+diferencias. Compartimos la idea de un modelo interno
+basado en pares atributo-valor con independencia del dominio, la de una navegación guiada por la
+selección incremental de filtros, la del cómputo dinámico de las facetas a partir del estado actual y la
+de un motor que opera sobre un modelo abstracto desacoplado de la fuente de datos concreta. Las
+diferencias, sin embargo, marcan el espacio que nuestra propuesta ocupa. Clavy se centra en colecciones
+homogéneas, donde todos los objetos pertenecen al mismo dominio y comparten un único esquema,
+con una organización plana que permite reconfigurar la jerarquía de presentación sin afectar a la
+estructura subyacente. Nuestro motor, en cambio, asume desde el principio una colección estratificada
+en varias subcolecciones de naturaleza distinta (por ejemplo, películas, series, personas, productoras,
+cadenas), cada una con su propio espacio de atributos, y vinculadas entre sí por relaciones explícitamente
+tipadas. Esa estructura introduce dos primitivas que no tienen análogo directo en Clavy. Por un lado, los
+filtros de referencia, que permiten restringir los objetos visibles de una colección por su vinculación con
+entidades concretas de otra. Por otro lado, la navegación transversal, que permite trasladarse de una
+colección a otra siguiendo una relación y arrastrando el contexto de filtrado acumulado, con un historial
+de transiciones que se materializa en subconsultas SQL anidadas. A estas dos primitivas se añade la
+operación de unión, que permite al usuario construir varios contextos de exploración de manera
+independiente y combinarlos a posteriori para obtener el conjunto de entidades que satisfacen al menos
+uno de ellos. Esta operación cubre casos de uso, como la búsqueda de personas que han participado
+como directoras en películas de un género o como actrices en series de otro, que no pueden expresarse
+con la semántica puramente conjuntiva del filtrado clásico, en la que todas las condiciones acumuladas
+deben cumplirse simultáneamente.
+
+Igualmente importante es la diferencia de énfasis. Clavy ha priorizado la reconfigurabilidad dinámica
+del esquema y la indexación eficiente, problemas cruciales cuando la colección y su organización
+evolucionan en paralelo, y por ello ha invertido un esfuerzo considerable en el desarrollo de
+estructuras de índice (autómatas de navegación, dendrogramas, cachés selectivas) que aproximen el
+comportamiento ideal del autómata de navegación sin pagar su coste exponencial en el peor caso.
+Nuestro proyecto adopta una posición opuesta. Asume un esquema relativamente estable y delega en
+PostgreSQL toda la responsabilidad de la indexación, evitando así reimplementar técnicas de
+recuperación de información que la base de datos ya resuelve de forma madura. El espacio que se
+libera en el lado del motor se invierte en lo que constituye el aporte diferencial de la propuesta, esto
+es, la construcción incremental de consultas SQL que reflejen un contexto de navegación enriquecido
+con filtros relacionales, transiciones tipadas entre colecciones y combinaciones de conjuntos sobre
+contextos independientes. Es en ese desplazamiento del foco, desde el problema de la indexación hacia
+el de la traducción dinámica de un estado de exploración complejo a una consulta ejecutable, donde
+nuestra propuesta complementa, sin solapar, la línea de trabajo de Clavy.
+
+\subsection{Knowledge Navigator y la exploración asistida por modelos del lenguaje}
+\label{subsec:knowledgenav}
+
+En el extremo opuesto del espectro metodológico se sitúan las propuestas recientes que abordan el
+mismo problema de fondo, la exploración de colecciones extensas, mediante técnicas basadas en
+grandes modelos del lenguaje. Knowledge Navigator, descrito por \citet{katz2024knowledgenav}, es
+representativo de esta corriente. Dada una consulta amplia sobre un dominio científico, el sistema
+recupera centenares de documentos relevantes, los embebe en un espacio vectorial, los agrupa
+mediante clustering probabilístico (modelos de mezcla gaussiana sobre embeddings reducidos con UMAP),
+y delega en un modelo de lenguaje las tareas de etiquetar cada \textit{cluster} con un nombre y una
+descripción, filtrar aquellos que resultan poco relevantes para la consulta original y organizar los
+resultantes en una jerarquía temática de dos niveles que el usuario puede recorrer.
+
+La filiación de Knowledge Navigator con la tradición clásica de \textit{cluster-based browsing} es
+declarada por sus propios autores, que sitúan su propuesta como una recuperación moderna del
+paradigma Scatter/Gather de los años noventa. Lo que el modelo del lenguaje aporta a esa tradición es,
+fundamentalmente, una mejora en la calidad de las representaciones de los \textit{clusters}, durante
+mucho tiempo el principal obstáculo para la adopción práctica del paradigma. Los nombres y
+descripciones generados por el modelo, frente a las listas de palabras clave extraídas automáticamente
+que caracterizaban a los sistemas anteriores, resultan suficientemente legibles como para servir de
+mapa al usuario. Las evaluaciones reportadas en el artículo, tanto automáticas como con expertos
+humanos, sugieren que el sistema es capaz de cubrir más del setenta por ciento de los subtemas que un
+revisor humano habría identificado en una revisión sistemática de literatura, y de generar además
+subtemas adicionales no presentes en la revisión.
+
+La distancia con nuestra propuesta es, en este caso, mucho más amplia que en el caso de Clavy, y por
+razones casi opuestas. Knowledge Navigator opera sobre colecciones de texto plano (artículos científicos),
+sin un modelo relacional explícito, y construye la organización de la colección a partir de propiedades
+estadísticas del lenguaje. La organización resultante es probabilística, no necesariamente reproducible
+entre ejecuciones, y depende del sesgo del modelo subyacente. Nuestro motor, en cambio, opera sobre
+una colección con un modelo de datos explícito (entidades, atributos, relaciones tipadas) y construye la
+organización de la exploración mediante operaciones deterministas y trazables sobre ese modelo. La
+elección entre ambos enfoques no es de mayor o menor sofisticación, sino de adecuación al problema:
+para una colección no estructurada, donde no existe un modelo relacional latente que un sistema
+determinista pueda explotar, la aproximación basada en modelos del lenguaje es probablemente la única
+viable. Para colecciones donde sí existe ese modelo, como las que motivan nuestro trabajo, prescindir
+de él para reducir el problema a uno de \textit{clustering} sobre embeddings supondría desperdiciar
+información estructural valiosa y aceptar la opacidad del modelo del lenguaje a cambio de poco.
+
+Esa distinción permite también identificar de manera explícita el hueco en el estado del arte que
+justifica la existencia de este proyecto. Por un lado, las herramientas clásicas de navegación basada en
+etiquetas, ejemplificadas por la línea Clavy, ofrecen un modelo determinista y trazable, pero se han
+mantenido predominantemente en el escenario de colecciones homogéneas, sin primitivas explícitas
+para la navegación transversal entre colecciones de distinta naturaleza ni para la combinación de
+contextos de exploración construidos por separado. Por otro lado, las herramientas recientes basadas
+en modelos del lenguaje son flexibles ante colecciones no estructuradas, pero renuncian al modelo
+relacional explícito y, con él, a la posibilidad de operaciones deterministas sobre el espacio de
+navegación. Entre ambos extremos queda un espacio escasamente cubierto de forma
+satisfactoria, el de un motor de exploración que mantenga el rigor determinista de la primera
+tradición, que extienda el modelo plano de etiquetas con relaciones tipadas entre colecciones y con
+operaciones de conjuntos sobre contextos independientes, y que exponga estas capacidades a través
+de una API web de manera que sean efectivamente utilizables desde una interfaz interactiva. La
+propuesta cuyo desarrollo se detalla en los capítulos siguientes pretende, precisamente, ocupar ese
+espacio.

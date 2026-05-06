@@ -6,17 +6,17 @@ En primer lugar, exponemos los marcos metodológicos utilizados para el manejo d
 definiendo las herramientas, prácticas y técnicas de ingeniería aplicadas. 
 Luego, seguimos con el desglose de la arquitectura del sistema, delimitando expresamente la separación de responsabilidades 
 a través de las distintas capas de la aplicación: la capa de control y exposición de la API, la capa de persistencia y acceso a datos, 
-y finalmente, el mecanismo de integración con la interfaz de usuario. El principal objetivo de esta arquitectura fue garantiza 
+y finalmente, el mecanismo de integración con la interfaz de usuario. El principal objetivo de esta arquitectura fue garantizar 
 un sistema modular, escalable, mantenible y flexible en la integración de base de datos.
 
 \section{Metodología de Ingeniería del Software}
 
 Este Trabajo de Fin de Grado se ha organizado por principios de Ingeniería de Software fundamentados en el paradigma ágil.
 Como se estableció en el plan de trabajo, hemos optado por \textbf{Scrum} como referencia, adaptando sus características 
-a las particuladades de eun equipo reducido de dos personas. La adaptación resultó esencial para mantener la 
+a las particuladades de un equipo reducido de dos personas. La adaptación resultó esencial para mantener la 
 disciplina y estructura ofrecida por el modelo ágil sin introducir una sobrecarga innecesaria.
 
-Por eso la aplicación de \textbf{Scrum} se centró principalmente en iclos de desarrollo iterativos (\textit{sprints}) 
+Por eso la aplicación de \textbf{Scrum} se centró principalmente en ciclos de desarrollo iterativos (\textit{sprints}) 
 de corta duración, donde se planteaban objetivos concretos y alcanzables. En general, todo iteración coincidía con un 
 incremento funcional del sistema, con excepción de las fases iniciales, en lo cual la mayor parte del esfurzo se mantuvo
 en una especificación incial del motor de navegación. Este abordaje permitió ejecutar una validación progresiva de los componentes 
@@ -26,12 +26,12 @@ mediante una API REST.
 
     \subsection*{Desarrollo iterativo e incremental}
 
-A cambio de definir completa y decididamente la arquitectura desde del principio con un enfoque lineal y secuencial, 
+A cambio de definir completa y decididamente la arquitectura desde el principio con un enfoque lineal y secuencial, 
 como la metodología cascada, el sistema se ha desarrollado de forma incremental. Es sus primeras iteraciones, hemos 
 priorizado la validación del propio modelo de navegación y la estructura de datos adyacente, al mismo tiempo que en 
-fases posteriores hemos incorporado progresivamente la capa de acceso a datos, la API y el \textit{frontendweb}. 
+fases posteriores hemos incorporado progresivamente la capa de acceso a datos, la API y el \textit{front-end web}. 
 Dicho tratamiento resultó significativamente relevante dedido a la naturaleza exploratoria del proyecto, ya que 
-permitió adaptar el diseño del motor de navegación al mismo paso en que se probaba con datos reales.
+permitió adaptar el diseño del motor de navegación al mismo tiempo que se probaba con datos reales.
 
     \subsection*{Gestión de requisitos y backlog}
 
@@ -55,8 +55,8 @@ frente los problemas técnicos.
 
     \subsection*{Control de versiones y gestión del código fuente}
 
-En virtude de la necesidad de mantener la integridad del código y facilitar el trabajo colaborativo, hemos 
-utilziado Git como sistema de control de versiones distribuido. El repositorio principal se alojó en GitHub 
+En virtud de la necesidad de mantener la integridad del código y facilitar el trabajo colaborativo, hemos 
+utilizado Git como sistema de control de versiones distribuido. El repositorio principal se alojó en GitHub 
 y se empleó una estrategia de ramificación sencilla : una rama principal (\texttt{main}) para el código 
 estable y funcional, y ramas de características (\textit{feature branches}) para el desarrollo de nuevos 
 componentes antes de su integración final. Con esa metodología, hemos podido trabajar en paralelo sin conflictos 
@@ -66,7 +66,7 @@ significativos manteniendo siempre una versión funcional del sistema.
 
 Durante el desarrollo hemos dado especial atención a la aplicación de buenas prácticas de programación y 
 diseño software. Se siguieron principios de separación de responsabilidades (\textit{Separation of Concerns}) 
-y modularidad, lo está reflejado en la organización del código en distintos paquetes (por ejemplo, 
+y modularidad, lo cual está reflejado en la organización del código en distintos paquetes (por ejemplo, 
 \texttt{controller}, \texttt{model}, \texttt{dao}, \texttt{filter}, etc.). Dicha estructura tiende a facilitar 
 la legibilidad del código, su mantenimiento y la posibilidad de ampliación futura sin 
 necesidad de realizar modificaciones significativas o profundas en su arquitectura.
@@ -76,7 +76,7 @@ necesidad de realizar modificaciones significativas o profundas en su arquitectu
 Para permitir la exposición de la lógica del motor de exploración y su respectivo consumo por parte de aplicaciones, 
 hemos diseñado una arquitectura fundamentada en el modelo Cliente-Servidor. Desde el lado del servidor (\textit{backend}), 
 la aplicación favorece el desacoplamiento al basarse en capas bien definidas. Esta sección se dedica a detallar la capa de 
-control, responsable por enrutar las distintas peticiones HTTP, y la capa de filtros, encargada de controlar las políticas 
+control, responsable de enrutar las distintas peticiones HTTP, y la capa de filtros, encargada de controlar las políticas 
 de acceso y seguridad.
 
     \subsection*{Diseño de la API y Controladores}
@@ -96,12 +96,12 @@ control más preciso de la gestión de sesiones, el formato de las respuestas y 
 
 Para ejecutar la aplicación se ha utilizado Apache Tomcat como contenedor de \textit{Servlets}. Nos hemos inclinado por 
 Tomcat frente a otras opciones principalmente por la naturaleza del proyecto. Tomcat es un contenedor
-considerablemente leve, enfocadoen la ejecución de aplicaciones basadas en \textit{Servlets} y JSP, lo que lo convierte en
+considerablemente ligero, enfocado en la ejecución de aplicaciones basadas en \textit{Servlets} y JSP, lo que lo convierte en
 una solución adecuada para trabajar directamente con la API de Java sin generar dependencias adicionales.
 
 Por motivos semejantes, hemos descartado servidores de aplicaciones completos como GlassFish, 
-ya que requiere tecnologías adicionales como EJB y gestión avanzada de recursos.
-Alternativas como Jetty también permiten ejecutar \textit{Servlets}, pero está más orientado a una 
+ya que requieren tecnologías adicionales como EJB y gestión avanzada de recursos.
+Alternativas como Jetty también permiten ejecutar \textit{Servlets}, pero éste está más orientado a una 
 integración embebida dentro de otras aplicaciones/frameworks. Un contenedor independiente, 
 sencillo de configurar y con respaldo de experiencia en entornos académicos y de desarrollo hace que 
 Tomcat resulte la opción más estable encontrada.
@@ -140,17 +140,17 @@ y mantener una coherencia estricta con el modelo de navegación propuesto.
 
     \subsection*{Componentes transversales de la arquitectura}
 
-El sistente contiene una serie de componentes transversales, para allá de la capa de controladores, que proporcionan 
+El sistente contiene una serie de componentes transversales, más allá de la capa de controladores, que proporcionan 
 funcionalidades comunes que permiten separar claramente la lógica de dominio y los aspectos técnicos propios de la 
 infraestructura web.
 
-Como mencionado en la sección anterior, la gestión de sesiones es un elemento fundamental dentro de la arquitectura, pues 
+Como se ha mencionado en la sección anterior, la gestión de sesiones es un elemento fundamental dentro de la arquitectura, pues 
 es el responsable por mantener el contexto de navegación del usuario entre peticiones distintas. A través del mecanismo de
 \texttt{HttpSession}, el sistema asocia cada usuario con una instancia de \texttt{StateManager}, lo que 
 garantiza la persistencia del estado de navegación y posibilita un modelo de interacción basado en estados.
 
 Por otro lado, la serialización de datos en formato JSON empleada de manera sistemática funciona como el mecanismo 
-clave para el intercambio de información entre el backend y el frontend. Este abordaje se ha hecho necesario principalmente 
+clave para el intercambio de información entre el \textit{backend} y el \textit{frontend}. Este abordaje se ha hecho necesario principalmente 
 para desacoplar ambas capas, lo que facilita la evolución independiente de la interfaz de usuario y del motor de navegación
 como tal.
 
@@ -165,15 +165,15 @@ se evita introducir lógica técnica adicional en los controladores y se mantien
 
 La capa de persistencia y su respectivo diseño constituyen la base fundamental de la arquitectura del sistema, 
 puesto que el motor de navegación tiene una relación de depencia directa de la estructura y disponibilidad de los 
-datos sobre los que opera. Como el sistema no se limita a recuperación de la información, este proyecto los datos no 
+datos sobre los que opera. Como el sistema no se limita a recuperación de la información, en este proyecto los datos no 
 se consumen directamente, sino que pasan por una transformación y reorganización que permiten la exploración mediante 
 un modelo de navegación relacional.
 
 Para posibilitar dicha exploración y mantener un nivel razonable de independencia del dominio, hemos decidido desacoplar 
-completamentela lógica del motor de las fuentes de datos concretas. Para tanto, hemos definido un modelo interno de representación 
+completamente la lógica del motor de las fuentes de datos concretas. Para ello, hemos definido un modelo interno de representación 
 que abstrae las entidades y relaciones relevantes del dominio, permitiendo trabajar de forma uniforme independientemente del origen de los
 datos. Este enfoque es particularmente relevante dado que el sistema integra conjuntos de datos heterogéneos, los cuales deben ser 
-"traducidos" bajo una misma estructura conceptual.
+"traducidos" \ bajo una misma estructura conceptual.
 
 Por ese misma razón, hemos optado por organizar el acceso a datos a través de una capa dedicada de abstracción \textit{(DAO)}, 
 que se encarga de aislar la lógica de acceso, traducción y recuperación de la información. Esta separación es lo que garantiza mantener 
@@ -232,7 +232,7 @@ encapsulando toda la lógica necesaria para la recuperación y adaptación de la
 La principal responsabilidad de los componentes DAO es proporcionar una interfaz uniforme de acceso a los datos,
 independiente de su origen. De este modo, el motor de navegación no interactúa de manera directa con las fuentes externas,
 sino que opera sobre estructuras ya adaptadas al modelo interno. Hemos tomado esta decisión para aislar completamente el núcleo
-del sistema de detalles específicos (como el formato de los datos, los mecanismos de acceso o mismo las 
+del sistema de detalles específicos (como el formato de los datos, los mecanismos de acceso o, mismamente, las 
 particularidades de cada fuente).
 
 Además, esta capa facilita la integración de múltiples conjuntos de datos, ya que cada fuente puede ser gestionada
@@ -269,5 +269,5 @@ intermedios de resultados: en cada petición, el estado en memoria se traduce di
 consulta sobre la base de datos. Esto simplifica el modelo de datos a costa de trasladar la
 complejidad al proceso de construcción dinámica de queries, que debe reflejar fielmente el
 contexto de navegación acumulado. Esta tensión --- entre simplicidad del modelo y complejidad de
-las consultas --- es una de las decisiones de diseño que hemos evaluado tener un gran impacto en la implementación,
+las consultas --- es una de las decisiones de diseño que hemos estimado que tendría un gran impacto en la implementación,
 y se aborda en detalle en el capítulo siguiente.

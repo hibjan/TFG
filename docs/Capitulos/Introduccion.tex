@@ -31,7 +31,7 @@ relacionado con la forma en la que se diseñan y utilizan las colecciones de inf
 Los modelos relacionales de navegación y los sistemas de navegación sobre colecciones 
 \textit{(collection navigation systems)}, traen un enfoque distinto en el que los datos no se 
 representan como elementos aislados, sino como entidades conectadas mediante relaciones semánticas.
-Ese abordaje permite recoger colecciones de manera interactiva, con mecanimos de navegación más expresivos 
+Ese abordaje permite recoger colecciones de manera interactiva, con mecanismos de navegación más expresivos 
 en los que el usuario puede explorar progresivamente una colección compleja combinando filtros, relaciones y 
 transiciones entre entidades.
 
@@ -58,13 +58,13 @@ Con respecto a la macroplanificación, el proyecto se estructuró en dos grandes
 \subsection{Fase 1: Investigación y Prototipo en Java (Septiembre 2025 - Enero 2026)}
 Con el objetivo de validar completa y rigurosamente la viabilidad del motor de navegación y los algoritmos involucrados,
 se optó por desarrollar un prototipo en Java. Deliberadamente abandonando la implementación inicial de una interfaz gráfica,
-hemos centralizado los esfuerzos en su eficacia, eficiencia y robustez técnica de los componentes del sistema.
+hemos centralizado los esfuerzos en la eficacia, eficiencia y robustez técnica de los componentes del sistema.
 Este enfoque permitió analizar en profundidad el comportamiento del algoritmo planteado y la correcta integración
 con la base de datos TMDB.
 
 \begin{itemize}
 \item \textbf{Estudio precedente y proceso de diseño arquitectónico:}
-Es ese momento hemos definido es estado de la cuestión basándonos en artículos de investigación previos, 
+Es ese momento hemos definido el estado de la cuestión basándonos en artículos de investigación previos, 
 seleccionamos los datasets pertinentes y de dominio público y diseñamos el modelo básico de datos relacional.
 
 \item \textbf{Desarrollo del motor de navegación (núcleo backend):}
@@ -93,7 +93,7 @@ con seguridad y de manera estructurada, las capacidades del motor (\texttt{Facet
 \item \textbf{Desarrollo del Frontend:}
 
 Trás definir la API, se desarrolló una interfaz web para la interacción con el motor de navegación.
-Dentre sus principales componentes están: el área de resultados, sistema de filtrado dinámico de metadatos,
+Entre sus principales componentes están: el área de resultados, sistema de filtrado dinámico de metadatos,
 controles de navegación de estados, conjunto de controles de filtros y exploración de relaciones. 
 Todo desde el paradigma de API RESTful con actualizacion dinámica.
 
