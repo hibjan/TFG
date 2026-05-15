@@ -398,6 +398,63 @@ completo que el usuario ha recorrido entre colecciones.
 una copia profunda de todas sus estructuras internas, necesaria para preservar instantáneas
 del estado en distintos puntos de la sesión.
 
+A modo de ejemplo concreto, la Figura~\ref{fig:stateExample} muestra
+cómo se ve un \texttt{State} tras una secuencia típica de operaciones:
+el usuario parte de la colección \textit{Movies} en el dataset TMDB,
+añade un filtro de metadatos \textit{Genres = Action} y a continuación
+navega hacia \textit{People} siguiendo la relación \textit{Director}.
+La colección activa ha pasado a \textit{People}, pero el estado
+conserva tanto los filtros aplicados previamente sobre \textit{Movies}
+como una entrada en \texttt{links} que registra la transición y guarda
+una instantánea del estado en el instante del salto.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+      every node/.style={font=\footnotesize},
+      outer/.style={draw, rounded corners, fill=blue!5,
+                    inner sep=8pt, align=left},
+      header/.style={font=\footnotesize\bfseries},
+      field/.style={draw, rounded corners=2pt, fill=white,
+                    inner sep=4pt, align=left, font=\footnotesize\ttfamily},
+      snap/.style={draw, rounded corners=2pt, fill=yellow!15,
+                   inner sep=3pt, align=left, font=\scriptsize\ttfamily}
+    ]
+    \node[outer, text width=12cm] (state) {%
+      \begin{tabular}{@{}l@{}}
+        \textbf{State} \\[2pt]
+        \ttfamily datasetId = 1 \rmfamily (TMDB) \\
+        \ttfamily currentCollectionId = 3 \rmfamily (People) \\[4pt]
+      \end{tabular}
+      \\[-4pt]
+      \tikz[baseline]{\node[field, text width=11cm]{%
+        \textbf{mfilters}: \{\ 1 (Movies) $\to$ \{\ ``Genres'' $\to$
+        \{``Action''\}\ \}\ \}%
+      };} \\[3pt]
+      \tikz[baseline]{\node[field, text width=11cm]{%
+        \textbf{notMfilters} / \textbf{rfilters} / \textbf{notRfilters}: \{\ \} (vacíos)%
+      };} \\[3pt]
+      \tikz[baseline]{\node[field, text width=11cm]{%
+        \textbf{links}: \\[2pt]
+        \quad [0] Link(forward = true, collectionId = 1 (Movies), \\
+        \quad\phantom{[0] }reason = ``Director'', \\
+        \quad\phantom{[0] }state = \tikz[baseline]{\node[snap]{%
+          \textit{snapshot}: currentCollectionId = 1, \\
+          \phantom{snapshot:\ }mfilters = \{ Movies $\to$ Genres $\to$ Action \}, \\
+          \phantom{snapshot:\ }links = [\ ]%
+        };})%
+      };}%
+    };
+  \end{tikzpicture}
+  \caption[Ejemplo de objeto \texttt{State}]{Instantánea de un
+  \texttt{State} tras filtrar películas por \textit{Genres = Action}
+  y navegar a \textit{People} por la relación \textit{Director}. La
+  colección activa es ya \textit{People}, pero los filtros aplicados
+  sobre \textit{Movies} y la transición que cruzó al usuario quedan
+  registrados en \texttt{mfilters} y \texttt{links}, respectivamente.}
+  \label{fig:stateExample}
+\end{figure}
+
     \subsection{\texttt{StateManager}: gestión del ciclo de vida del estado}
 
 \texttt{StateManager} es el punto de entrada a través del cual los controladores interactúan
@@ -643,6 +700,49 @@ mismo \texttt{Link} se apila en \texttt{linkStack}, la pila auxiliar que mantien
 \texttt{StateManager} para conocer cuál es la última transición revertible en una
 eventual operación de \texttt{goback}.
 
+La Figura~\ref{fig:seqLink} resume la secuencia de mensajes entre el
+cliente, el \texttt{NavigationServlet} y el modelo en memoria al
+ejecutar una operación de \textit{link}. Se observa que el servlet
+invoca primero \texttt{save()} (volcando una copia del estado actual a
+\texttt{historyStack}) y a continuación \texttt{link()}, dentro de
+la cual \texttt{StateManager} actualiza tanto la colección activa de
+\texttt{cur} como sus listas internas \texttt{links} y \texttt{linkStack}.
+
+\begin{figure}[H]
+  \centering
+  \resizebox{\textwidth}{!}{%
+  \begin{sequencediagram}
+    \newthread{c}{:Cliente}
+    \newinst[2]{nav}{:NavigationServlet}
+    \newinst[2]{sm}{:StateManager}
+    \newinst[2]{state}{cur:State}
+
+    \begin{call}{c}{POST /api/navigation (action=link)}{nav}{HTTP 200 JSON}
+      \begin{call}{nav}{save()}{sm}{}
+        \begin{call}{sm}{historyStack.push(new State(cur))}{sm}{}
+        \end{call}
+      \end{call}
+      \begin{call}{nav}{link(collectionId, reason)}{sm}{}
+        \begin{call}{sm}{new Link(true, curColl, reason, new State(cur))}{sm}{}
+        \end{call}
+        \begin{call}{sm}{link(collectionId, reason)}{state}{}
+        \end{call}
+        \begin{call}{sm}{getLinks().add(newLink)}{state}{}
+        \end{call}
+        \begin{call}{sm}{linkStack.push(newLink)}{sm}{}
+        \end{call}
+      \end{call}
+    \end{call}
+  \end{sequencediagram}}
+  \caption[Diagrama de secuencia de \texttt{link}]{Secuencia de
+  mensajes durante la operación \texttt{link}. \texttt{save()} guarda
+  una copia profunda del estado en \texttt{historyStack}; a
+  continuación \texttt{link()} crea el nuevo \texttt{Link} con
+  instantánea del estado previo, actualiza \texttt{cur} y lo apila
+  tanto en \texttt{cur.getLinks()} como en \texttt{linkStack}.}
+  \label{fig:seqLink}
+\end{figure}
+
 La operación \texttt{goback} revierte la última transición hacia delante realizada en
 la sesión. Su implementación se apoya en \texttt{linkStack}: extrae de la pila el último
 \texttt{Link} apilado por \texttt{link()}, construye un nuevo \texttt{Link} con dirección
@@ -668,6 +768,47 @@ resultante debe recorrer toda la cadena de transiciones acumuladas, incluidos lo
 retrocesos, para reconstruir fielmente el contexto de exploración. La pila
 \texttt{linkStack}, en cambio, sí pierde la entrada con cada \texttt{goback}, pero su rol
 es estrictamente operacional: indicar cuál es la próxima reversión legal y nada más.
+
+Esta asimetría queda reflejada en la
+Figura~\ref{fig:seqGoback}: \texttt{linkStack.pop()} consume la cabeza
+de la pila, mientras que el nuevo \texttt{Link} de retroceso se añade
+únicamente a \texttt{cur.getLinks()}, dejando la cadena efectiva del
+historial monótonamente creciente.
+
+\begin{figure}[H]
+  \centering
+  \resizebox{\textwidth}{!}{%
+  \begin{sequencediagram}
+    \newthread{c}{:Cliente}
+    \newinst[2]{nav}{:NavigationServlet}
+    \newinst[2]{sm}{:StateManager}
+    \newinst[2]{state}{cur:State}
+
+    \begin{call}{c}{POST /api/navigation (action=goback)}{nav}{HTTP 200 JSON}
+      \begin{call}{nav}{save()}{sm}{}
+        \begin{call}{sm}{historyStack.push(new State(cur))}{sm}{}
+        \end{call}
+      \end{call}
+      \begin{call}{nav}{goback()}{sm}{}
+        \begin{call}{sm}{last = linkStack.pop()}{sm}{}
+        \end{call}
+        \begin{call}{sm}{new Link(false, curColl, last.reason, new State(cur))}{sm}{}
+        \end{call}
+        \begin{call}{sm}{goback(last.collectionId)}{state}{}
+        \end{call}
+        \begin{call}{sm}{getLinks().add(backLink)}{state}{}
+        \end{call}
+      \end{call}
+    \end{call}
+  \end{sequencediagram}}
+  \caption[Diagrama de secuencia de \texttt{goback}]{Secuencia de
+  mensajes durante la operación \texttt{goback}. \texttt{linkStack}
+  sí se reduce con \texttt{pop()}, pero el historial efectivo en
+  \texttt{cur.getLinks()} crece con un nuevo \texttt{Link} marcado
+  como retroceso (\texttt{forward = false}), preservando toda la
+  cadena de transiciones para reconstruir el contexto en SQL.}
+  \label{fig:seqGoback}
+\end{figure}
 
     \subsection{Subconsultas anidadas: traducción del historial de \textit{links} a SQL}
 
@@ -789,6 +930,48 @@ iniciado del anterior.
 El \texttt{unionSet} puede acumular un número arbitrario de entradas repitiendo esta
 operación. Cada entrada es un estado completo e independiente, con su propia colección
 activa, sus propios filtros y su propio historial de transiciones.
+
+La Figura~\ref{fig:seqUnion} ilustra la secuencia de mensajes
+correspondiente. A diferencia de \texttt{link} y \texttt{goback}, la
+operación no toca \texttt{State} directamente: el estado anterior se
+añade tal cual a \texttt{unionSet} (sin copia profunda, dado que
+\texttt{cur} va a ser reemplazado), y \texttt{change()} instala un
+\texttt{State} recién creado como nuevo contexto activo.
+
+\begin{figure}[H]
+  \centering
+  \resizebox{\textwidth}{!}{%
+  \begin{sequencediagram}
+    \newthread{c}{:Cliente}
+    \newinst[2]{nav}{:NavigationServlet}
+    \newinst[2]{sm}{:StateManager}
+    \newinst[2]{state}{:State}
+
+    \begin{call}{c}{POST /api/navigation (action=union, collectionId)}{nav}{HTTP 200 JSON}
+      \begin{call}{nav}{save()}{sm}{}
+        \begin{call}{sm}{historyStack.push(new State(cur))}{sm}{}
+        \end{call}
+      \end{call}
+      \begin{call}{nav}{union(collectionId)}{sm}{}
+        \begin{call}{sm}{unionSet.add(cur)}{sm}{}
+        \end{call}
+        \begin{call}{sm}{change(collectionId)}{sm}{}
+          \begin{call}{sm}{historyStack.clear()}{sm}{}
+          \end{call}
+          \begin{call}{sm}{new State(datasetId, collectionId)}{state}{cur}
+          \end{call}
+        \end{call}
+      \end{call}
+    \end{call}
+  \end{sequencediagram}}
+  \caption[Diagrama de secuencia de \texttt{union}]{Secuencia de
+  mensajes durante la operación \texttt{union}. El estado activo
+  pasa a \texttt{unionSet} sin copia profunda y \texttt{change()}
+  vacía \texttt{historyStack} antes de reinicializar \texttt{cur} con
+  un \texttt{State} limpio sobre la colección indicada. La pila
+  \texttt{linkStack} no se modifica.}
+  \label{fig:seqUnion}
+\end{figure}
 
     \subsection{Resolución de la unión en base de datos}
 
@@ -952,6 +1135,79 @@ petición y lo devuelve como valor explícito. Complementariamente, fue necesari
 configurar el \texttt{CookieProcessor} en \texttt{context.xml} con
 \texttt{sameSiteCookies="None"} para que la cookie de sesión se enviara correctamente
 en peticiones cross-origin.
+
+El flujo completo de una petición HTTP, desde el \textit{preflight}
+CORS hasta la respuesta JSON, se ilustra en la
+Figura~\ref{fig:httpFlow}. El diagrama distingue las dos fases que el
+navegador desencadena de manera automática para una petición
+cross-origin con credenciales: primero un \texttt{OPTIONS} que
+\texttt{CORSFilter} corta en cuanto inyecta las cabeceras, y a
+continuación la petición real, que recorre toda la cadena
+(filtro $\to$ servlet $\to$ DAO $\to$ JDBC $\to$ PostgreSQL) antes de
+devolver el cuerpo JSON.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+      node distance=0.55cm and 1.0cm,
+      every node/.style={font=\footnotesize, align=center},
+      block/.style={draw, rectangle, rounded corners,
+                    minimum width=5.4cm, minimum height=0.75cm,
+                    fill=blue!5},
+      filter/.style={draw, rectangle, rounded corners,
+                     minimum width=5.4cm, minimum height=0.75cm,
+                     fill=orange!10},
+      io/.style={draw, rectangle, rounded corners,
+                 minimum width=5.4cm, minimum height=0.75cm,
+                 fill=green!8},
+      db/.style={draw, rectangle, rounded corners,
+                 minimum width=5.4cm, minimum height=0.75cm,
+                 fill=teal!8},
+      arrow/.style={-Latex, thick}
+    ]
+    \node[io] (opt)
+      {Cliente: \texttt{OPTIONS /api/\ldots}\\(preflight CORS)};
+    \node[filter, below=of opt] (cors1)
+      {\texttt{CORSFilter}: inyecta cabeceras\\
+       \texttt{Access-Control-Allow-*} y responde \texttt{200}};
+    \node[io, below=of cors1] (req)
+      {Cliente: petición real (\texttt{GET}/\texttt{POST} /api/\ldots)\\
+       con \texttt{Cookie: JSESSIONID}};
+    \node[filter, below=of req] (cors2)
+      {\texttt{CORSFilter}: añade cabeceras CORS\\
+       y delega con \texttt{chain.doFilter()}};
+    \node[block, below=of cors2] (route)
+      {Tomcat enruta al \texttt{Servlet} por \texttt{@WebServlet}};
+    \node[block, below=of route] (session)
+      {\texttt{req.getSession()} $\to$\\
+       \texttt{(StateManager) session.getAttribute("navState")}};
+    \node[block, below=of session] (dao)
+      {\texttt{Servlet} $\to$ \texttt{NavigationDAO} con el estado};
+    \node[db, below=of dao] (db)
+      {\texttt{NavigationDAO} $\to$ JDBC (\texttt{PreparedStatement})\\
+       $\to$ PostgreSQL};
+    \node[io, below=of db] (resp)
+      {\texttt{Servlet} serializa con Jackson\\
+       $\to$ \texttt{HTTP 200} \texttt{application/json}};
+
+    \draw[arrow] (opt) -- (cors1);
+    \draw[arrow] (cors1) -- node[right]{respuesta vacía} (req);
+    \draw[arrow] (req) -- (cors2);
+    \draw[arrow] (cors2) -- (route);
+    \draw[arrow] (route) -- (session);
+    \draw[arrow] (session) -- (dao);
+    \draw[arrow] (dao) -- (db);
+    \draw[arrow] (db) -- (resp);
+  \end{tikzpicture}
+  \caption[Flujo de una petición HTTP]{Flujo completo de una petición
+  HTTP en el sistema. La fase de \textit{preflight} (parte superior) se
+  resuelve íntegramente en \texttt{CORSFilter}, sin alcanzar al servlet.
+  La petición real (parte inferior) atraviesa el filtro, el routing por
+  anotación, la recuperación del \texttt{StateManager} en la sesión HTTP,
+  la consulta a través de \texttt{NavigationDAO} y JDBC, y termina con
+  una respuesta JSON serializada por Jackson.}
+  \label{fig:httpFlow}
+\end{figure}
 
     \subsection*{El diseño de \texttt{goback} y sus implicaciones}
 
