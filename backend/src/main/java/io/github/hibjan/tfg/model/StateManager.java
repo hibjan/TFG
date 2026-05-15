@@ -19,10 +19,10 @@ public class StateManager implements Serializable {
     private List<Link> linkList = new ArrayList<>();
     private Deque<Link> linkStack = new ArrayDeque<>();
 
-    public StateManager(int datasetID, int collectionID) {
-        this.datasetId = datasetID;
+    public StateManager(int datasetId, int collectionId) {
+        this.datasetId = datasetId;
         this.historyStack = new ArrayDeque<>();
-        this.cur = new State(datasetID, collectionID);
+        this.cur = new State(datasetId, collectionId);
     }
 
     public State getCurrent() {
@@ -37,12 +37,12 @@ public class StateManager implements Serializable {
         this.cur.removeMetadataFilter(element, value);
     }
 
-    public void addReferenceFilter(int env, String reason, int value) {
-        this.cur.addReferenceFilter(env, reason, value);
+    public void addReferenceFilter(int refCollectionId, String reason, int value) {
+        this.cur.addReferenceFilter(refCollectionId, reason, value);
     }
 
-    public void removeReferenceFilter(int env, String reason, int value) {
-        this.cur.removeReferenceFilter(env, reason, value);
+    public void removeReferenceFilter(int refCollectionId, String reason, int value) {
+        this.cur.removeReferenceFilter(refCollectionId, reason, value);
     }
 
     public void addNotMetadataFilter(String element, String value) {
@@ -53,17 +53,17 @@ public class StateManager implements Serializable {
         this.cur.removeNotMetadataFilter(element, value);
     }
 
-    public void addNotReferenceFilter(int env, String reason, int value) {
-        this.cur.addNotReferenceFilter(env, reason, value);
+    public void addNotReferenceFilter(int refCollectionId, String reason, int value) {
+        this.cur.addNotReferenceFilter(refCollectionId, reason, value);
     }
 
-    public void removeNotReferenceFilter(int env, String reason, int value) {
-        this.cur.removeNotReferenceFilter(env, reason, value);
+    public void removeNotReferenceFilter(int refCollectionId, String reason, int value) {
+        this.cur.removeNotReferenceFilter(refCollectionId, reason, value);
     }
 
-    public void link(int env, String reason) {
+    public void link(int targetCollectionId, String reason) {
         this.linkList.add(new Link(true, this.cur.getCurrentCollectionId(), reason, new State(this.cur)));
-        this.cur.link(env, reason);
+        this.cur.link(targetCollectionId, reason);
         this.cur.setLinks(new ArrayList<>(this.linkList));
         this.linkStack.push(this.linkList.get(this.linkList.size() - 1));
     }
@@ -71,7 +71,7 @@ public class StateManager implements Serializable {
     public void goback() {
         Link last = this.linkStack.pop();
         this.linkList.add(new Link(false, this.cur.getCurrentCollectionId(), last.getReason(), new State(this.cur)));
-        this.cur.goback(last.getEnv());
+        this.cur.goback(last.getCollectionId());
         this.cur.setLinks(new ArrayList<>(this.linkList));
     }
 

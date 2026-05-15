@@ -6,13 +6,13 @@ public class Link implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private boolean forward;
-    private int env;
+    private int collectionId;
     private String reason;
     private State state;
 
-    public Link(boolean forward, int env, String reason, State state) {
+    public Link(boolean forward, int collectionId, String reason, State state) {
         this.forward = forward;
-        this.env = env;
+        this.collectionId = collectionId;
         this.reason = reason;
         this.state = state;
     }
@@ -21,8 +21,8 @@ public class Link implements Serializable {
         return forward;
     }
 
-    public int getEnv() {
-        return env;
+    public int getCollectionId() {
+        return collectionId;
     }
 
     public String getReason() {
