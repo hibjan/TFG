@@ -85,7 +85,8 @@ proporcionar un vocabulario formal para describir documentos interconectados. \c
 ofrecen una revisión panorámica de esta familia de modelos que conviene resumir aquí, porque
 varias de sus categorías son directamente trasladables a las decisiones de diseño de nuestro sistema.
 
-El primero y más antiguo de estos modelos es el HAM (\textit{Hypertext Abstract Machine}), concebido
+El primero y más antiguo de estos modelos es el HAM (\textit{Hypertext Abstract Machine})
+\citep{campbell1988ham}, concebido
 como una máquina servidor de propósito general para almacenar sistemas de hipertexto. Su modelo de
 memoria distingue cinco objetos básicos: grafos, contextos, nodos, enlaces entre nodos y atributos
 semánticos. La correspondencia entre estas cinco abstracciones y los componentes de nuestro sistema
@@ -114,7 +115,7 @@ del dominio, persistentes y compartidos, y contexto de exploración, momentáneo
 decisión que se detalla en el capítulo de arquitectura, encuentra aquí su raíz conceptual.
 
 El segundo modelo de referencia, conceptualmente posterior y más elaborado, es el modelo Dexter
-(\textit{Dexter Hypertext Reference Model}). Dexter organiza el sistema de hipermedia en tres capas
+(\textit{Dexter Hypertext Reference Model}) \citep{halasz1994dexter}. Dexter organiza el sistema de hipermedia en tres capas
 con interfaces bien definidas. Una capa de almacenamiento, donde residen los componentes
 persistentes y sus enlaces. Una capa de ejecución, que coordina las sesiones de usuario y la
 instanciación de los componentes activos. Y una capa intracomponente, que describe la estructura
@@ -185,7 +186,8 @@ revisión de estos dos polos basta para situar el espacio que nuestra propuesta 
 Clavy es una plataforma experimental para la gestión de repositorios de objetos de aprendizaje con
 estructuras dinámicamente reconfigurables, desarrollada a lo largo de la última década en la Universidad
 Complutense de Madrid \citep{gayoso2016siie}. Su rasgo distintivo, frente a las propuestas estándar
-de repositorios de objetos de aprendizaje basadas en esquemas fijos como LOM o IMS CP, es
+de repositorios de objetos de aprendizaje basadas en esquemas fijos como LOM \citep{ieee_lom_2002}
+o IMS CP \citep{ims_cp_2004}, es
 permitir que cada repositorio defina su propio esquema de metadatos, que ese esquema se construya
 de forma inductiva a medida que se cataloga la colección, y que sea reconfigurable en cualquier momento
 por los usuarios. Esta filosofía bottom-up acerca a Clavy a las folksonomías y, más en general, a los
@@ -218,7 +220,7 @@ fue un paso importante en escenarios reales como las bibliotecas digitales human
 objeto típicamente representa una obra con varios contribuidores, cada uno con sus propios atributos
 \citep{gayoso2023siie}. La caracterización de estos esquemas como un tipo restringido de gramática
 EBNF abre además la posibilidad de extender el modelo a estructuras alternativas y recursivas,
-acercándolo al espíritu de los lenguajes generalizados de marcado. La aplicabilidad práctica de la
+acercándolo al espíritu de los lenguajes generalizados de marcado \citep{coombs1987markup}. La aplicabilidad práctica de la
 plataforma se ha demostrado en repositorios reales de humanidades, lingüística y, recientemente,
 medicina, donde Clavy ha servido como soporte para generar paquetes de contenido educativo
 estandarizado a partir de colecciones médicas existentes \citep{buendia2019medsys}.
