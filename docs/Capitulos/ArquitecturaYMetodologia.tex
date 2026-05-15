@@ -102,13 +102,13 @@ datos relacional.
     node distance=1.5cm and 1.5cm,
     every node/.style={font=\small},
     box/.style={draw, rectangle, rounded corners, minimum width=4cm,
-                minimum height=0.9cm, align=center, fill=blue!5},
+                minimum height=0.9cm, align=center, fill=orange!10},
     db/.style={draw, cylinder, shape border rotate=90, aspect=0.25,
                minimum width=3cm, minimum height=1.2cm, align=center,
-               fill=orange!10},
+               fill=blue!10},
     arrow/.style={Latex-Latex, thick}
   ]
-    \node[box] (frontend) {Frontend (Vanilla JS + Vite)};
+    \node[box, fill=yellow!40] (frontend) {Frontend (Vanilla JS + Vite)};
     \node[box, below=of frontend] (cors)  {CORS Filter};
     \node[box, below=of cors]     (ctrl)  {Servlets (capa de control)};
     \node[box, below=of ctrl]     (mgr)   {StateManager + State + Link\\(modelo en sesión HTTP)};
