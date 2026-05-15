@@ -17,7 +17,10 @@ El trabajo ha permitido construir un motor de exploración de colecciones digita
 los tres mecanismos planteados desde el inicio: filtrado facetado sobre metadatos, navegación
 transversal entre colecciones a través de referencias semánticas, y operaciones de conjuntos
 sobre los resultados parciales. Cada uno de ellos se ha materializado en un componente
-identificable del sistema (filtros, \textit{links} y conjunto unión).
+identificable del sistema (filtros, \textit{links} y conjunto unión) y se ha verificado su
+comportamiento sobre volcados reales de dos catálogos públicos de naturaleza muy distinta, TMDB
+(audiovisual) y DBLP (publicaciones científicas), escogidos precisamente por sus diferencias
+estructurales.
 
 La estrategia metodológica de doble fase ha resultado especialmente acertada. La primera fase,
 centrada en el prototipo en Java sin interfaz gráfica, permitió validar la viabilidad técnica
@@ -102,13 +105,16 @@ ofrecer una primera experiencia ligera y enfocada en la exploración.
 \subsection{Extensión a nuevos dominios y datasets}
 
 El sistema se ha pensado desde el principio como agnóstico al dominio. La integración con TMDB
-ha servido como banco de pruebas, pero se han iniciado tareas preparatorias para incorporar
-otros conjuntos de datos como DBLP, dirigidos al ámbito de las publicaciones científicas. Su
-incorporación efectiva requiere completar el proceso de carga, ajustar las heurísticas de
-identificación de facetas a las particularidades de cada dominio y validar que el modelo
-relacional generaliza sin necesidad de modificaciones sustanciales. Aplicaciones a fondos
-bibliotecarios, repositorios documentales o catálogos de software libre seguirían el mismo
-patrón.
+y DBLP ha servido para demostrar que el modelo relacional generaliza sin modificaciones
+sustanciales entre un catálogo audiovisual y una base de publicaciones científicas, pero la
+elección de futuros dominios sigue siendo el camino más directo para reforzar esa evidencia.
+Resultarían especialmente interesantes los fondos bibliotecarios completos (con varias clases
+de objetos coexistiendo bajo un mismo esquema descriptivo), los repositorios documentales
+institucionales (donde la riqueza de relaciones entre versiones, autores e instituciones pondría
+a prueba la capa de \textit{links}) y los catálogos de software libre (en los que las relaciones
+de dependencia y autoría dibujan grafos densos). En cada caso, la incorporación efectiva exige
+ajustar las heurísticas de identificación de facetas a las particularidades del dominio y, en
+algunos, ampliar el proceso de carga para acomodar formatos de origen heterogéneos.
 
 \subsection{Mejoras incrementales en la experiencia de usuario}
 

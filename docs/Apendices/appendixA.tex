@@ -1,4 +1,433 @@
-\chapter{Título del Apéndice A}
-\label{Appendix:Key1}
+\chapter{Guion de Evaluación de Usabilidad}
+\label{Appendix:Guion}
 
-Los apéndices son secciones al final del documento en las que se agrega texto con el objetivo de ampliar los contenidos del documento principal.
+Este apéndice reproduce, en su forma definitiva, el guion utilizado en la evaluación de
+usabilidad del sistema descrita en el capítulo~\ref{cap:pruebasValidacion}. Se conserva la
+estructura original con la que se llevaron a cabo las cinco sesiones, de manera que pueda
+reutilizarse o replicarse sin modificaciones por terceros que deseen comparar los resultados.
+
+\section{Información general}
+
+\begin{tabular}{l l}
+\textbf{Versión}                 & 1.0 \\
+\textbf{Duración por sesión}     & 35--45 minutos \\
+\textbf{Participantes objetivo} & 5--7 \\
+\textbf{Método}                  & \textit{Think-aloud} + observación directa + cuestionarios pre/post \\
+\end{tabular}
+
+\section{Información para el facilitador}
+
+\subsection{Objetivos}
+
+\begin{itemize}
+\item Facilidad de aprendizaje en la primera toma de contacto.
+\item Eficiencia al realizar tareas comunes de búsqueda y navegación.
+\item Comprensión de los conceptos clave (filtros \textit{include}/\textit{exclude},
+  \textit{links}, \textit{Union Set}, historial, \textit{restore} vs \textit{goback}).
+\item Recuperación ante errores y manejo de acciones destructivas (\textit{Exit},
+  \textit{Change collection}).
+\item Satisfacción subjetiva (SUS).
+\end{itemize}
+
+\subsection{Perfil del participante}
+
+Cualquier persona con experiencia básica en navegadores web. No es necesario conocimiento
+previo del dominio del \textit{dataset} cargado.
+
+\subsection{Material necesario}
+
+\begin{itemize}
+\item Ordenador con la aplicación arrancada en una pestaña.
+\item \textit{Dataset} cargado con varias colecciones, metadatos, referencias y al menos
+  un \textit{link} entre colecciones.
+\item Cronómetro.
+\item Cuestionario SUS impreso o en formato digital.
+\item Hoja de consentimiento informado.
+\end{itemize}
+
+\subsection{Checklist previo a la sesión}
+
+\begin{itemize}
+\item Verificar que la aplicación arranca sin errores en consola.
+\item Asegurar que existen al menos dos \textit{datasets} distintos.
+\item Asegurar que el \textit{backend} responde (probar \texttt{/datasets} desde la URL).
+\item Tener a mano la URL exacta de la aplicación.
+\end{itemize}
+
+\subsection{Protocolo general}
+
+\begin{itemize}
+\item No interrumpir al participante salvo bloqueo total superior a 90 segundos.
+\item No dar pistas. Si pregunta cómo hacer algo, devolver con \og ¿Qué harías tú?\fg{} o
+  \og ¿Por dónde empezarías?\fg{}
+\item Tomar notas en silencio. Marcar tiempo de inicio y fin de cada tarea.
+\item Mantener un tono neutro: ni felicitar éxitos ni lamentar fracasos.
+\item Si el participante quiere abandonar, agradecer y cerrar sin presionar.
+\item Recordarle (una o dos veces si hace falta) que piense en voz alta.
+\end{itemize}
+
+\section{Introducción al participante (texto literal)}
+
+\begin{quote}
+\og Hola, muchas gracias por participar. Vamos a estar aquí unos 40 minutos.
+
+El objetivo de esta sesión es evaluar la aplicación, NO evaluarte a ti. No hay respuestas
+correctas o incorrectas. Si algo no funciona o te resulta confuso, es información muy valiosa
+para nosotros: significa que tenemos algo que mejorar.
+
+Te voy a pedir que realices una serie de tareas usando la aplicación. Mientras las haces,
+me gustaría que pensaras en voz alta: di lo que estás mirando, lo que esperas que pase, lo
+que te confunde, lo que te gusta o no te gusta. No tengas miedo de criticar; al contrario,
+cuanto más honesto seas, más útil será tu \textit{feedback}.
+
+Yo voy a estar tomando notas y manteniéndome en silencio la mayor parte del tiempo. Si te
+bloqueas, intenta resolverlo a tu manera. Solo intervendré si llevas mucho rato sin saber
+por dónde seguir. Puedes parar la sesión en cualquier momento sin necesidad de explicar nada.
+
+¿Tienes alguna duda antes de empezar?\fg{}
+\end{quote}
+
+\section{Consentimiento informado}
+
+\begin{quote}
+\og Antes de empezar te pido que leas y firmes este consentimiento. Resumido:
+\begin{itemize}
+\item Los datos recogidos en esta sesión serán usados únicamente para mejorar la aplicación.
+\item Tu identidad no aparecerá en ningún informe.
+\item Podemos grabar audio y vídeo si das tu permiso explícito; la grabación se borrará una
+  vez analizada.
+\item Puedes retirarte en cualquier momento sin consecuencias.
+\end{itemize}
+¿Estás de acuerdo?\fg{}
+\end{quote}
+
+Casillas a marcar: consentimiento verbal, consentimiento por escrito, permiso de grabación
+(S / N).
+
+\section{Cuestionario previo (5 minutos)}
+
+\begin{enumerate}
+\item ¿Cuál es tu rango de edad? \quad 18--24 / 25--34 / 35--44 / 45--54 / 55+
+\item ¿Cuál es tu ocupación o área de estudios?
+\item ¿Con qué frecuencia usas aplicaciones web? \quad Varias horas al día / A diario,
+  ocasionalmente / Varias veces por semana / Esporádicamente.
+\item ¿Has usado antes herramientas de búsqueda con filtros (Amazon, Idealista,
+  bibliotecas digitales, archivos online)? \quad Sí, con frecuencia / Sí, alguna vez / No.
+\item ¿Te dedicas o has estudiado algo relacionado con catalogación, bibliotecas, archivos,
+  museos, bases de datos o similares? \quad Sí, profesionalmente / Sí, en estudios / No.
+\item En una escala del 1 al 5, ¿cómo de cómodo te sientes aprendiendo una herramienta nueva
+  por tu cuenta? \quad 1 (muy incómodo) -- 5 (muy cómodo).
+\end{enumerate}
+
+\section{Instrucciones sobre el método (2 minutos)}
+
+\begin{quote}
+\og Antes de empezar las tareas:
+\begin{itemize}
+\item La aplicación ya está abierta en una pestaña del navegador. Empieza siempre desde la
+  pantalla de selección de \textit{dataset}.
+\item Te leeré cada tarea en voz alta y te daré un escenario realista. No te diré los pasos
+  exactos: tú decides cómo resolverla.
+\item Recuerda: piensa en voz alta. Cuanto más digas, mejor.
+\item Cada tarea tiene un tiempo límite aproximado. Si te bloqueas no pasa nada: pasamos a
+  la siguiente.
+\end{itemize}
+¿Listo para empezar?\fg{}
+\end{quote}
+
+\section{Tareas}
+
+Para cada tarea el facilitador anota tiempo de inicio y fin, completitud
+(\textit{Éxito} / \textit{Parcial} / \textit{Fallo}), errores observados, caminos tomados y
+comentarios espontáneos. Tras cada tarea se pregunta: \og En una escala del 1 (muy difícil)
+al 7 (muy fácil), ¿cómo de fácil te ha resultado?\fg{} (SEQ) y se invita a comentar.
+
+\subsection{Tarea 1 -- Empezar a navegar (límite: 2 min)}
+
+\textbf{Escenario:} \og Acabas de abrir la aplicación. Quieres empezar a explorar uno de los
+\textit{datasets} disponibles. Elige el \textit{dataset} que prefieras y, dentro de él, una
+colección para empezar.\fg{}
+
+\textbf{Criterio de éxito:} llega a la vista de navegación con los paneles Filtros,
+\textit{Links}, \textit{Filtered Collection} y \textit{Union Set} visibles.
+
+\textbf{Observar:} ¿Entiende el flujo \textit{Dataset}~$\rightarrow$~Colección? ¿Lee los
+nombres antes de elegir o pulsa al azar? ¿Reconoce el \textit{breadcrumb} superior tras entrar?
+
+\subsection{Tarea 2 -- Filtrar por metadatos (límite: 3 min)}
+
+\textbf{Escenario:} \og Imagina que sólo te interesan las entidades que cumplan un criterio
+concreto. Aplica un filtro de metadatos para reducir el conjunto de resultados.\fg{}
+
+\textbf{Criterio de éxito:} se aplica al menos un filtro; el conteo de \textit{Filtered
+Collection} se reduce; aparece la etiqueta verde con \og+\fg{} en la sección de Metadata.
+
+\textbf{Observar:} ¿Encuentra los desplegables sin ayuda? ¿Usa la búsqueda dentro del
+\textit{combobox} o se desplaza? ¿Comprende que la etiqueta verde con \og+\fg{} representa
+un filtro activo?
+
+\subsection{Tarea 3 -- Combinar varios filtros (límite: 3 min)}
+
+\textbf{Escenario:} \og Añade dos filtros más, combinando atributos diferentes. Comprueba
+cómo el conteo se va reduciendo.\fg{}
+
+\textbf{Criterio de éxito:} se aplican al menos tres filtros activos en total.
+
+\textbf{Observar:} ¿Nota que los valores ya elegidos desaparecen del desplegable? ¿Le
+sorprende algún comportamiento?
+
+\subsection{Tarea 4 -- Filtros de exclusión (límite: 3 min)}
+
+\textbf{Escenario:} \og Ahora quieres lo contrario: hay un valor concreto que NO quieres ver
+en los resultados. Excluye una opción del conjunto.\fg{}
+
+\textbf{Criterio de éxito:} cambia el modo a \textit{Exclude} y aplica al menos un filtro de
+exclusión (etiqueta roja con símbolo menos).
+
+\textbf{Observar:} ¿Encuentra el toggle \textit{Include}/\textit{Exclude}? ¿Entiende la
+previsualización al pasar el ratón? ¿Sabe diferenciar visualmente entre filtro de inclusión
+y exclusión?
+
+\subsection{Tarea 5 -- Filtros de referencia (límite: 3 min)}
+
+\textbf{Escenario:} \og Además de los metadatos, hay filtros basados en referencias entre
+entidades de otras colecciones. Aplica un filtro de referencia para reducir el conjunto.\fg{}
+(Si no hay referencias en la colección actual, el facilitador omite la tarea y lo anota.)
+
+\textbf{Criterio de éxito:} se aplica al menos un filtro de referencia.
+
+\textbf{Observar:} ¿Distingue entre la sección Metadata y \textit{References}? ¿Le resulta
+clara la sintaxis \og Colección~$\rightarrow$~motivo\fg{}?
+
+\subsection{Tarea 6 -- Quitar filtros (límite: 2 min)}
+
+\textbf{Escenario:} \og Quita primero solo uno (el que prefieras) y comprueba que el conjunto
+se actualiza. Después quita todos los filtros activos a la vez.\fg{}
+
+\textbf{Criterio de éxito:} elimina un filtro individual con la \og x\fg{} de la etiqueta y
+después usa \textit{Clear all} para vaciar el resto.
+
+\textbf{Observar:} ¿Ve la \og x\fg{} de cada etiqueta sin ayuda? ¿Encuentra el botón
+\textit{Clear all} sin pista? ¿Le resulta claro que el botón se desactiva cuando no hay
+filtros?
+
+\subsection{Tarea 7 -- Seguir un \textit{link} a otra colección (límite: 2 min)}
+
+\textbf{Escenario:} \og En el panel de \textit{Links} hay accesos directos a otras colecciones
+relacionadas. Sigue uno de los \textit{links} para navegar a otra colección.\fg{}
+
+\textbf{Criterio de éxito:} pulsa un \textit{link}, ve que el \textit{breadcrumb} cambia y
+aparece el contenido de la nueva colección.
+
+\textbf{Observar:} ¿Le queda claro que ha cambiado de colección? ¿Comprende el papel del
+\textit{breadcrumb} superior?
+
+\subsection{Tarea 8 -- Ver el historial de navegación (límite: 2 min)}
+
+\textbf{Escenario:} \og Has saltado entre colecciones. Te gustaría ver visualmente el camino
+que has seguido. Encuentra la forma de mostrarlo.\fg{}
+
+\textbf{Criterio de éxito:} pulsa \og History~$\rangle$\fg{} en el panel de \textit{Links} y
+ve el grafo horizontal de cajas conectadas por flechas. Reconoce el nodo actual.
+
+\textbf{Observar:} ¿Encuentra el botón \textit{History} o lo busca por otros sitios?
+¿Reconoce que los nodos representan colecciones y las flechas \textit{links}? ¿Vuelve a
+cerrar el historial?
+
+\subsection{Tarea 9 -- Volver atrás un paso (límite: 1 min)}
+
+\textbf{Escenario:} \og Quieres deshacer el último salto y volver a la colección donde
+estabas antes.\fg{}
+
+\textbf{Criterio de éxito:} pulsa \textit{Go Back} en la barra superior y vuelve a la
+colección previa.
+
+\textbf{Observar:} ¿Distingue \textit{Go Back} del botón \og atrás\fg{} del propio navegador?
+¿Diferencia \textit{Go Back} de \textit{Restore}?
+
+\subsection{Tarea 10 -- Ver el detalle de una entidad (límite: 2 min)}
+
+\textbf{Escenario:} \og Elige cualquier entidad de la colección y abre su ficha completa.
+Echa un vistazo a la información que contiene.\fg{}
+
+\textbf{Criterio de éxito:} abre el \textit{modal} de detalle y ve metadatos, referencias y
+recursos si los hay.
+
+\textbf{Observar:} ¿Le sorprende el \textit{modal} o es lo que esperaba? ¿Encuentra cómo
+cerrarlo (\og x\fg{}, \textit{click} fuera, ESC)? ¿Le resulta clara la información mostrada?
+
+\subsection{Tarea 11 -- Guardar en \textit{Union} y cambiar de colección (límite: 4 min)}
+
+\textbf{Escenario:} \og Tienes ahora un conjunto filtrado interesante que querrías conservar
+mientras exploras OTRA colección en paralelo. Guarda los resultados actuales en el conjunto
+\textit{Union} y elige otra colección para seguir explorando.\fg{}
+
+\textbf{Criterio de éxito:} pulsa \og + Add current\fg{} en el panel \textit{Union Set},
+elige otra colección en el selector que aparece y vuelve a la vista de navegación. Comprueba
+que el contador de \textit{Union} es mayor que cero y que las entidades anteriores aparecen
+ahí.
+
+\textbf{Observar:} ¿Entiende el concepto de \textit{Union} sin pistas? ¿Ve el \textit{toast}
+verde de confirmación? ¿Reconoce que la colección principal ha cambiado pero \textit{Union}
+conserva lo anterior? ¿Localiza fácilmente el botón \og + Add current\fg{}?
+
+\subsection{Tarea 12 -- Reordenar paneles (límite: 2 min)}
+
+\textbf{Escenario:} \og Te gustaría tener la lista de \textit{Links} arriba del todo, o
+reordenar cualquier panel a tu gusto. Intenta mover los paneles.\fg{}
+
+\textbf{Criterio de éxito:} arrastra al menos un panel a una nueva posición y comprueba que
+el cambio se mantiene tras refrescar la página (F5).
+
+\textbf{Observar:} ¿Descubre que las cabeceras son arrastrables? ¿Cuánto tarda en darse
+cuenta? ¿Hay gestos fallidos (\textit{click} vs \textit{drag})? ¿Le sorprende que se mantenga
+al refrescar?
+
+\subsection{Tarea 13 -- Cambiar de colección (sin \textit{Union}) (límite: 2 min)}
+
+\textbf{Escenario:} \og Quieres empezar de cero en una colección distinta, sin guardar nada
+ni mantener los filtros actuales. Cambia de colección.\fg{}
+
+\textbf{Criterio de éxito:} pulsa \textit{Change collection}, lee el diálogo de confirmación
+y acepta. Selecciona una nueva colección. Filtros e historial quedan vacíos.
+
+\textbf{Observar:} ¿Lee el mensaje de confirmación antes de aceptar? ¿Diferencia
+\textit{Change collection} del flujo de \textit{Add to Union} del paso anterior? ¿Le parece
+adecuada la diferenciación visual (color ámbar) frente a \textit{Goback} y \textit{Restore}
+(azul y gris)?
+
+\subsection{Tarea 14 -- Salir del modo navegación (límite: 1 min)}
+
+\textbf{Escenario:} \og Has terminado. Sal del modo navegación y vuelve a la pantalla
+inicial de selección de \textit{datasets}.\fg{}
+
+\textbf{Criterio de éxito:} pulsa el botón \og x\fg{} de la barra superior, confirma el
+diálogo, vuelve a la pantalla de selección de \textit{datasets}.
+
+\textbf{Observar:} ¿Encuentra el botón \og x\fg{} fácilmente? ¿Le sorprende el diálogo de
+confirmación? ¿Diferencia \og salir\fg{} de \og cambiar de colección\fg{}?
+
+\section{Cuestionario posterior (SUS, 5 minutos)}
+
+Indica tu grado de acuerdo con cada afirmación en una escala de 1 a 5, donde 1 = totalmente
+en desacuerdo y 5 = totalmente de acuerdo.
+
+\begin{enumerate}
+\item Creo que me gustaría usar este sistema con frecuencia.
+\item He encontrado el sistema innecesariamente complejo.
+\item He pensado que el sistema era fácil de usar.
+\item Creo que necesitaría ayuda de un técnico para poder usar este sistema.
+\item He encontrado que las distintas funciones del sistema estaban bien integradas.
+\item He pensado que había demasiada inconsistencia en el sistema.
+\item Imagino que la mayoría de la gente aprendería a usar este sistema muy rápidamente.
+\item He encontrado el sistema muy complicado de usar.
+\item Me he sentido muy seguro/a usando el sistema.
+\item He necesitado aprender muchas cosas antes de poder empezar a usar este sistema.
+\end{enumerate}
+
+\textbf{Cálculo de la puntuación SUS} (uso interno):
+\begin{itemize}
+\item Ítems impares (1, 3, 5, 7, 9): restar 1 al valor.
+\item Ítems pares (2, 4, 6, 8, 10): restar el valor a 5.
+\item Sumar los diez resultados y multiplicar por 2{,}5; el resultado queda en el rango
+  0--100. Umbral aceptable: $\geq$~68. Excelente: $\geq$~80.
+\end{itemize}
+
+\section{Preguntas abiertas de cierre (10 minutos)}
+
+\begin{enumerate}
+\item ¿Qué es lo que más te ha gustado del sistema?
+\item ¿Qué es lo que más te ha confundido o frustrado?
+\item Si pudieras cambiar UNA cosa, ¿cuál sería?
+\item ¿Hubo algún momento en el que no sabías qué hacer?
+\item ¿Cómo describirías el sistema a un compañero/a?
+\item ¿Hay alguna funcionalidad que esperabas encontrar y no está?
+\item ¿Te ha resultado claro el papel del \textit{Union Set}? Explica con tus palabras para
+  qué sirve.
+\item ¿Te resultó claro lo que hacía cada uno de los botones de la barra superior
+  (\textit{X}, \textit{Change collection}, \textit{Go Back}, \textit{Restore})?
+\end{enumerate}
+
+\section{Cierre y agradecimiento}
+
+\begin{quote}
+\og Hemos terminado. Muchas gracias por dedicar este tiempo. Tus comentarios son muy útiles
+para mejorar la aplicación. ¿Tienes alguna pregunta para mí antes de irnos?\fg{}
+\end{quote}
+
+\section{Plantilla de observación del facilitador}
+
+\subsection{Datos de la sesión}
+
+\begin{itemize}
+\item ID participante.
+\item Fecha y hora de inicio y fin.
+\item Facilitador y, en su caso, observador.
+\item Indicador de grabación (S/N).
+\end{itemize}
+
+\subsection{Registro por tarea}
+
+Para cada una de las catorce tareas se cumplimenta una fila con: tiempo de inicio, tiempo de
+fin, completitud (\textit{Éxito} / \textit{Parcial} / \textit{Fallo}), valor SEQ y notas
+sobre errores observados o caminos alternativos.
+
+\subsection{Incidencias destacables y citas literales}
+
+Dos tablas adicionales recogen, respectivamente, las incidencias críticas o momentos de
+bloqueo (con marca temporal, tarea afectada y descripción) y las citas literales del
+participante con marca temporal. Esta última información alimenta el análisis cualitativo
+posterior.
+
+\subsection{Conclusiones del facilitador}
+
+Tras la sesión, el facilitador rellena un breve bloque libre con los patrones observados,
+las hipótesis surgidas y los cambios sugeridos sobre la aplicación.
+
+\section{Notas metodológicas}
+
+\subsection{Número de participantes}
+
+Nielsen (2000) sostiene que con cinco participantes se descubre aproximadamente el 85\% de
+los problemas de usabilidad. Para esta evaluación se proponen entre cinco y siete para
+absorber la variabilidad entre perfiles.
+
+\subsection{Perfil equilibrado recomendado}
+
+\begin{itemize}
+\item Una persona con experiencia en catalogación, archivos o bibliotecas.
+\item Una persona sin experiencia previa en búsqueda facetada.
+\item Una persona del entorno académico (potencial usuario real).
+\item Dos o tres perfiles generalistas (usuarios web habituales).
+\end{itemize}
+
+\subsection{Análisis posterior}
+
+\begin{enumerate}
+\item Calcular SUS por participante y media (umbral aceptable: $\geq$~68).
+\item Para cada tarea, calcular tasa de éxito, tiempo medio (mediana más robusta para
+  muestras pequeñas) y SEQ medio.
+\item Catalogar incidencias por gravedad según la escala de Nielsen: 0 = no es problema,
+  1 = cosmético, 2 = menor, 3 = mayor, 4 = catastrófico.
+\item Priorizar correcciones por gravedad $\times$ frecuencia $\times$ impacto en tareas
+  críticas.
+\end{enumerate}
+
+\subsection{Criterios de éxito por tarea}
+
+\begin{itemize}
+\item \textbf{Éxito}: el participante completa el criterio de éxito sin ayuda y dentro del
+  límite de tiempo.
+\item \textbf{Parcial}: completa la tarea con ayuda o supera el tiempo límite.
+\item \textbf{Fallo}: abandona o no consigue completarla.
+\end{itemize}
+
+\subsection{Variables a controlar entre sesiones}
+
+\begin{itemize}
+\item Mismo \textit{dataset} y misma colección inicial.
+\item Mismas opciones de filtro disponibles.
+\item Mismo orden de paneles al arrancar (preferencia local limpia).
+\item Misma versión del software (\textit{tag} o \textit{commit} fijo).
+\item Mismo dispositivo si es posible (la resolución afecta al \textit{layout}).
+\end{itemize}
