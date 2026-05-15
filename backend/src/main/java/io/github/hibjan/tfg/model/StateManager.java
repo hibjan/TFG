@@ -16,7 +16,6 @@ public class StateManager implements Serializable {
 
     private List<State> unionSet = new ArrayList<>();
 
-    private List<Link> linkList = new ArrayList<>();
     private Deque<Link> linkStack = new ArrayDeque<>();
 
     public StateManager(int datasetId, int collectionId) {
@@ -62,24 +61,23 @@ public class StateManager implements Serializable {
     }
 
     public void link(int targetCollectionId, String reason) {
-        this.linkList.add(new Link(true, this.cur.getCurrentCollectionId(), reason, new State(this.cur)));
+        Link newLink = new Link(true, this.cur.getCurrentCollectionId(), reason, new State(this.cur));
         this.cur.link(targetCollectionId, reason);
-        this.cur.setLinks(new ArrayList<>(this.linkList));
-        this.linkStack.push(this.linkList.get(this.linkList.size() - 1));
+        this.cur.getLinks().add(newLink);
+        this.linkStack.push(newLink);
     }
 
     public void goback() {
         Link last = this.linkStack.pop();
-        this.linkList.add(new Link(false, this.cur.getCurrentCollectionId(), last.getReason(), new State(this.cur)));
+        Link backLink = new Link(false, this.cur.getCurrentCollectionId(), last.getReason(), new State(this.cur));
         this.cur.goback(last.getCollectionId());
-        this.cur.setLinks(new ArrayList<>(this.linkList));
+        this.cur.getLinks().add(backLink);
     }
 
     public void restore() {
         if (this.historyStack.size() > 1) {
             this.historyStack.pop();
             this.cur = this.historyStack.pop();
-            this.linkList = new ArrayList<>(this.cur.getLinks());
         }
     }
 
@@ -88,14 +86,12 @@ public class StateManager implements Serializable {
     }
 
     public void union(int collectionId) {
-        this.cur.setLinks(new ArrayList<>(this.linkList));
         this.unionSet.add(this.cur);
         change(collectionId);
     }
 
     public void change(int collectionId) {
         this.historyStack.clear();
-        this.linkList.clear();
         this.cur = new State(this.datasetId, collectionId);
     }
 
@@ -112,6 +108,6 @@ public class StateManager implements Serializable {
     }
 
     public List<Link> getLinkList() {
-        return this.linkList;
+        return this.cur.getLinks();
     }
 }
