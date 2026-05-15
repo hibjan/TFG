@@ -85,11 +85,49 @@ necesidad de realizar modificaciones significativas o profundas en su arquitectu
 
 \section{Arquitectura del Sistema}
 
-Para permitir la exposición de la lógica del motor de exploración y su respectivo consumo por parte de aplicaciones, 
-hemos diseñado una arquitectura fundamentada en el modelo Cliente-Servidor. Desde el lado del servidor (\textit{backend}), 
-la aplicación favorece el desacoplamiento al basarse en capas bien definidas. Esta sección se dedica a detallar la capa de 
-control, responsable de enrutar las distintas peticiones HTTP, y la capa de filtros, encargada de controlar las políticas 
+Para permitir la exposición de la lógica del motor de exploración y su respectivo consumo por parte de aplicaciones,
+hemos diseñado una arquitectura fundamentada en el modelo Cliente-Servidor. Desde el lado del servidor (\textit{backend}),
+la aplicación favorece el desacoplamiento al basarse en capas bien definidas. Esta sección se dedica a detallar la capa de
+control, responsable de enrutar las distintas peticiones HTTP, y la capa de filtros, encargada de controlar las políticas
 de acceso y seguridad.
+
+La Figura~\ref{fig:arquitectura} resume las capas que constituyen el sistema
+y su flujo principal de comunicación, desde el cliente web hasta la base de
+datos relacional.
+
+\begin{figure}[h]
+  \centering
+  \hspace*{2cm}%
+  \begin{tikzpicture}[
+    node distance=1.5cm and 1.5cm,
+    every node/.style={font=\small},
+    box/.style={draw, rectangle, rounded corners, minimum width=4cm,
+                minimum height=0.9cm, align=center, fill=blue!5},
+    db/.style={draw, cylinder, shape border rotate=90, aspect=0.25,
+               minimum width=3cm, minimum height=1.2cm, align=center,
+               fill=orange!10},
+    arrow/.style={Latex-Latex, thick}
+  ]
+    \node[box] (frontend) {Frontend (Vanilla JS + Vite)};
+    \node[box, below=of frontend] (cors)  {CORS Filter};
+    \node[box, below=of cors]     (ctrl)  {Servlets (capa de control)};
+    \node[box, below=of ctrl]     (mgr)   {StateManager + State + Link\\(modelo en sesión HTTP)};
+    \node[box, below=of mgr]      (dao)   {DAO (NavigationDAO, DatabaseService)};
+    \node[db,  below=of dao]      (db)    {PostgreSQL};
+
+    \draw[arrow] (frontend) -- node[right, pos=0.6]{HTTP / JSON} (cors);
+    \draw[arrow] (cors)     -- (ctrl);
+    \draw[arrow] (ctrl)     -- node[right]{lectura/escritura de estado} (mgr);
+    \draw[arrow] (mgr)      -- node[right]{construcción de query} (dao);
+    \draw[arrow] (dao)      -- node[right, pos=0.4]{JDBC} (db);
+
+    \node[draw, dashed, fit=(cors)(ctrl)(mgr)(dao),
+          inner ysep=1cm, inner xsep=1.5cm,
+          label=right:{Apache Tomcat}] {};
+  \end{tikzpicture}
+  \caption{Arquitectura general del sistema en capas.}
+  \label{fig:arquitectura}
+\end{figure}
 
     \subsection*{Diseño de la API y Controladores}
 
@@ -204,6 +242,24 @@ por un conjunto de atributos (\textbf{metadatos}), mientras que las interaccione
 expresan mediante relaciones explícitamente manifiestas. Esta separación permite tratar de forma homogénea tanto el
 filtrado por atributos (por ejemplo, características propias de una entidad) como la exploración
 relacional (navegación entre entidades conectadas).
+
+Esta representación se materializa en un esquema relacional almacenado en
+PostgreSQL y compuesto por cinco tablas: \texttt{datasets},
+\texttt{collections}, \texttt{entities}, \texttt{metadata} y
+\texttt{reference}. Los \textit{datasets} agrupan colecciones, cada
+colección contiene entidades y cada entidad lleva asociado un número
+arbitrario de filas de metadatos. Para evitar fijar el conjunto de
+atributos por anticipado (requisito incompatible con la naturaleza
+heterogénea de las fuentes integradas), la tabla \texttt{metadata}
+sigue un patrón clave/valor que asocia cada entidad con tantos pares
+\texttt{(key, value)} como atributos posea. De manera análoga, la tabla
+\texttt{reference} materializa las relaciones entre entidades como filas de
+primera clase, con un identificador de origen, uno de destino y una
+\textit{razón} que cualifica el tipo de vínculo. Esta uniformidad permite
+que la incorporación de nuevos tipos de atributos o nuevas clases de
+relaciones no requiera modificar el esquema. El detalle del modelo
+relacional y de las restricciones de integridad asociadas se presenta en
+el Capítulo~\ref{cap:desarrolloImplementacion}.
 
 Al mismo tiempo, esta representación actúa como una capa de abstracción sobre las fuentes de
 datos, unificando conjuntos heterogéneos bajo una estructura común e independiente de su formato u origen.
