@@ -491,6 +491,85 @@ frontend --- \texttt{addMetadataFilter}, \texttt{removeReferenceFilter}, \texttt
 \texttt{State} las operaciones sobre filtros, y aplicando directamente la lógica de
 coordinación cuando la operación afecta a más de una de sus estructuras internas.
 
+    \subsection{API REST: endpoints expuestos al cliente}
+    \label{subsec:endpoints}
+
+El modelo de exploración descrito hasta aquí permanecería inerte sin
+un mecanismo que lo expusiese al exterior. Esa función la cumple una
+API HTTP basada en \textit{servlets} anotados con \texttt{@WebServlet},
+en la que cada \textit{servlet} se ocupa de un recurso bien delimitado
+y delega la lógica en \texttt{StateManager} o en \texttt{NavigationDAO}
+según corresponda.
+
+La traducción del modelo a esta API sigue una asimetría intencionada
+entre escrituras y lecturas. Todas las acciones que modifican el
+estado de exploración se canalizan a través de un único
+\textit{endpoint}, \texttt{/api/navigation}, que recibe en el cuerpo
+de la petición un campo \texttt{action} cuyo valor discrimina entre
+las operaciones disponibles: añadir y retirar filtros de metadatos y
+de referencia, navegar por un enlace, deshacer una transición,
+restaurar el estado previo a una unión, abrir un nuevo bloque de
+unión o cambiar de colección. De este modo, el vocabulario público
+de \texttt{StateManager} se proyecta directamente sobre la superficie
+HTTP del backend, sin necesidad de multiplicar \textit{endpoints} por
+cada operación. Las consultas, por el contrario, sí justifican
+\textit{endpoints} independientes, ya que cada una devuelve una
+representación distinta del estado actual: las entidades visibles,
+el detalle de una entidad concreta, las facetas de metadatos, las
+facetas de referencia o los enlaces disponibles.
+
+La correspondencia entre cada URL y la clase \texttt{*Servlet} que la
+atiende es directa: \texttt{DatasetsServlet} resuelve
+\texttt{/api/datasets}, \texttt{MetadataFacetsServlet} resuelve
+\texttt{/api/facets/metadata}, y así sucesivamente. Todas las
+peticiones que requieren contexto de exploración recuperan el
+\texttt{StateManager} asociado a la sesión mediante
+\texttt{req.getSession()} y devuelven \texttt{HTTP 400} cuando no
+existe un estado activo, lo que garantiza que ningún \textit{endpoint}
+opere sobre un cliente que aún no se ha inicializado.
+
+El conjunto completo de \textit{endpoints} expuestos por el backend,
+junto con sus parámetros principales y la acción que desencadenan, se
+resume en la Tabla~\ref{tab:endpoints}.
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \renewcommand{\arraystretch}{1.2}
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{|l|p{4.1cm}|p{2.8cm}|p{4.7cm}|}
+    \hline
+    \textbf{Método} & \textbf{URL} & \textbf{Parámetros} & \textbf{Acción} \\
+    \hline
+    GET  & \texttt{/api/datasets}    & ---                       & Lista los \textit{datasets} disponibles \\
+    \hline
+    GET  & \texttt{/api/collections} & \texttt{datasetId}        & Lista las colecciones de un \textit{dataset} \\
+    \hline
+    GET  & \texttt{/api/session}     & ---                       & Devuelve el estado de la sesión activa \\
+    \hline
+    POST & \texttt{/api/session}     & \texttt{datasetId}, \texttt{collectionId} (cuerpo JSON) & Inicializa una sesión sobre un \textit{dataset} y una colección \\
+    \hline
+    GET  & \texttt{/api/entities}    & \texttt{page}, \texttt{size} & Entidades visibles tras aplicar los filtros activos (paginado) \\
+    \hline
+    GET  & \texttt{/api/entity}      & \texttt{id}, \texttt{collectionId} (opcional) & Detalle de una entidad: metadatos, recursos y referencias \\
+    \hline
+    GET  & \texttt{/api/facets/metadata}   & ---                 & Facetas de metadatos y filtros activos \\
+    \hline
+    GET  & \texttt{/api/facets/references} & ---                 & Facetas de referencia y filtros activos \\
+    \hline
+    GET  & \texttt{/api/facets/links}      & ---                 & Relaciones disponibles desde la colección actual \\
+    \hline
+    POST & \texttt{/api/navigation}  & \texttt{action} + parámetros propios de la acción & Aplica una acción sobre el estado: filtros (\texttt{add\_mfilter}, \texttt{rm\_mfilter}, \texttt{add\_not\_mfilter}, \texttt{rm\_not\_mfilter}, \texttt{add\_rfilter}, \texttt{rm\_rfilter}, \texttt{add\_not\_rfilter}, \texttt{rm\_not\_rfilter}), navegación (\texttt{link}, \texttt{goback}), unión (\texttt{union}, \texttt{change}) y restauración (\texttt{restore}) \\
+    \hline
+    GET  & \texttt{/api/union}       & \texttt{page}, \texttt{size} & Entidades del conjunto de unión (paginado) \\
+    \hline
+    GET  & \texttt{/api/resource/*}  & ruta como \texttt{pathInfo} & Sirve archivos del directorio de \textit{uploads} (imágenes y recursos asociados a entidades) \\
+    \hline
+  \end{tabular}
+  \caption{Endpoints REST expuestos por el backend.}
+  \label{tab:endpoints}
+\end{table}
+
 \section{Filtrado clásico y relacional}
 \label{sec:filtrado}
 
@@ -1011,6 +1090,102 @@ relación \textit{Actor}. Que ambas entradas compartan colección activa no es u
 del sistema: el campo \texttt{collection\_id} devuelto por \texttt{getUnionEntities()}
 indica a qué colección pertenece cada entidad del resultado, permitiendo al frontend
 distinguirlas cuando fuera necesario.
+
+\section{Desarrollo del frontend}
+\label{sec:frontend}
+
+Concluida la descripción del backend, queda por presentar la capa
+que el usuario percibe directamente. El frontend se concibió como una
+superficie de presentación deliberadamente delgada, cuya única
+responsabilidad consiste en renderizar el estado actual del servidor
+y en traducir las acciones del usuario en peticiones HTTP contra los
+\textit{endpoints} descritos en la Tabla~\ref{tab:endpoints}. El
+cliente no mantiene una copia del modelo de datos ni implementa una
+lógica propia de navegación: el \texttt{StateManager} del servidor es
+la única fuente de verdad, y la interfaz se limita a presentar lo que
+recibe y a invocar el \textit{endpoint} adecuado ante cada acción del
+usuario.
+
+    \subsection*{Tecnología y filosofía}
+
+Para una capa con esa responsabilidad acotada, recurrir a un
+\textit{framework} reactivo como React, Vue o Angular habría supuesto
+un sobrecoste injustificado. El cliente está implementado, por tanto,
+en JavaScript moderno con módulos \textit{ES}, sin dependencias de
+interfaz. Tres razones sostienen esta decisión. En primer lugar, su
+lógica se reduce a peticiones HTTP y a manipulación directa del DOM,
+sin estructuras de datos derivadas que justifiquen un sistema reactivo.
+En segundo lugar, la gestión del estado vive íntegramente en el
+servidor a través de \texttt{StateManager}, por lo que no es necesaria
+una capa equivalente en el cliente. Por último, mantener el código en
+JavaScript estándar facilita la lectura y la evolución del proyecto,
+especialmente en un contexto académico en el que la base de código
+debe poder revisarse sin requerir conocimientos específicos de un
+\textit{framework} concreto.
+
+La única dependencia de desarrollo es \textbf{Vite}, que actúa como
+servidor de desarrollo durante la iteración, con recarga en caliente,
+y como empaquetador de producción al generar el \textit{bundle}
+estático mediante \texttt{npm run build}.
+
+    \subsection*{Estructura}
+
+Sobre esa base mínima de herramientas, el árbol de directorios del
+cliente se organiza de forma plana y predecible:
+
+\begin{itemize}
+  \item \texttt{index.html}: punto de entrada HTML. Declara las
+    regiones visuales (selección de \textit{dataset}, selección de
+    colección y pantalla de navegación) y los contenedores donde el
+    \textit{script} inyecta dinámicamente facetas, entidades y
+    filtros activos.
+  \item \texttt{src/main.js}: punto de entrada JavaScript. Orquesta
+    la inicialización, mantiene un objeto \texttt{state} con la
+    información mínima necesaria para renderizar (identificadores y
+    nombres de la colección actual, historial de \textit{links} o
+    página activa, entre otros) y registra los \textit{listeners}
+    sobre los controles de la interfaz.
+  \item \texttt{src/api.js}: cliente HTTP, descrito más adelante.
+  \item \texttt{src/utils.js}: utilidades genéricas, como la
+    selección de nodos por \texttt{id} o el escape de HTML.
+  \item \texttt{src/components/}: piezas de interfaz reutilizables.
+    Cada archivo encapsula un componente independiente, con una API
+    mínima: combobox con búsqueda incremental para las facetas
+    (\texttt{Combobox.js}), \textit{chips} que representan los filtros
+    activos (\texttt{FilterTags.js}), ventana modal de detalle de
+    entidad (\texttt{Modal.js}), control de paginación
+    (\texttt{PaginationHandler.js}), reordenamiento de paneles por
+    \textit{drag and drop} (\texttt{PanelDragOrder.js}),
+    \textit{placeholders} de carga (\texttt{Skeleton.js}) y
+    notificaciones efímeras (\texttt{Toast.js}).
+  \item \texttt{src/styles/}: hojas de estilo
+    (\texttt{base.css}, \texttt{layout.css} y \texttt{main.css}).
+\end{itemize}
+
+    \subsection*{Comunicación con el backend}
+
+A todas estas piezas y a la orquestación de \texttt{main.js} les da
+soporte una capa transversal: el cliente HTTP centralizado en
+\texttt{src/api.js}. Esta pieza expone una única función,
+\texttt{api(endpoint, options)}, construida sobre \texttt{fetch}, que
+fija \texttt{mode: \string'cors\string'}, \texttt{credentials: \string'include\string'} y la
+cabecera \texttt{Content-Type: application/\-json}, serializa
+automáticamente el cuerpo de las peticiones \texttt{POST} y lanza una
+excepción si la respuesta no es satisfactoria. El uso de
+\texttt{credentials: \string'include\string'} es lo que garantiza que la cookie
+\texttt{JSESSIONID} viaje en cada petición, permitiendo al backend
+recuperar el \texttt{StateManager} asociado a la sesión.
+
+Coherente con la decisión arquitectónica que sitúa el estado en el
+servidor, el cliente no duplica esa información. Tras cada acción,
+ya sea aplicar un filtro, navegar por un enlace, retroceder o añadir
+al conjunto de unión, se invoca una función \texttt{refreshAll()} que
+vuelve a llamar a los \textit{endpoints} de facetas, entidades y
+unión, y repinta la interfaz con los datos recibidos. Esta estrategia,
+alineada con el espíritu HATEOAS discutido en el
+Capítulo~\ref{cap:estadoDeLaCuestion}, simplifica el razonamiento
+sobre coherencia: el servidor es la única fuente de verdad, y la
+interfaz refleja en todo momento el resultado que aquel devuelve.
 
 \section{Obstáculos encontrados y soluciones implementadas}
 \label{sec:obstaculos}
