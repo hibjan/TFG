@@ -34,6 +34,9 @@ La aplicación maneja dos representaciones complementarias de la
 información. La primera es un esquema relacional persistente, alojado
 en PostgreSQL, en el que se almacenan las entidades importadas de las
 fuentes externas (TMDB, DBLP, etc.) junto con sus metadatos y vínculos.
+El detalle del pipeline de integración con cada fuente (descarga,
+procesado e ingesta) se documenta en el
+Apéndice~\ref{Appendix:integracion}.
 La segunda es una representación en memoria del contexto de exploración
 de cada usuario, descrita en la
 Sección~\ref{sec:representacionContexto}, que se traduce dinámicamente
@@ -1234,6 +1237,9 @@ Con este mecanismo activo, el script ordena las películas y series por su campo
 más populares antes de generar el dataset de salida. Esto permitió trabajar durante el
 desarrollo con un subconjunto representativo y manejable, manteniendo la opción de
 escalar al dataset completo simplemente desactivando el filtro o aumentando el límite.
+La motivación de operar con un subconjunto y los detalles del script
+de procesado se desarrollan en el
+Apéndice~\ref{Appendix:integracion}.
 
     \subsection*{Valores numéricos y de fecha en los metadatos: la decisión de usar rangos}
 
@@ -1309,7 +1315,10 @@ la cookie de sesión), por lo que el filtro lee el encabezado \texttt{Origin} de
 petición y lo devuelve como valor explícito. Complementariamente, fue necesario
 configurar el \texttt{CookieProcessor} en \texttt{context.xml} con
 \texttt{sameSiteCookies="None"} para que la cookie de sesión se enviara correctamente
-en peticiones cross-origin.
+en peticiones cross-origin. La configuración exacta del contenedor de
+servlets en los modos de desarrollo y de producción, junto con el
+empaquetado del backend tras un mismo origen mediante Nginx en
+producción, se describe en el Apéndice~\ref{Appendix:despliegue}.
 
 El flujo completo de una petición HTTP, desde el \textit{preflight}
 CORS hasta la respuesta JSON, se ilustra en la

@@ -843,9 +843,24 @@
     backgroundcolor=\color{yellow!5}
 }
 
+\lstdefinelanguage{Golang}{
+    morekeywords=[1]{package,import,func,var,const,type,struct,interface,
+        map,chan,return,if,else,for,range,switch,case,default,break,
+        continue,go,defer,select,fallthrough,goto},
+    morekeywords=[2]{int,int8,int16,int32,int64,uint,uint8,uint16,uint32,
+        uint64,float32,float64,string,bool,byte,rune,error,any,nil,
+        true,false,iota},
+    sensitive=true,
+    morecomment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    morestring=[b]",
+    morestring=[b]'
+}
+
 \lstdefinestyle{goStyle}{
     language=Golang,
     keywordstyle=\color{cyan!70!black}\bfseries,
+    keywordstyle=[2]\color{magenta!70!black}\bfseries,
     commentstyle=\color{gray}\itshape,
     stringstyle=\color{red},
     basicstyle=\small\ttfamily,
@@ -854,6 +869,32 @@
     numberstyle=\tiny,
     frame=single,
     backgroundcolor=\color{cyan!5}
+}
+
+\lstdefinestyle{bashStyle}{
+    language=bash,
+    keywordstyle=\color{black}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{red},
+    basicstyle=\small\ttfamily,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny,
+    frame=single,
+    backgroundcolor=\color{gray!5}
+}
+
+\lstdefinestyle{xmlStyle}{
+    language=XML,
+    keywordstyle=\color{blue!70!black}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{red},
+    basicstyle=\small\ttfamily,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny,
+    frame=single,
+    backgroundcolor=\color{blue!5}
 }
 
 % TikZ para diagramas vectoriales (p.ej. figura de arquitectura)

@@ -1,4 +1,248 @@
-\chapter{Título del Apéndice A}
-\label{Appendix:Key1}
+\chapter{Integración e ingesta de fuentes de datos}
+\label{Appendix:integracion}
 
-Los apéndices son secciones al final del documento en las que se agrega texto con el objetivo de ampliar los contenidos del documento principal.
+La aplicación está diseñada para operar sobre datos provenientes de fuentes
+externas heterogéneas, lo que obliga a disponer de una capa de integración
+que medie entre cada origen y el modelo relacional descrito en el cuerpo de
+la memoria. Este apéndice documenta el conjunto de scripts que conforman
+dicha capa, distinguiendo entre la descarga remota, el procesado y la
+carga final en PostgreSQL. Se detallan los dos orígenes incorporados a
+día de hoy, TMDB y DBLP, y se describe el script de poblado, común a
+ambos, que materializa los objetos en las cinco tablas del esquema.
+
+\section{Pipeline general}
+
+La integración de cada fuente sigue un esquema de tres etapas
+diferenciadas. La primera etapa, de \emph{extracción}, obtiene los datos
+brutos desde el sistema de origen, ya sea mediante una API REST autenticada
+o a través de volcados públicos comprimidos. La segunda etapa, de
+\emph{procesado}, transforma esos datos en una representación intermedia
+uniforme, en formato JSON Lines (un objeto JSON por línea), que codifica
+de forma homogénea el modelo común de colecciones, entidades, metadatos,
+referencias y recursos. La tercera etapa, de \emph{ingesta}, vuelca ese
+JSONL en la base de datos PostgreSQL siguiendo el esquema descrito en el
+capítulo de desarrollo.
+
+Esta separación tiene dos consecuencias prácticas. Por un lado, permite
+incorporar nuevas fuentes implementando únicamente las dos primeras
+etapas, ya que la tercera es agnóstica al origen siempre que el JSONL
+generado se ajuste al formato esperado. Por otro, hace que los archivos
+intermedios actúen como caché reutilizable, evitando rehacer descargas o
+procesados costosos cuando solo se modifica una etapa posterior.
+
+\subsection*{Modelo de representación intermedio}
+
+La pieza que articula esta arquitectura es el formato del JSONL
+intermedio. El archivo contiene un objeto JSON por línea (lo que
+permite procesarlo en streaming sin cargarlo entero en memoria) y se
+estructura en dos partes. La primera línea es un objeto de cabecera con
+la lista de colecciones presentes en el dataset (nombre e identificador
+de cada una). Las líneas siguientes son entidades, cada una con cinco
+campos: \texttt{id} y \texttt{collection\_id} que identifican la
+entidad dentro de su colección, \texttt{metadata} con los atributos
+filtrables agrupados por clave, \texttt{references} con los vínculos
+tipados hacia otras entidades del mismo archivo y \texttt{contents}
+con el texto descriptivo y los recursos externos. El
+Listado~\ref{lst:jsonlSchema} reproduce un fragmento ilustrativo del
+formato.
+
+\begin{lstlisting}[style=jsonStyle, caption=Esquema del JSONL intermedio, label=lst:jsonlSchema]
+{"collections": [{"name": "Movies", "id": 1}, {"name": "People", "id": 3}]}
+{
+  "id": 550,
+  "collection_id": 1,
+  "metadata": {
+    "Genres": ["Drama"],
+    "Release date (Year)": ["1990-1999"],
+    "Runtime": ["120-149"]
+  },
+  "references": [
+    {"reason": "Director", "reference_id": 7467, "reference_collection_id": 3}
+  ],
+  "contents": {
+    "Name": "Fight Club",
+    "Overview": "...",
+    "_resources": [
+      {"type": "image", "label": "Poster", "url": "https://image.tmdb.org/..."}
+    ]
+  }
+}
+\end{lstlisting}
+
+Este formato cumple varios objetivos a la vez. Es directamente
+proyectable al esquema relacional: cada clave del bloque
+\texttt{metadata} produce una o más filas en la tabla \texttt{metadata},
+cada elemento de \texttt{references} se convierte en una fila de
+\texttt{reference}, y el bloque \texttt{contents} se almacena tal cual
+en la columna \texttt{JSONB} de \texttt{entities}. Es también
+extensible, ya que la ausencia de un esquema fijo en los bloques
+\texttt{metadata} y \texttt{contents} permite que cada colección
+exponga los campos propios de su dominio sin necesidad de coordinarse
+con las demás. Y, por último, es independiente de la fuente: tanto el
+procesado de TMDB como el de DBLP producen archivos con esta misma
+estructura, lo que hace que la etapa de ingesta sea un único script
+común a todos los orígenes.
+
+\section{TMDB}
+
+The Movie Database (TMDB) es una base de datos colaborativa de
+información cinematográfica y televisiva, mantenida por una comunidad
+amplia de contribuyentes y consumida por servicios de terceros a través
+de una API REST pública. Su catálogo incluye decenas de miles de
+películas, series, personas (actores, directores, equipo técnico),
+productoras y cadenas de televisión, todos enlazados entre sí por
+relaciones tipadas. Esa combinación de tamaño, riqueza de metadatos y
+densidad de relaciones la convertía en el banco de pruebas ideal para
+un sistema cuyo objetivo es precisamente explorar grafos de información
+mediante metadatos y referencias.
+
+La extracción se apoya en un par de scripts en Python independientes,
+uno por etapa. El primero descarga los identificadores diarios
+publicados por TMDB y, a continuación, consulta el endpoint de detalle
+correspondiente para cada uno, escribiendo el JSON devuelto en un
+archivo JSONL por colección. El acceso a la API requiere una clave
+personal, gestionada como variable de entorno \texttt{TMDB\_API\_KEY}
+definida en \texttt{.env.thirdparty} para mantenerla fuera del control
+de versiones. La descarga utiliza un pool de corrutinas asíncronas con
+un limitador que respeta el ritmo admitido por la API y un mecanismo
+de reanudación que evita volver a pedir identificadores ya presentes
+en el archivo de salida, lo que hace la descarga idempotente ante
+interrupciones.
+
+\subsection*{El interés de trabajar con un subconjunto}
+
+Operar con el catálogo completo durante el desarrollo no era práctico.
+Las decenas de miles de entidades por colección, multiplicadas por las
+referencias cruzadas entre ellas, habrían provocado tiempos de poblado
+de la base de datos y de respuesta del frontend prohibitivos para una
+iteración rápida. Más relevante todavía, una parte significativa del
+catálogo corresponde a contenidos poco conocidos o con muy pocos votos,
+cuya presencia en la exploración aporta ruido sin mejorar el valor
+demostrativo del sistema.
+
+La solución adoptada fue puntuar cada entidad mediante un promedio
+bayesiano sobre el número de votos y la nota media, y retener
+únicamente las primeras \texttt{TOP\_K} entidades de cada colección.
+Con \texttt{TOP\_K = 500}, el dataset resultante (denominado
+\texttt{dataset\_top500.jsonl}) cabe holgadamente en memoria, se ingesta
+en pocos minutos y mantiene precisamente los títulos sobre los que el
+usuario tiene más probabilidades de querer navegar. El mismo script
+admite ampliar el subconjunto a varios miles de entidades sin tocar
+código, ajustando únicamente el parámetro de corte, lo que permite
+escalar la prueba con escaso esfuerzo.
+
+\subsection*{Configuración por colección}
+
+El procesado se parametriza mediante \texttt{scripts/TMDB/format.json},
+un archivo declarativo que describe las cinco colecciones consideradas
+(películas, series, personas, compañías y cadenas) y, para cada una,
+los campos que deben extraerse del JSON crudo y cómo se clasifican
+dentro del modelo. La configuración define qué campos son
+\emph{metadatos} (filtrables), \emph{contenidos} (texto descriptivo) o
+\emph{recursos} (URLs externas, como pósteres o enlaces a IMDB), así
+como el tipo de cada metadato: cadena, numérico, fecha, ubicación o
+codificado. La discretización en rangos para los campos numéricos y de
+fechas, motivada en el capítulo de desarrollo, se controla también
+desde este archivo mediante un tamaño de bucket por campo.
+
+Centralizar la configuración en este archivo permite extender el
+dataset con nuevos campos sin tocar el código Python, y facilita además
+que el mismo motor de procesado se aplique a fuentes distintas con un
+esquema diferente pero un objetivo análogo, idea que se materializa en
+la integración con DBLP.
+
+\section{DBLP}
+
+La segunda fuente integrada es DBLP, un servicio bibliográfico mantenido
+por la Universidad de Tréveris que cataloga la producción científica en
+informática: artículos en revistas y conferencias, monografías, autores
+y lugares de publicación. A diferencia de TMDB, DBLP no expone una API
+de consulta detallada; en su lugar, publica un volcado RDF completo en
+formato \texttt{N-Triples} (\texttt{dblp.nt.gz}) que, en su variante
+íntegra, ronda decenas de gigabytes una vez descomprimido. La fuente es
+interesante para este proyecto por dos motivos: aporta un dominio
+ortogonal al cinematográfico, lo que valida la generalidad del modelo,
+y permite construir un dataset alineado con la comunidad universitaria
+filtrando por afiliación.
+
+El procesado se ha implementado en Go por razones de rendimiento: la
+lectura completa del volcado debe poder hacerse en tiempos razonables y
+con un consumo de memoria acotado. La estrategia se basa en una
+primera pasada lineal sobre todas las tripletas que asigna
+identificadores enteros a las entidades reconocidas y, en paralelo,
+reparte las tripletas en sesenta y cuatro archivos de partición usando
+una función hash sobre el sujeto. Esto garantiza que toda la
+información de una misma entidad acabe en la misma partición y permite
+procesar el grafo en bloques que sí caben en memoria, sin necesidad de
+ordenar el archivo completo. Una segunda pasada recorre las
+particiones, construye los objetos JSONL aplicando la misma estructura
+declarativa de \texttt{format.json} que TMDB y elimina cada partición
+inmediatamente después de procesarla para acotar el uso de disco.
+
+Un detalle relevante es el filtrado opcional por afiliación a la UCM:
+cuando está activo, el script conserva únicamente personas cuya
+información contiene alguna referencia a \texttt{.ucm.es} y, en una
+fase de limpieza posterior, descarta las obras que ya no quedan ligadas
+a ninguna persona conservada. Este filtro reduce drásticamente el
+tamaño del dataset y produce un grafo autoconsistente alineado con el
+caso de uso académico previsto. La fase de limpieza realiza además una
+poda de referencias colgantes (apuntando a entidades que dejaron de
+formar parte del subconjunto), de modo que el JSONL final puede
+ingerirse directamente sin pasos de validación adicionales.
+
+\section{Ingesta en PostgreSQL}
+
+La etapa final del pipeline es común a ambas fuentes y se implementa en
+\texttt{scripts/populate\_db\_jsonl.py}. El script consume un archivo
+JSONL cuyo primer registro describe las colecciones y los registros
+siguientes son objetos individuales, y los inserta en las cinco tablas
+del esquema (\texttt{datasets}, \texttt{collections}, \texttt{entities},
+\texttt{metadata} y \texttt{reference}).
+
+La carga se realiza en dos pasadas. La primera pasada inserta las
+entidades y construye en memoria un diccionario que asocia los
+identificadores originales del JSON con los identificadores internos
+asignados por PostgreSQL. Esta tabla de equivalencias es la que permite,
+en la segunda pasada, traducir las referencias del archivo en referencias
+internas entre filas de la tabla \texttt{entities}, evitando así las
+referencias colgantes y garantizando la integridad del grafo. Durante la
+carga, las inserciones se agrupan en lotes para reducir el número de
+viajes a la base de datos, y los índices secundarios se desactivan
+temporalmente y se reconstruyen al finalizar, lo que acelera de forma
+notable el poblado inicial.
+
+La conexión a la base de datos se configura íntegramente mediante las
+variables de entorno \texttt{DB\_HOST}, \texttt{DB\_NAME},
+\texttt{DB\_USER}, \texttt{DB\_PASS} y \texttt{DB\_PORT}, definidas en
+\texttt{.env.db}. El script invoca \texttt{psycopg2} sin credenciales
+embebidas, lo que mantiene el archivo libre de información sensible y
+facilita reutilizarlo entre entornos de desarrollo y producción. El
+nombre del dataset y la ruta al JSONL pueden pasarse como argumentos
+de la línea de comandos, lo que permite cargar varios datasets
+independientes sobre la misma base de datos.
+
+\section{Ejecución completa desde cero}
+
+Para reproducir el pipeline completo desde un repositorio recién
+clonado los pasos son los descritos en el Listado~\ref{lst:pipelineRun}.
+Se asume que la base de datos ya está arrancada (véase el
+Apéndice~\ref{Appendix:despliegue}) y que las variables de entorno
+están definidas en \texttt{.env.db} y \texttt{.env.thirdparty}.
+
+\begin{lstlisting}[style=bashStyle, caption=Ejecución del pipeline completo, label=lst:pipelineRun]
+# 1. Instalar dependencias Python
+cd scripts
+pip install -r requirements.txt
+
+# 2. TMDB: descargar y procesar
+python TMDB/pull.py
+python TMDB/process.py
+
+# 3. (Alternativa) DBLP: procesar el volcado
+cd DBLP
+go run main.go dblp.nt.gz format.json
+cd ..
+
+# 4. Ingesta en PostgreSQL
+python populate_db_jsonl.py "./TMDB/dataset_top500.jsonl" "TMDb Top 500"
+\end{lstlisting}
