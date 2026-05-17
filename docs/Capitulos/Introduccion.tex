@@ -50,7 +50,71 @@ Dichas herramientas deben combinar la precisión establecida por la búsqueda di
 que el filtrado clásico sin quitar la agencia del usuario.
 
 \section{Objetivos}
-Descripción de los objetivos del trabajo.
+\label{sec:objetivos}
+
+El presente Trabajo de Fin de Grado parte de la propuesta original del profesor, titulada
+\textit{Aplicación para el procesamiento de colecciones de contenidos digitales}, que planteaba
+el diseño de una herramienta para transformar metadatos y contenidos de objetos en grandes
+colecciones digitales, con posibilidades que iban desde la recodificación de descripciones hasta
+el etiquetado asistido por modelos del lenguaje. A partir de esa propuesta inicial hemos
+delimitado el alcance hacia la \textbf{exploración interactiva} de colecciones, conservando la
+idea central de un sistema agnóstico al dominio capaz de operar sobre colecciones heterogéneas,
+pero concentrando el esfuerzo en las primitivas de navegación que permitan al usuario recorrerlas
+de forma expresiva. Esta acotación está sustentada por la naturaleza experimental del motor de
+navegación que se quería validar y por el deseo de entregar un sistema funcionalmente cerrado al
+término del trabajo; queda como línea de continuación natural, recogida más adelante entre las
+líneas futuras, la integración de transformaciones asistidas por modelos del lenguaje sobre el
+mismo motor.
+
+\subsection*{Objetivo general}
+
+Diseñar e implementar una aplicación de exploración interactiva de colecciones digitales que
+combine filtrado facetado por metadatos, navegación transversal entre colecciones relacionadas
+mediante referencias semánticas, y operaciones de conjuntos sobre los resultados parciales, todo
+ello bajo un modelo de datos agnóstico al dominio que permita aplicar el sistema a colecciones
+de naturaleza estructural distinta sin modificaciones sustanciales.
+
+\subsection*{Objetivos específicos}
+
+A partir de ese objetivo general identificamos seis objetivos específicos, formulados de manera
+que puedan verificarse de forma independiente en el capítulo de Pruebas y Validación.
+
+\begin{itemize}
+\item \textbf{O1. Modelo de datos agnóstico al dominio.} Definir un modelo relacional que
+represente colecciones, entidades, metadatos descriptivos y relaciones entre entidades, sin
+acoplarse a las particularidades de ningún dominio concreto.
+
+\item \textbf{O2. Motor de navegación con tres primitivas.} Diseñar e implementar la lógica de
+exploración mediante una máquina de estados que combine filtrado facetado con modos de inclusión
+y exclusión, navegación transversal mediante \textit{links}, y operaciones de conjuntos (en
+concreto, unión) sobre los resultados parciales, manteniendo historial e invariantes coherentes
+entre transiciones.
+
+\item \textbf{O3. Validación funcional sobre dominios distintos.} Verificar empíricamente que el
+modelo y el motor generalizan a colecciones de naturaleza estructural diferenciada, mediante la
+integración de al menos dos catálogos públicos de dominios distintos.
+
+\item \textbf{O4. Exposición del motor mediante \textit{API RESTful}.} Diseñar y desarrollar una
+capa de servicios HTTP que exponga las capacidades del motor de manera estructurada y consumible
+por interfaces externas, con gestión de sesión y control de errores.
+
+\item \textbf{O5. Interfaz web interactiva.} Desarrollar una aplicación cliente que materialice
+las primitivas del motor en componentes de interfaz comprensibles para usuarios sin experiencia
+previa en búsqueda facetada, cuidando especialmente la legibilidad, la inmediatez de la
+respuesta y la consistencia de la metáfora de exploración.
+
+\item \textbf{O6. Evaluación empírica de la usabilidad.} Diseñar y conducir un estudio formal
+de usabilidad con usuarios externos siguiendo un protocolo estándar (\textit{think-aloud}
+acompañado de cuestionarios SUS y SEQ y observación directa), del que se derive evidencia
+accionable sobre la calidad de la interacción y un catálogo priorizado de mejoras incrementales.
+\end{itemize}
+
+Quedan deliberadamente fuera del alcance de este trabajo, y se reservan como líneas de
+continuación recogidas en el capítulo de Conclusiones, las transformaciones automáticas de
+metadatos asistidas por modelos del lenguaje, la persistencia y autenticación de usuarios y el
+despliegue a escala distribuida del motor. Estas decisiones de acotación son deliberadas y
+permiten cerrar el sistema de manera coherente en el horizonte temporal del proyecto, sin
+comprometer las primitivas centrales que constituyen el aporte principal.
 
 \section{Plan de trabajo}
 Hemos optado por una metodología ágil, basada en su mayor parte en el marco de trabajo \textbf{Scrum}, adaptada a un 
