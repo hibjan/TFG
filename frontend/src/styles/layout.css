@@ -93,9 +93,11 @@
 }
 
 .panel-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #c5d0e6;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #e5ecf5;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
 }
 
 .collection-label {
@@ -105,19 +107,25 @@
 }
 
 /* === Space Panels === */
+/* Each space-panel must read as its own region. Bigger padding, more
+   margin between panels, a thin coloured top accent and a divider
+   underneath the header reinforce the boundary. */
 .space-panel {
     background: rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.04);
-    border-radius: 8px;
-    padding: 14px;
-    margin-bottom: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 3px solid rgba(176, 190, 197, 0.28);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 22px;
 }
 
 .space-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .space-header-actions {
@@ -190,8 +198,10 @@
 /* === Primary space-panel — used to mark the Filtered Collection as the
    focal area of the screen (slightly stronger background, taller floor). */
 .space-panel.primary {
-    background: rgba(0, 0, 0, 0.22);
-    border-color: rgba(92, 132, 193, 0.18);
+    background: rgba(0, 0, 0, 0.25);
+    border-color: rgba(92, 132, 193, 0.25);
+    border-top: 3px solid #5c84c1;
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.18);
 }
 
 .space-panel.primary .entity-grid {

@@ -1,12 +1,127 @@
 \chapter{Conclusiones y Trabajo Futuro}
 \label{cap:conclusiones}
 
-\section{LLM como método de navegación}
+\chapterquote{Lo que llamamos comienzo es a menudo el final, y llegar al final es comenzar.}{T. S. Eliot}
 
-\section{Distribuir el motor en várias máquinas}
+Este capítulo cierra la memoria recogiendo lo aportado por el trabajo, reconociendo de manera
+explícita sus límites y enunciando las líneas de continuación orgánica que se abren a partir
+de él. La sección~\ref{sec:conclusiones} sintetiza los resultados alcanzados respecto a los
+objetivos planteados en el capítulo~\ref{cap:introduccion}. La sección~\ref{sec:limitaciones}
+delimita el alcance del sistema entregado. La sección~\ref{sec:trabajoFuturo} agrupa, en cinco
+direcciones complementarias, las extensiones que dejamos abiertas como continuación del proyecto.
 
-\section{Cosas genéricas (usuario, historial, etc.)}
+\section{Conclusiones}
+\label{sec:conclusiones}
 
-Antes de la entrega de actas de cada convocatoria, en el plazo que se indica en el calendario de los trabajos de fin de grado, el estudiante entregará en el Campus Virtual la versión final de la memoria en PDF.
+El trabajo ha permitido construir un motor de exploración de colecciones digitales que integra
+los tres mecanismos planteados desde el inicio: filtrado facetado sobre metadatos, navegación
+transversal entre colecciones a través de referencias semánticas, y operaciones de conjuntos
+sobre los resultados parciales. Cada uno de ellos se ha materializado en un componente
+identificable del sistema (filtros, \textit{links} y conjunto unión) y se ha verificado su
+comportamiento sobre volcados reales de dos catálogos públicos de naturaleza muy distinta, TMDB
+(audiovisual) y DBLP (publicaciones científicas), escogidos precisamente por sus diferencias
+estructurales.
 
+La estrategia metodológica de doble fase ha resultado especialmente acertada. La primera fase,
+centrada en el prototipo en Java sin interfaz gráfica, permitió validar la viabilidad técnica
+del modelo de navegación de manera rigurosa, sin contaminar las decisiones de diseño con
+restricciones derivadas de la presentación. La segunda fase, dedicada a la exposición del motor
+mediante una \textit{API RESTful} y al desarrollo de la interfaz web, pudo entonces concentrarse
+en cuestiones de experiencia de usuario sobre una base ya estable. Esta separación clara entre
+\textit{back-end} y \textit{front-end} también ha facilitado el trabajo en pareja, al definir
+contratos explícitos entre las dos capas.
 
+La adopción del marco de trabajo \textbf{Scrum} adaptado a un equipo reducido ha demostrado su
+valor al permitir reorientar el proyecto cuando los hallazgos de cada \textit{sprint} obligaban
+a reconsiderar decisiones previas. En paralelo, la evaluación de usabilidad realizada con
+participantes externos siguiendo un protocolo formal ha producido evidencia cualitativa que ha
+guiado la última iteración de la interfaz, y constituye en sí misma una contribución reusable
+para futuros desarrollos sobre el mismo motor.
+
+\section{Limitaciones}
+\label{sec:limitaciones}
+
+El alcance del sistema entregado debe entenderse dentro de varios límites bien delimitados. La
+validación funcional del motor se ha realizado sobre dos dominios diferenciados (el catálogo
+audiovisual TMDB y la base bibliográfica DBLP), lo que aporta evidencia razonable de que el
+modelo no depende de las particularidades de un único corpus, pero no agota el espectro de
+colecciones a las que el sistema aspira a aplicarse. Su extensión a otros tipos de fondos
+(repositorios documentales institucionales, catálogos bibliotecarios completos o conjuntos de
+software libre) sigue siendo, por tanto, una hipótesis razonable que no se ha demostrado
+empíricamente en este trabajo. Del mismo modo, las pruebas de carga se han limitado a
+colecciones de unas decenas de miles de entidades, sin abordar escenarios de gran escala que
+requerirían un trabajo de optimización específico.
+
+El sistema carece, por decisión de diseño y no por descuido, de una capa de usuario persistente:
+las sesiones son efímeras y no se contempla la identificación, la autenticación ni la
+sincronización de estado entre dispositivos. La interfaz web, por su parte, se ha optimizado
+para uso en pantallas de escritorio y, aunque colapsa razonablemente en pantallas estrechas,
+no se ha trabajado de forma específica el caso móvil. Por último, la evaluación de usabilidad
+sigue una aproximación cualitativa de muestra reducida (entre cinco y siete participantes),
+adecuada para detectar la mayoría de los problemas observables pero insuficiente para sostener
+afirmaciones cuantitativas de carácter estadístico.
+
+\section{Trabajo futuro}
+\label{sec:trabajoFuturo}
+
+A partir del estado en el que se entrega el sistema, identificamos cinco líneas naturales de
+continuación. Las dos primeras (asistencia mediante modelos del lenguaje y distribución del
+motor) tienen un componente de investigación aplicada y abrirían la puerta a un proyecto de
+mayor envergadura. Las tres restantes (capa de usuario, extensión a nuevos dominios y mejoras
+de la experiencia de usuario) son de carácter más incremental y podrían abordarse de forma
+independiente, sin alterar el núcleo del modelo de navegación.
+
+\subsection{Asistencia mediante modelos del lenguaje}
+
+La irrupción de los modelos del lenguaje de gran tamaño (\textit{Large Language Models}) abre
+una vía interesante para enriquecer el motor sin sustituirlo. En lugar de delegar la navegación
+en un modelo opaco, se puede emplear el modelo como capa de asistencia: traducción de consultas
+en lenguaje natural a combinaciones concretas de filtros, sugerencia de filtros pertinentes en
+función del estado de la exploración, generación de descripciones sintéticas del conjunto
+filtrado y explicación de por qué dos entidades aparecen relacionadas a través de un \textit{link}
+determinado. Este enfoque preserva la agencia del usuario, al mantener visibles las operaciones
+del motor, y delega únicamente las tareas en las que un modelo del lenguaje aporta valor real.
+
+\subsection{Distribución del motor sobre múltiples nodos}
+
+El motor se ejecuta actualmente como un proceso único frente a una base de datos también única.
+Para colecciones de mayor escala convendría descomponer el sistema en nodos independientes:
+particionar el almacenamiento por dominio o por dataset, replicar el cálculo de facetas para
+balancear carga, e introducir una capa de caché para resultados intermedios frecuentes. Esta
+línea exigiría revisar la noción de sesión, hoy asociada a un único proceso, y diseñar un
+protocolo coherente de invalidación que mantenga la sensación de inmediatez sobre la que descansa
+la experiencia de exploración.
+
+\subsection{Capa de usuario, persistencia e historial compartido}
+
+La introducción de una capa de identidad permitiría conservar el estado entre sesiones, recuperar
+exploraciones anteriores, marcar conjuntos unión como favoritos y compartir exploraciones mediante
+\textit{URLs} reproducibles. Esta línea es relativamente independiente del motor y podría
+desarrollarse en paralelo, aprovechando la separación ya existente entre \textit{back-end} y
+\textit{front-end}. Su mayor reto no es técnico, sino de diseño de interacción: integrar las
+nuevas funcionalidades sin sobrecargar la interfaz actual, que ha sido afinada precisamente para
+ofrecer una primera experiencia ligera y enfocada en la exploración.
+
+\subsection{Extensión a nuevos dominios y datasets}
+
+El sistema se ha pensado desde el principio como agnóstico al dominio. La integración con TMDB
+y DBLP ha servido para demostrar que el modelo relacional generaliza sin modificaciones
+sustanciales entre un catálogo audiovisual y una base de publicaciones científicas, pero la
+elección de futuros dominios sigue siendo el camino más directo para reforzar esa evidencia.
+Resultarían especialmente interesantes los fondos bibliotecarios completos (con varias clases
+de objetos coexistiendo bajo un mismo esquema descriptivo), los repositorios documentales
+institucionales (donde la riqueza de relaciones entre versiones, autores e instituciones pondría
+a prueba la capa de \textit{links}) y los catálogos de software libre (en los que las relaciones
+de dependencia y autoría dibujan grafos densos). En cada caso, la incorporación efectiva exige
+ajustar las heurísticas de identificación de facetas a las particularidades del dominio y, en
+algunos, ampliar el proceso de carga para acomodar formatos de origen heterogéneos.
+
+\subsection{Mejoras incrementales en la experiencia de usuario}
+
+Sobre la interfaz desarrollada quedan abiertas varias mejoras de carácter incremental que la
+evaluación de usabilidad ha permitido priorizar: una versión adaptada a dispositivos móviles,
+internacionalización completa más allá del par castellano-inglés actual, refuerzo de la
+accesibilidad mediante navegación por teclado y atributos \textit{ARIA}, exportación del
+historial de navegación y del conjunto unión a formatos reutilizables (\textit{CSV},
+\textit{JSON} o referencias bibliográficas), y un trabajo más fino sobre la representación
+visual del grafo de \textit{links} para hacerla útil con caminos largos.

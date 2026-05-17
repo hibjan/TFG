@@ -551,6 +551,7 @@ async function loadMetadataFacets() {
             list.forEach(val => addFilterTag(
                 dom.metadataActiveFilters, attr, val, 'include',
                 () => removeFilter(attr, val, 'include', 'metadata'),
+                () => toggleFilter(attr, val, 'include', 'metadata'),
             ));
         }
         for (const [attr, values] of Object.entries(activeNotMfilters)) {
@@ -558,6 +559,7 @@ async function loadMetadataFacets() {
             list.forEach(val => addFilterTag(
                 dom.metadataActiveFilters, attr, val, 'exclude',
                 () => removeFilter(attr, val, 'exclude', 'metadata'),
+                () => toggleFilter(attr, val, 'exclude', 'metadata'),
             ));
         }
 
@@ -655,6 +657,7 @@ async function loadReferenceFacets() {
                         addFilterTag(
                             dom.referenceActiveFilters, compositeKey, id, type,
                             () => removeFilter(compositeKey, id, type, 'reference'),
+                            () => toggleFilter(compositeKey, id, type, 'reference'),
                             displayLabel, displayValue,
                         );
                     });
@@ -737,6 +740,40 @@ async function removeFilter(name, value, type, category) {
     } catch (err) {
         console.error('Failed to remove filter:', err);
         showToast(`Failed to remove filter: ${err.message || err}`, 'error');
+    }
+}
+
+// Toggle a single filter between include and exclude in one round trip
+// (raw remove of the current type + raw add of the opposite type, then a
+// single refreshAll at the end). Triggered by clicking the chip body.
+async function toggleFilter(name, value, currentType, category) {
+    const newType = currentType === 'include' ? 'exclude' : 'include';
+    try {
+        await removeFilterRaw(name, value, currentType, category);
+
+        if (category === 'metadata') {
+            const action = newType === 'include' ? 'add_mfilter' : 'add_not_mfilter';
+            await api('/navigation', {
+                method: 'POST',
+                body: { action, attribute: name, value: String(value) },
+            });
+        } else {
+            const splitIndex = name.indexOf(':');
+            if (splitIndex === -1) return;
+            const collectionId = parseInt(name.substring(0, splitIndex));
+            const reason = name.substring(splitIndex + 1);
+            const action = newType === 'include' ? 'add_rfilter' : 'add_not_rfilter';
+            await api('/navigation', {
+                method: 'POST',
+                body: { action, collectionId, reason, entityId: value },
+            });
+        }
+
+        state.page = 0;
+        await refreshAll();
+    } catch (err) {
+        console.error('Failed to toggle filter:', err);
+        showToast(`Failed to toggle filter: ${err.message || err}`, 'error');
     }
 }
 
@@ -930,15 +967,14 @@ function setupListeners() {
     if (dom.historyToggleBtn)  dom.historyToggleBtn.onclick  = toggleHistoryView;
     if (dom.clearAllFiltersBtn) dom.clearAllFiltersBtn.onclick = clearAllFilters;
 
-    // Include/Exclude toggle: hover previews the opposite, click commits the swap.
+    // Include/Exclude toggle: just flips the mode on click. Hover preview
+    // was removed because it confused users (the displayed text matched the
+    // *next* action, which made the click feel like a no-op).
     if (dom.toggleNotBtn) {
         dom.toggleNotBtn.onclick = () => {
             state.notMode = !state.notMode;
-            // Mouse is still hovering after click → keep showing what *next* click would do.
-            renderToggleBtn(true);
+            renderToggleBtn(false);
         };
-        dom.toggleNotBtn.addEventListener('mouseenter', () => renderToggleBtn(true));
-        dom.toggleNotBtn.addEventListener('mouseleave', () => renderToggleBtn(false));
     }
 }
 

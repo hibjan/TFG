@@ -40,6 +40,35 @@ function restoreOrder(container) {
     } catch (_) { /* corrupt storage — ignore */ }
 }
 
+// ── Auto-scroll while dragging near the viewport edges ──────
+// During a drag, the browser doesn't auto-scroll the page when the cursor
+// reaches the top/bottom edge. We do it manually with an interval that
+// reads the latest pointer Y captured by the dragover handler.
+const SCROLL_ZONE = 90;   // px from edge where scrolling kicks in
+const SCROLL_SPEED = 14;  // px per frame
+let autoScrollTimer = null;
+let lastDragY = 0;
+
+function startAutoScroll() {
+    if (autoScrollTimer) return;
+    autoScrollTimer = setInterval(() => {
+        const vh = window.innerHeight;
+        if (lastDragY > 0 && lastDragY < SCROLL_ZONE) {
+            window.scrollBy(0, -SCROLL_SPEED);
+        } else if (lastDragY > vh - SCROLL_ZONE) {
+            window.scrollBy(0, SCROLL_SPEED);
+        }
+    }, 16);
+}
+
+function stopAutoScroll() {
+    if (autoScrollTimer) {
+        clearInterval(autoScrollTimer);
+        autoScrollTimer = null;
+    }
+    lastDragY = 0;
+}
+
 // ── Drag listeners ──────────────────────────────────────
 function attachDragListeners(container) {
     let dragging = null;
@@ -61,9 +90,11 @@ function attachDragListeners(container) {
         dragging = panel;
         setTimeout(() => panel.classList.add('panel-dragging'), 0);
         e.dataTransfer.effectAllowed = 'move';
+        startAutoScroll();
     });
 
     container.addEventListener('dragend', () => {
+        stopAutoScroll();
         if (!dragging) return;
         dragging.classList.remove('panel-dragging');
         dragging = null;
@@ -76,6 +107,9 @@ function attachDragListeners(container) {
         e.preventDefault();
         if (!dragging) return;
         e.dataTransfer.dropEffect = 'move';
+
+        // Feed the latest pointer Y to the auto-scroll timer.
+        lastDragY = e.clientY;
 
         const target = dropTarget(e.target, container);
         if (!target || target === dragging) { removeIndicator(); return; }
@@ -90,6 +124,7 @@ function attachDragListeners(container) {
 
     container.addEventListener('drop', (e) => {
         e.preventDefault();
+        stopAutoScroll();
         if (!dragging) return;
 
         const target = dropTarget(e.target, container);

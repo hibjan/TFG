@@ -108,3 +108,82 @@
 .filter-tag .tag-remove:hover {
     color: #ff5252;
 }
+
+/* When the chip is toggleable, the body becomes a click target. The
+   cursor and a subtle hover background hint that something will happen. */
+.filter-tag.toggleable {
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.filter-tag.toggleable:hover {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.filter-tag.toggleable.include-tag:hover {
+    border-color: rgba(76, 175, 80, 0.45);
+}
+
+.filter-tag.toggleable.exclude-tag:hover {
+    border-color: rgba(239, 83, 80, 0.45);
+}
+
+/* === Info tooltip (?) === */
+/* Used next to a panel title to explain a non-obvious concept on hover. */
+.info-tooltip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 19px;
+    height: 19px;
+    margin-left: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: #8f9ba8;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: help;
+    position: relative;
+    vertical-align: middle;
+    user-select: none;
+    line-height: 1;
+    transition: background 0.15s, color 0.15s;
+}
+
+.info-tooltip:hover,
+.info-tooltip:focus {
+    background: rgba(92, 132, 193, 0.32);
+    color: #ffffff;
+    outline: none;
+}
+
+.info-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 14px;
+    background: #1e2227;
+    color: #e0e0e0;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 400;
+    line-height: 1.45;
+    white-space: normal;
+    width: 300px;
+    text-align: left;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s, visibility 0.15s;
+    z-index: 100;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+}
+
+.info-tooltip:hover::after,
+.info-tooltip:focus::after {
+    visibility: visible;
+    opacity: 1;
+}
