@@ -1,13 +1,277 @@
 \chapter{Arquitectura y Metodología}
 \label{cap:arquitecturaMetodologia}
 
-Este capítulo centraliza el conjunto de decisiones de diseño técnico y estructural que sirven como fundamentos del proyecto. 
-En primer lugar, exponemos los marcos metodológicos utilizados para el manejo del propio ciclo de vida del software, 
-definiendo las herramientas, prácticas y técnicas de ingeniería aplicadas. 
-Luego, seguimos con el desglose de la arquitectura del sistema, delimitando expresamente la separación de responsabilidades 
-a través de las distintas capas de la aplicación: la capa de control y exposición de la API, la capa de persistencia y acceso a datos, 
-y finalmente, el mecanismo de integración con la interfaz de usuario. El principal objetivo de esta arquitectura fue garantizar 
+Este capítulo centraliza el conjunto de decisiones de diseño técnico y estructural que sirven como fundamentos del proyecto.
+Comenzamos formalizando el \textbf{motor de navegación} que articula todo el sistema: la metodología, la arquitectura por capas
+y la persistencia que se describen después son, en el fondo, decisiones de soporte para esa pieza conceptual. Esta primera
+sección recoge el camino que llevó del prototipo previo al modelo definitivo y presenta dicho modelo con una notación formal,
+para que los capítulos siguientes puedan referirse a él sin ambigüedad.
+A continuación, exponemos los marcos metodológicos utilizados para el manejo del propio ciclo de vida del software,
+definiendo las herramientas, prácticas y técnicas de ingeniería aplicadas.
+Luego, seguimos con el desglose de la arquitectura del sistema, delimitando expresamente la separación de responsabilidades
+a través de las distintas capas de la aplicación: la capa de control y exposición de la API, la capa de persistencia y acceso a datos,
+y finalmente, el mecanismo de integración con la interfaz de usuario. El principal objetivo de esta arquitectura fue garantizar
 un sistema modular, escalable, mantenible y flexible en la integración de base de datos.
+
+\section{Motor de navegación}
+\label{sec:motorNavegacion}
+
+El motor de navegación es la pieza central sobre la que descansa el resto del sistema: la metodología
+elegida para construirlo, la arquitectura en capas que lo aloja y la capa de persistencia que lo materializa
+se entienden mejor cuando se conoce primero qué pretende modelar. Esta sección reconstruye, en este orden, la
+historia y la teoría del motor: un primer apartado describe el prototipo previo que sirvió de banco de pruebas
+y las lecciones que se extrajeron de él; un segundo apartado decanta esas lecciones en un modelo formal cuyos
+conjuntos, estado, operaciones y semántica fijan el vocabulario que utiliza el resto de la memoria.
+
+\subsection{Del prototipo al modelo formal}
+\label{subsec:prototipoModeloFormal}
+
+Antes de plantear la arquitectura definitiva del sistema, se desarrolló un prototipo previo\footnote{\url{https://github.com/hibjan/TFG-prototype}}
+cuyo objetivo era validar las intuiciones iniciales sobre el modelo de navegación. La meta no era construir
+un producto, sino explorar empíricamente qué primitivas necesitaba el motor y qué decisiones de diseño se
+sostenían cuando se las llevaba al código.
+
+El prototipo se implementó en \textbf{Java 17} sobre \textbf{Maven}, sin servidor de aplicaciones ni base de
+datos: era una aplicación de línea de comandos que cargaba un dataset reducido (\texttt{test\_pms.json}) en
+memoria y permitía recorrerlo de forma interactiva. Sobre ese dataset --- compuesto por colecciones de tipo
+\texttt{People}, \texttt{Movies} y \texttt{Studios} relacionadas entre sí --- el prototipo ofrecía un
+subconjunto del catálogo de operaciones que terminaría incorporando el sistema final: seleccionar la colección
+activa, listar las entidades visibles, consultar el detalle de una entidad, aplicar filtros sobre metadatos
+(con la variante negativa), aplicar filtros de referencia entre colecciones, navegar por enlaces relacionales
+y guardar o restaurar estados ya visitados.
+
+Aunque el prototipo logró validar la idea, también expuso limitaciones que motivaron rediseñarlo desde cero. La
+más importante fue de naturaleza \emph{conceptual}: el prototipo no distinguía con precisión entre el estado de
+navegación del usuario y los datos del dominio, mezclando responsabilidades que en el diseño final quedaron
+separadas en capas distintas (modelo, acceso a datos y controladores). Esta confusión generó deuda técnica
+temprana que habría sido necesario pagar antes de poder implementar mecanismos más complejos --- como la
+navegación transversal o las operaciones de unión --- y desaconsejaba promocionar el prototipo a sistema final.
+
+A esta limitación de fondo se sumaron carencias prácticas que también empujaron hacia un rediseño: la carga en
+memoria del dataset hacía inviable escalar a catálogos del tamaño de los reales y obligaba a recorrer estructuras
+\texttt{HashMap} anidadas para resolver cualquier consulta, sin un lenguaje declarativo (como SQL) en el que
+expresar los filtros acumulados; faltaban además primitivas que después se revelaron centrales, como los filtros
+\emph{negativos} sobre referencias y la operación de \emph{unión} entre exploraciones independientes; y la
+interfaz por línea de comandos resultaba opaca para entender las trayectorias de navegación.
+
+La consecuencia metodológica fue clara: el siguiente paso no podía ser ``arreglar el prototipo'', sino
+\emph{formalizar} qué era exactamente lo que estaba modelando, con independencia de la implementación. La
+subsección siguiente recoge esa formalización: define los conjuntos sobre los que opera el motor, el estado, la
+estructura de los enlaces, el contexto de exploración, las operaciones primitivas y la semántica del estado.
+El sistema final --- descrito en el resto del capítulo y en el capítulo de desarrollo --- es una realización
+fiel de ese modelo: el código del backend (\texttt{State}, \texttt{StateManager}, \texttt{Link} y
+\texttt{NavigationDAO}) reproduce uno a uno los elementos formales que se introducen a continuación.
+
+\subsection{Modelo formal de navegación}
+\label{subsec:modeloFormal}
+
+\subsubsection*{Conjuntos base}
+
+El motor opera sobre un universo de datos estructurado en datasets, colecciones y entidades. Fijamos los
+siguientes conjuntos:
+
+\begin{itemize}
+  \item $\mathcal{D}$: conjunto de \emph{datasets}. Cada dataset agrupa colecciones cargadas desde una misma fuente.
+  \item $\mathcal{C}$: conjunto de \emph{colecciones}.
+  \item $\mathcal{E}$: conjunto de \emph{entidades}.
+  \item $\mathcal{K}$: conjunto de \emph{claves de metadato}.
+  \item $\mathcal{V}$: conjunto de \emph{valores de metadato}.
+  \item $\mathcal{R}$: conjunto de \emph{razones}; cada razón etiqueta un tipo de relación dirigida entre entidades.
+\end{itemize}
+
+Las funciones que estructuran la pertenencia entre conjuntos son:
+\begin{align*}
+  \mathrm{ds} &: \mathcal{C} \to \mathcal{D} & &\text{(dataset al que pertenece una colección)}\\
+  \mathrm{coll} &: \mathcal{E} \to \mathcal{C} & &\text{(colección a la que pertenece una entidad)}\\
+  \mathrm{meta} &: \mathcal{E} \to \mathcal{P}(\mathcal{K} \times \mathcal{V}) & &\text{(pares atributo-valor de una entidad)}\\
+  \mathrm{Ref} &\subseteq \mathcal{E} \times \mathcal{E} \times \mathcal{R} & &\text{(tripletas de referencias tipadas activas)}
+\end{align*}
+
+La sesión de un usuario explora un único dataset; fijamos por tanto un dataset $d_{0} \in \mathcal{D}$ y
+denotamos $\mathcal{C}_{d_{0}} = \{c \in \mathcal{C} \mid \mathrm{ds}(c) = d_{0}\}$.
+
+\subsubsection*{Estado de exploración}
+
+Un \emph{estado} es una tupla
+\[
+  s \;=\; \langle\, c,\; F^{+},\; F^{-},\; R^{+},\; R^{-},\; L \,\rangle
+\]
+donde:
+\begin{itemize}
+  \item $c \in \mathcal{C}_{d_{0}}$ es la \emph{colección activa}.
+  \item $F^{+}, F^{-} : \mathcal{C}_{d_{0}} \times \mathcal{K} \to \mathcal{P}(\mathcal{V})$ son los
+    \emph{filtros de metadatos}, positivos y negativos, indexados por colección y clave.
+  \item $R^{+}, R^{-} : \mathcal{C}_{d_{0}} \times \mathcal{C}_{d_{0}} \times \mathcal{R} \to \mathcal{P}(\mathcal{E})$
+    son los \emph{filtros de referencia}, positivos y negativos, indexados por colección activa, colección
+    referenciada y razón.
+  \item $L = [\ell_{1}, \ldots, \ell_{n}]$ es una secuencia ordenada de \emph{links} (definidos a continuación).
+\end{itemize}
+
+Denotamos por $\mathcal{S}$ el conjunto de estados posibles. Esta tupla se corresponde literalmente con la clase
+\texttt{State} del backend: el campo $c$ es \texttt{currentCollectionId}; los mapas $F^{+}, F^{-}, R^{+}, R^{-}$
+son \texttt{mfilters}, \texttt{notMfilters}, \texttt{rfilters} y \texttt{notRfilters}; y $L$ es la lista
+\texttt{links}. El dataset $d_{0}$ se almacena además en el campo \texttt{datasetId}.
+
+\subsubsection*{Link}
+
+Un \emph{link} representa una transición entre colecciones registrada como parte del historial de navegación
+del estado. Es una tupla
+\[
+  \ell \;=\; \langle\, d,\; c_{\text{from}},\; r,\; s' \,\rangle
+\]
+donde:
+\begin{itemize}
+  \item $d \in \{\mathsf{fwd}, \mathsf{bwd}\}$ es la dirección del enlace.
+  \item $c_{\text{from}} \in \mathcal{C}_{d_{0}}$ es la \emph{colección origen} de la transición, es decir, la
+    colección activa antes de aplicar el cambio.
+  \item $r \in \mathcal{R}$ es la razón seguida.
+  \item $s' \in \mathcal{S}$ es un \emph{snapshot} (copia inmutable) del estado anterior a la transición.
+\end{itemize}
+
+Esta tupla corresponde con la clase \texttt{Link}: el campo $d$ se materializa en el booleano \texttt{forward},
+y $s'$ es la copia profunda del estado capturada en el momento de crear el enlace.
+
+\subsubsection*{Contexto de exploración}
+
+El contexto de una sesión es una tupla
+\[
+  \Sigma \;=\; \langle\, s_{\text{cur}},\; H,\; U,\; T \,\rangle
+\]
+donde:
+\begin{itemize}
+  \item $s_{\text{cur}} \in \mathcal{S}$ es el \emph{estado activo}.
+  \item $H$ es una pila LIFO de estados (\texttt{historyStack}), utilizada por \texttt{save} y \texttt{restore}.
+  \item $U = [s_{1}, \ldots, s_{k}]$ es la lista de estados marcados para unión (\texttt{unionSet}).
+  \item $T$ es una pila auxiliar de links \emph{forward} ya aplicados (\texttt{linkStack}), que permite a
+    \texttt{goback} recuperar la colección origen del último enlace.
+\end{itemize}
+
+\subsubsection*{Operaciones primitivas}
+
+Para cada operación se indica su signatura, su precondición y su postcondición. Las operaciones marcadas con
+$\rightsquigarrow$ actúan sobre el estado activo $s_{\text{cur}}$ del contexto; las marcadas con $\Rightarrow$
+modifican el contexto completo. Por brevedad, cuando se modifica una función como $F^{+}$, escribimos
+$F^{+}[(c,k) \mapsto V]$ para denotar la función igual a $F^{+}$ salvo en $(c,k)$, donde toma el valor $V$.
+
+\begin{enumerate}
+  \item $\textsc{addMfilter}(s, k, v) \rightsquigarrow s'$
+    \begin{itemize}
+      \item Signatura: $\mathcal{S} \times \mathcal{K} \times \mathcal{V} \to \mathcal{S}$.
+      \item Precondición: $k \in \mathcal{K}$, $v \in \mathcal{V}$.
+      \item Postcondición: $s'$ es idéntico a $s$ salvo que
+      $F^{+}{}' \;=\; F^{+}[\,(c,k) \mapsto F^{+}(c,k) \cup \{v\}\,]$,
+      donde $c$ es la colección activa de $s$.
+    \end{itemize}
+
+  \item $\textsc{addNotMfilter}(s, k, v) \rightsquigarrow s'$
+    \begin{itemize}
+      \item Signatura: $\mathcal{S} \times \mathcal{K} \times \mathcal{V} \to \mathcal{S}$.
+      \item Postcondición: análoga a la anterior actualizando $F^{-}$ en lugar de $F^{+}$.
+    \end{itemize}
+
+  \item $\textsc{addRfilter}(s, c', r, e) \rightsquigarrow s'$
+    \begin{itemize}
+      \item Signatura: $\mathcal{S} \times \mathcal{C}_{d_{0}} \times \mathcal{R} \times \mathcal{E} \to \mathcal{S}$.
+      \item Precondición: $\mathrm{coll}(e) = c'$.
+      \item Postcondición: $R^{+}{}'(c, c', r) = R^{+}(c, c', r) \cup \{e\}$; el resto de $R^{+}$ no cambia. La
+        operación $\textsc{addNotRfilter}$ es análoga actualizando $R^{-}$.
+    \end{itemize}
+
+  \item $\textsc{link}(s, c', r) \rightsquigarrow s'$
+    \begin{itemize}
+      \item Signatura: $\mathcal{S} \times \mathcal{C}_{d_{0}} \times \mathcal{R} \to \mathcal{S}$.
+      \item Precondición: existe al menos una entidad $e \in \llbracket s \rrbracket$ y una entidad
+        $e' \in \mathcal{E}$ con $\mathrm{coll}(e') = c'$ tales que $(e, e', r) \in \mathrm{Ref}$.
+      \item Postcondición: $s'$ tiene la misma información de filtros que $s$ y además
+        \[
+          c' \text{ pasa a ser la colección activa,} \qquad
+          L' \;=\; L \,\mathbin{::}\, \langle \mathsf{fwd},\, c,\, r,\, s \rangle.
+        \]
+        El contexto registra adicionalmente el nuevo link en la pila $T$.
+    \end{itemize}
+
+  \item $\textsc{goback}(\Sigma) \Rightarrow \Sigma'$
+    \begin{itemize}
+      \item Signatura: contexto $\to$ contexto.
+      \item Precondición: $T$ no está vacía; sea $\ell = \langle \mathsf{fwd}, c_{\text{prev}}, r_{\text{prev}}, s_{\text{snap}}\rangle$
+        el elemento en la cima de $T$.
+      \item Postcondición: $T' = \mathrm{pop}(T)$; el estado activo $s_{\text{cur}}'$ se obtiene de $s_{\text{cur}}$
+        cambiando la colección activa a $c_{\text{prev}}$ y añadiendo a $L$ un link
+        $\langle \mathsf{bwd}, c, r_{\text{prev}}, s_{\text{cur}} \rangle$, donde $c$ es la colección activa de $s_{\text{cur}}$.
+    \end{itemize}
+
+  \item $\textsc{save}(\Sigma) \Rightarrow \Sigma'$ y $\textsc{restore}(\Sigma) \Rightarrow \Sigma'$
+    \begin{itemize}
+      \item $\textsc{save}$ apila una copia inmutable de $s_{\text{cur}}$ en $H$.
+      \item $\textsc{restore}$ desapila el último estado guardado y lo restaura como $s_{\text{cur}}$, siempre que
+        $|H| > 1$.
+    \end{itemize}
+
+  \item $\textsc{union}(\Sigma, c') \Rightarrow \Sigma'$
+    \begin{itemize}
+      \item Signatura: contexto $\times\, \mathcal{C}_{d_{0}} \to$ contexto.
+      \item Postcondición: $U' = U \mathbin{::} s_{\text{cur}}$; $H' = \emptyset$; $s_{\text{cur}}'$ se reinicializa
+        como estado limpio con colección activa $c'$ (es decir, sin filtros y con $L = []$).
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection*{Semántica: resultados de un estado}
+
+Lo más importante del modelo es decidir \emph{qué conjunto de entidades representa un estado}. Definimos una
+función semántica
+\[
+  \llbracket \cdot \rrbracket \;:\; \mathcal{S} \longrightarrow \mathcal{P}(\mathcal{E})
+\]
+de manera recursiva sobre la lista de links. Empezamos por los predicados de filtrado, que actúan sobre una
+entidad $e$ con colección $c = \mathrm{coll}(e)$:
+
+\begin{align*}
+  \Phi^{+}(s, e) &\;\equiv\; \forall (k, V) \in F^{+}(c, \cdot) \;\; \exists v \in V :\; (k, v) \in \mathrm{meta}(e),\\
+  \Phi^{-}(s, e) &\;\equiv\; \forall (k, V) \in F^{-}(c, \cdot) \;\; \forall v \in V :\; (k, v) \notin \mathrm{meta}(e),\\
+  \Psi^{+}(s, e) &\;\equiv\; \forall (c', r, E) \in R^{+}(c, \cdot, \cdot) \;\; \forall e' \in E :\; (e, e', r) \in \mathrm{Ref},\\
+  \Psi^{-}(s, e) &\;\equiv\; \forall (c', r, E) \in R^{-}(c, \cdot, \cdot) \;\; \forall e' \in E :\; (e, e', r) \notin \mathrm{Ref}.
+\end{align*}
+
+(La notación $F^{+}(c, \cdot)$ designa el conjunto de pares $(k, V)$ con $V = F^{+}(c, k) \neq \emptyset$; análogamente
+$R^{+}(c, \cdot, \cdot)$ designa las tripletas $(c', r, E)$ con $E = R^{+}(c, c', r) \neq \emptyset$.)
+
+\paragraph{Caso base.} Si $L = []$,
+\[
+  \llbracket s \rrbracket \;=\; \bigl\{\, e \in \mathcal{E} \;\bigm|\; \mathrm{coll}(e) = c \,\land\, \Phi^{+}(s,e) \,\land\, \Phi^{-}(s,e) \,\land\, \Psi^{+}(s,e) \,\land\, \Psi^{-}(s,e) \,\bigr\}.
+\]
+
+\paragraph{Caso recursivo.} Si $L = L' \mathbin{::} \ell$ con $\ell = \langle d, c_{\text{from}}, r, s' \rangle$,
+sea $s_{L'}$ el estado obtenido de $s$ reemplazando $L$ por $L'$. Entonces
+\[
+  \llbracket s \rrbracket \;=\; \bigl\{\, e \in \llbracket s_{L'} \rrbracket \;\bigm|\; \exists e'' \in \llbracket s' \rrbracket \;:\; \Theta_{d}(e, e'', r) \,\bigr\},
+\]
+donde
+\[
+  \Theta_{\mathsf{fwd}}(e, e'', r) \;\equiv\; (e'', e, r) \in \mathrm{Ref}, \qquad
+  \Theta_{\mathsf{bwd}}(e, e'', r) \;\equiv\; (e, e'', r) \in \mathrm{Ref}.
+\]
+
+Esta definición recursiva es exactamente la que se materializa en la sobrecarga recursiva
+\texttt{appendFilterClauses} de \texttt{NavigationDAO}: la rama no recursiva delega en
+\texttt{appendStateFilters} ($\Phi^{\pm}$ y $\Psi^{\pm}$ se traducen en cláusulas
+\texttt{EXISTS} y \texttt{NOT EXISTS} sobre las tablas \texttt{metadata} y \texttt{reference}); la rama recursiva
+añade, por cada link $\ell$, una subconsulta sobre \texttt{reference} que liga las entidades del nivel actual con
+las del estado anterior, eligiendo \texttt{target\_id} o \texttt{source\_id} según $\ell$ sea \textit{forward} o
+\textit{backward}. Las secciones~\ref{sec:filtrado} y~\ref{sec:navegacion_transversal} del capítulo de desarrollo
+describen esa traducción a SQL con el código a la vista, y la sección~\ref{sec:operaciones_conjuntos} hace lo
+propio para la unión.
+
+\subsubsection*{Semántica de la unión}
+
+El operador de unión combina el estado activo con todos los estados guardados en $U$. Su semántica es la unión
+conjuntista de los resultados individuales:
+\[
+  \llbracket \Sigma \rrbracket_{\cup} \;=\; \llbracket s_{\text{cur}} \rrbracket \;\cup\; \bigcup_{s \in U} \llbracket s \rrbracket.
+\]
+
+En el código, esta semántica se realiza en \texttt{NavigationDAO.getUnionEntities}, que emite una única consulta
+SQL en la que cada estado de $U \cup \{s_{\text{cur}}\}$ contribuye con un bloque de condiciones unidas mediante
+\texttt{OR}, exactamente la traducción de la unión definida arriba (sección~\ref{sec:operaciones_conjuntos}).
 
 \section{Metodología de Ingeniería del Software}
 

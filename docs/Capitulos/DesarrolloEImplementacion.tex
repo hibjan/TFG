@@ -1975,14 +1975,15 @@ acumulados, transiciones --- no tiene un equivalente directo en los sistemas de 
 de datos más habituales, lo que dificultó establecer desde el principio una representación
 interna clara.
 
-El prototipo inicial no distinguía con precisión entre el estado de navegación del usuario
-y los datos del dominio, mezclando responsabilidades que en el diseño final quedaron
-separadas en capas distintas: el modelo (\texttt{State}, \texttt{StateManager}), la capa
-de acceso a datos (\texttt{NavigationDAO}) y los controladores. Esta confusión generó
-deuda técnica temprana que fue necesario resolver antes de poder implementar mecanismos
-más complejos como la navegación transversal o las operaciones de unión. La separación
-de responsabilidades que se describe a lo largo de este capítulo es, en parte, el
-resultado directo de haber identificado y corregido esas imprecisiones del prototipo.
+La historia de ese aprendizaje y las lecciones del prototipo previo se relatan ya en la
+sección~\ref{subsec:prototipoModeloFormal} del capítulo de arquitectura, donde además se
+formaliza el modelo definitivo. A los efectos de este capítulo basta con dejar constancia
+del coste técnico que tuvo aquella confusión: una deuda temprana que fue necesario
+resolver antes de poder implementar mecanismos más complejos como la navegación
+transversal o las operaciones de unión, y que motivó la separación estricta de
+responsabilidades entre modelo (\texttt{State}, \texttt{StateManager}), capa de acceso a
+datos (\texttt{NavigationDAO}) y controladores que se describe a lo largo de este
+capítulo.
 
     \subsection*{Tamaño de las colecciones y trabajo con subconjuntos}
 

@@ -788,6 +788,19 @@
 \usepackage{float}
 \usepackage{placeins}
 
+% amsmath / amssymb: necesarios para el modelo formal del motor de
+% navegación (entornos align, equation; símbolos \mathcal, \mathbb,
+% \langle, \rangle, \llbracket, etc.). amsthm habilita los entornos
+% \begin{definition}, \begin{proposition} que se utilizan en la
+% subsección "Modelo formal de navegación".
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{stmaryrd} % \llbracket / \rrbracket para la semántica [[ s ]]
+\theoremstyle{definition}
+\newtheorem{definition}{Definición}[chapter]
+\newtheorem{proposition}[definition]{Proposición}
+
 \usepackage{xcolor}
 
 % Definir estilos por lenguaje
