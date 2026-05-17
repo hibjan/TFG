@@ -2,13 +2,127 @@
 \label{cap:contribucionesPersonales}
 \addcontentsline{toc}{chapter}{Contribuciones Personales}
 
-En caso de trabajos no unipersonales, cada participante indicará en la memoria su contribución al proyecto con una extensión de al menos dos páginas por cada uno de los participantes.
+El presente Trabajo de Fin de Grado ha sido desarrollado en pareja durante el curso 2025-2026
+por Juan Andrés Hibjan Cardona y Leonardo Prado de Souza. La división del trabajo se ha
+articulado en torno a la especialización de cada autor, manteniendo un reparto global
+aproximadamente equilibrado: la integración con fuentes externas de datos y la infraestructura
+de la capa de servicios han recaído principalmente en Juan Andrés, mientras que el desarrollo
+del cliente web, el diseño de la experiencia de usuario y la evaluación empírica con usuarios
+han recaído principalmente en Leonardo. La lógica nuclear del motor de navegación,
+especialmente la máquina de estados desarrollada durante la fase de prototipo, se ha trabajado
+de manera conjunta en sesiones de diseño compartidas y posteriormente implementada y revisada
+al cincuenta por ciento. Ambos hemos participado en igual medida en las decisiones
+arquitectónicas, en la redacción cruzada de los capítulos y en la revisión final de la memoria.
 
-En caso de trabajo unipersonal, elimina esta página en el fichero \texttt{TFGTeXiS.tex} (comenta o borra la línea \verb|\include{Capitulos/ContribucionesPersonales}|).
+\section*{Juan Andrés Hibjan Cardona}
 
-\section*{Estudiante 1}
-Al menos dos páginas con las contribuciones del estudiante 1.
+Mi aportación al proyecto se ha concentrado en torno a tres ejes complementarios: la
+\textbf{conexión con fuentes de datos externas}, la \textbf{infraestructura de la capa de
+servicios} del motor de navegación y la \textbf{documentación técnica operativa} en los
+apéndices de la memoria. La distribución del trabajo con mi compañero ha sido equilibrada en
+proporción global pero diferenciada en especialización, lo que ha permitido avanzar en paralelo
+durante la mayor parte del proyecto.
 
-\section*{Estudiante 2}
-Al menos dos páginas con las contribuciones del estudiante 2. En caso de que haya más estudiantes, copia y pega una de estas secciones.
+En la fase inicial, dedicada al prototipo en Java, mi responsabilidad ha sido la \textbf{capa
+de integración de datos}. He diseñado y escrito los \textit{scripts} de ingesta para los dos
+dominios sobre los que se ha validado el motor. Para TMDB, los \textit{scripts} de Python
+(\texttt{scripts/TMDB/pull.py} y \texttt{scripts/TMDB/process.py}) consultan la API pública de
+\textit{The Movie Database}, transforman las respuestas según el formato declarado en
+\texttt{format.json} y producen el volcado intermedio en JSON Lines que sirve de fuente única
+de verdad para la carga posterior. Para DBLP, el procesador escrito en Go
+(\texttt{scripts/DBLP/main.go}) aplica las heurísticas de filtrado por institución sobre el
+volcado público completo y produce el dataset reducido que se carga finalmente en la base de
+datos. He desarrollado además el \textit{script} unificado de poblado
+(\texttt{scripts/populate\_db.py} y su variante \texttt{populate\_db\_jsonl.py}), que lee los
+volcados intermedios y los inserta en el esquema relacional definido en
+\texttt{database/01\_schema.sql}.
 
+En el back-end Java, mi parte ha sido la \textbf{capa de persistencia y los controladores
+infraestructurales}. Concretamente, he sido responsable de \texttt{DatabaseService} y de la
+lógica de conexión a PostgreSQL, del controlador de sesión \texttt{SessionServlet}, del
+controlador central de transiciones \texttt{NavigationServlet} (que orquesta todas las acciones
+del motor) y del \texttt{CORSFilter} que permite el consumo desde el cliente web en el escenario
+de desarrollo. También he implementado los servlets de cabecera del dominio
+(\texttt{DatasetsServlet}, \texttt{CollectionsServlet}, \texttt{EntityServlet},
+\texttt{EntitiesServlet} y \texttt{ResourceServlet}) que sirven el contexto sobre el que opera
+el resto del motor.
+
+En la lógica de la \textbf{máquina de estados} (\texttt{State}, \texttt{StateManager} y
+\texttt{Link}) el trabajo ha sido conjunto. Hemos diseñado la representación del estado, las
+transiciones, el historial y los invariantes en sesiones de trabajo compartidas, repartiéndonos
+después las implementaciones concretas y revisándolas entre ambos. Estimo que el reparto de
+líneas escritas en esa parte está aproximadamente al cincuenta por ciento.
+
+En el frontend, mi aportación ha sido menor y se ha limitado a colaborar en la primera versión
+de la capa de comunicación con la API (\texttt{src/api.js}) y en la integración con los servlets
+durante la depuración de los problemas de CORS y de manejo de sesión. El resto del frontend
+(componentes, diseño visual, evaluación con usuarios) ha sido responsabilidad de mi compañero.
+
+Para el despliegue, he sido responsable de los \texttt{Dockerfile} del frontend y del backend,
+del \texttt{docker-compose.dev.yml} y \texttt{docker-compose.prod.yml}, de la configuración de
+variables de entorno (\texttt{.env.db}, \texttt{.env.thirdparty}) y del \texttt{nginx.conf} del
+frontend en producción.
+
+En la redacción de la memoria, he liderado el \textbf{capítulo de Arquitectura y Metodología},
+la sección de \textbf{Modelo de datos} dentro del capítulo de Desarrollo, los dos
+\textbf{apéndices técnicos} (Integración e ingesta de fuentes de datos, y Despliegue del
+sistema), y he revisado y completado el capítulo de Estado de la Cuestión. He participado
+también en la depuración cruzada del resto del documento y en las decisiones editoriales
+conjuntas, en particular en la selección de citas y la organización de la bibliografía.
+
+\section*{Leonardo Prado de Souza}
+
+Mi aportación al proyecto se ha concentrado en torno a tres ejes complementarios: el
+\textbf{desarrollo completo del frontend}, el \textbf{diseño de la experiencia de usuario} y
+la \textbf{evaluación empírica con usuarios externos}. La distribución del trabajo con mi
+compañero ha sido equilibrada en proporción global pero diferenciada en especialización, lo que
+ha permitido avanzar en paralelo durante la mayor parte del proyecto.
+
+El \textbf{frontend} ha sido íntegramente mi responsabilidad. He diseñado e implementado la
+totalidad del cliente web en JavaScript modular, sin dependencias de \textit{framework}, sobre
+una arquitectura orientada a componentes. La organización en componentes
+(\texttt{src/components/Combobox.js}, \texttt{Modal.js}, \texttt{PaginationHandler.js},
+\texttt{FilterTags.js}, \texttt{PanelDragOrder.js}, \texttt{Skeleton.js}, \texttt{Toast.js}),
+la separación de estilos (\texttt{src/styles/} con subdivisión por componentes y por capa
+estructural), la lógica de estado en \texttt{main.js} y la integración con la API mediante
+\texttt{api.js} son resultado de mi trabajo. El sistema de filtros con \textit{combobox}
+buscables, la diferenciación visual de filtros include/exclude con activación inline en el
+propio \textit{chip}, el grafo horizontal de historial de navegación, el sistema de
+\textit{drag and drop} para reordenar paneles con persistencia en \textit{localStorage} y
+\textit{auto-scroll}, las notificaciones \textit{toast} y los esqueletos de carga son
+componentes que he diseñado e implementado de manera independiente.
+
+El \textbf{diseño visual} (paleta de colores, tipografía, jerarquía de paneles, sistema de
+\textit{breadcrumb}, diferenciación entre acciones recuperables y destructivas en la barra
+superior, estados de \textit{hover}/\textit{focus} y feedback visual de las interacciones) es
+también obra mía. La paleta y la organización final son resultado de varias iteraciones
+documentadas, parte de ellas guiadas por los hallazgos del estudio de usabilidad descrito más
+adelante.
+
+He liderado la \textbf{evaluación de usabilidad}, desde el diseño del protocolo hasta la
+conducción de las sesiones y la codificación posterior. He elaborado el guion completo de
+evaluación (reproducido en el apéndice~\ref{Appendix:Guion}), gestionado el reclutamiento de
+los participantes, conducido las cinco sesiones presenciales, transcrito las observaciones y
+citas literales, calculado las métricas cuantitativas (SUS, SEQ, tasa de éxito, tiempo por
+tarea) y derivado el catálogo de problemas detectados con la escala de gravedad de Nielsen. Las
+iteraciones de interfaz que se derivaron de la evaluación las hemos implementado conjuntamente,
+pero el diseño y la conducción del estudio han sido mi responsabilidad exclusiva.
+
+En el back-end Java, durante la fase del prototipo, mi parte ha sido la lógica de
+\textbf{filtros facetados y operaciones de conjunto}. He sido responsable de los servlets
+\texttt{MetadataFacetsServlet}, \texttt{ReferenceFacetsServlet}, \texttt{LinkFacetsServlet} y
+\texttt{UnionServlet}, así como de la parte de \texttt{NavigationDAO} correspondiente a la
+traducción de las primitivas de filtrado a consultas SQL parametrizadas y a la construcción
+incremental de cláusulas \texttt{WHERE} a partir del estado.
+
+En la lógica central de la \textbf{máquina de estados} (\texttt{State}, \texttt{StateManager}
+y \texttt{Link}) el trabajo ha sido conjunto con mi compañero, en sesiones compartidas de
+diseño seguidas de implementación repartida y revisión cruzada. Estimo que el reparto de líneas
+escritas en esa parte está aproximadamente al cincuenta por ciento.
+
+En la redacción de la memoria, he liderado el \textbf{capítulo de Pruebas y Validación}, el
+\textbf{apéndice del guion de evaluación de usabilidad}, las secciones de \textbf{Desarrollo
+del frontend} y \textbf{Operaciones de conjuntos} dentro del capítulo de Desarrollo, y he
+participado en la redacción del capítulo de Introducción y en las líneas de trabajo futuro.
+He coordinado además las revisiones tipográficas y de estilo del documento global, así como la
+generación de las figuras vectoriales con PGFplots para los resultados cuantitativos.
