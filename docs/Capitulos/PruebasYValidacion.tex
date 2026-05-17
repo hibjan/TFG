@@ -233,18 +233,21 @@ en torno a 5, coherente con la fricción detectada en sus tiempos.
     ymin=0, ymax=7.5,
     ytick={0,1,2,3,4,5,6,7},
     xtick={1,2,3,4,5,6,7,8,9,10,11,12,13,14},
+    xmin=0.4, xmax=14.6,
+    enlarge x limits=false,
     nodes near coords,
     nodes near coords align={vertical},
-    every node near coord/.append style={font=\scriptsize,yshift=-1pt},
-    enlarge x limits=0.04
+    every node near coord/.append style={font=\scriptsize,yshift=-1pt}
 ]
 \addplot+[fill=blue!45,draw=blue!60!black] coordinates {
     (1,7.0)(2,6.4)(3,7.0)(4,3.4)(5,6.6)(6,6.8)(7,6.0)(8,6.4)(9,6.6)(10,6.4)(11,5.0)(12,5.2)(13,6.8)(14,6.8)
 };
-\addplot[red,dashed,thick,mark=none] coordinates {(0.5,5.5) (14.5,5.5)};
-\addplot[gray,dashed,thick,mark=none] coordinates {(0.5,4.0) (14.5,4.0)};
-\node[red,font=\scriptsize] at (axis cs:13.7,5.8) {Sauro 5{,}5};
-\node[gray,font=\scriptsize] at (axis cs:13.7,4.3) {Aceptable 4};
+\draw[red!70!black, dashed, thick] (axis cs:0.4,5.5) -- (axis cs:14.6,5.5);
+\draw[gray, dashed, thick]         (axis cs:0.4,4.0) -- (axis cs:14.6,4.0);
+\node[red!70!black, font=\scriptsize, fill=white, inner sep=1.5pt, anchor=east]
+    at (axis cs:14.6,5.5) {Sauro 5{,}5};
+\node[gray, font=\scriptsize, fill=white, inner sep=1.5pt, anchor=east]
+    at (axis cs:14.6,4.0) {Aceptable 4};
 \end{axis}
 \end{tikzpicture}
 \caption{Facilidad percibida (SEQ) media por tarea. Las líneas discontinuas marcan el umbral
@@ -284,10 +287,18 @@ estudio.
 \addplot+[fill=blue!45,draw=blue!60!black] coordinates {
     (P01,77.5) (P02,87.5) (P03,80) (P04,85) (P05,95)
 };
-\addplot[red,dashed,thick,mark=none] coordinates {(P01,68) (P05,68)};
-\addplot[green!50!black,dashed,thick,mark=none] coordinates {(P01,80) (P05,80)};
-\node[red,font=\scriptsize] at (axis cs:P01,71) {Aceptable 68};
-\node[green!50!black,font=\scriptsize] at (axis cs:P01,83) {Excelente 80};
+% Horizontal reference lines spanning the full plot width (use rel axis
+% cs for the X bounds so they sit edge-to-edge regardless of bar layout).
+\draw[red!70!black, dashed, thick]
+    ({rel axis cs:0,0} |- {axis cs:P01,68}) --
+    ({rel axis cs:1,0} |- {axis cs:P01,68});
+\draw[green!50!black, dashed, thick]
+    ({rel axis cs:0,0} |- {axis cs:P01,80}) --
+    ({rel axis cs:1,0} |- {axis cs:P01,80});
+\node[red!70!black, font=\scriptsize, fill=white, inner sep=1.5pt, anchor=east]
+    at ({rel axis cs:1,0} |- {axis cs:P01,68}) {Aceptable 68};
+\node[green!50!black, font=\scriptsize, fill=white, inner sep=1.5pt, anchor=east]
+    at ({rel axis cs:1,0} |- {axis cs:P01,80}) {Excelente 80};
 \end{axis}
 \end{tikzpicture}
 \caption{Puntuación SUS por participante. La media del grupo es 85, con todos los valores
