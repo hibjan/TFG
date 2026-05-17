@@ -368,7 +368,7 @@ entre colecciones.
     % Link tiene un State (composición, como cur)
     \draw[compose] (LA.west) -- +(-0.6,0) |- node[lbl,pos=0.25,left]{1\ state} (StateM.south west);
   \end{tikzpicture}
-  \caption{Diagrama UML de clases del modelo de exploración en memoria.
+  \caption[Diagrama UML del modelo de exploración]{Diagrama UML de clases del modelo de exploración en memoria.
   \texttt{State} en el momento de la transición.}
   \label{fig:umlClases}
 \end{figure}
@@ -943,7 +943,7 @@ Retomando el ejemplo anterior --- películas de acción, navegación hacia \text
 por la relación \textit{Actor} --- la query resultante para obtener los actores visibles
 adopta la forma mostrada en el Código~\ref{lst:queryResultante}.
 
-\begin{lstlisting}[style=sqlStyle, caption=Query SQL resultante de la navegación transversal, label=lst:queryResultante]
+\begin{lstlisting}[style=sqlStyle, caption={[Query SQL de la navegación transversal]Query SQL resultante de la navegación transversal}, label=lst:queryResultante]
 SELECT DISTINCT e.original_id, e.name
 FROM entities e
 JOIN collections c ON e.collection_global_id = c.global_id
@@ -1261,7 +1261,7 @@ componen, tal y como aparecen físicamente en la base de datos.
     2 & 1 & 2 & People  \\ \hline
     3 & 1 & 3 & Studios \\ \hline
   \end{tabular}
-  \caption{Tabla \texttt{collections}: tres colecciones bajo el \textit{dataset} \texttt{tmdb-toy}.}
+  \caption[Tabla \texttt{collections} del mini-dataset]{Tabla \texttt{collections}: tres colecciones bajo el \textit{dataset} \texttt{tmdb-toy}.}
   \label{tab:ejemplo_collections}
 \end{table}
 
@@ -1283,7 +1283,7 @@ nombre de la entidad, ya reflejado en la columna \textbf{name}.
     12 & 1 &  24428 & The Avengers           \\ \hline
     13 & 1 &  49026 & The Dark Knight Rises  \\ \hline
   \end{tabular}
-  \caption{Tabla \texttt{entities} restringida a la colección \textit{Movies}.}
+  \caption[Tabla \texttt{entities} --- \textit{Movies}]{Tabla \texttt{entities} restringida a la colección \textit{Movies}.}
   \label{tab:ejemplo_movies}
 \end{table}
 
@@ -1297,7 +1297,7 @@ nombre de la entidad, ya reflejado en la columna \textbf{name}.
     22 & 2 & 3223 & Robert Downey Jr. \\ \hline
     23 & 2 & 3894 & Christian Bale    \\ \hline
   \end{tabular}
-  \caption{Tabla \texttt{entities} restringida a la colección \textit{People}.}
+  \caption[Tabla \texttt{entities} --- \textit{People}]{Tabla \texttt{entities} restringida a la colección \textit{People}.}
   \label{tab:ejemplo_people}
 \end{table}
 
@@ -1309,7 +1309,7 @@ nombre de la entidad, ya reflejado en la columna \textbf{name}.
     30 & 3 & 174 & Warner Bros. Pictures \\ \hline
     31 & 3 & 420 & Marvel Studios        \\ \hline
   \end{tabular}
-  \caption{Tabla \texttt{entities} restringida a la colección \textit{Studios}.}
+  \caption[Tabla \texttt{entities} --- \textit{Studios}]{Tabla \texttt{entities} restringida a la colección \textit{Studios}.}
   \label{tab:ejemplo_studios}
 \end{table}
 
@@ -1347,7 +1347,7 @@ darán soporte a los filtros \texttt{add\_mfilter} y
     16 & 30 & Founded    & 1923          \\ \hline
     17 & 31 & Founded    & 1993          \\ \hline
   \end{tabular}
-  \caption{Tabla \texttt{metadata}: pares clave/valor por entidad.}
+  \caption[Tabla \texttt{metadata} del mini-dataset]{Tabla \texttt{metadata}: pares clave/valor por entidad.}
   \label{tab:ejemplo_metadata}
 \end{table}
 
@@ -1392,7 +1392,7 @@ navegación.
     19 & 30 & 13 & Production & Warner $\leftarrow$ TDKR          \\ \hline
     20 & 31 & 12 & Production & Marvel $\leftarrow$ Avengers      \\ \hline
   \end{tabular}
-  \caption{Tabla \texttt{reference}: aristas dirigidas entre entidades. La
+  \caption[Tabla \texttt{reference} del mini-dataset]{Tabla \texttt{reference}: aristas dirigidas entre entidades. La
   columna \textit{sentido} es meramente explicativa.}
   \label{tab:ejemplo_reference}
 \end{table}
@@ -1493,7 +1493,7 @@ conexiones que las escenas van explotando una tras otra.
   $\bullet$ Founded: 1993\\
   $\leftarrow$ Production: The Avengers
   \end{minipage}}
-  \caption{Fichas por entidad del mini-dataset, agrupadas por colección
+  \caption[Fichas por entidad del mini-dataset]{Fichas por entidad del mini-dataset, agrupadas por colección
   y coloreadas en consecuencia: \textit{Movies} en azul, \textit{People}
   en verde y \textit{Studios} en naranja. Los puntos resumen los
   metadatos; las flechas $\to$ marcan referencias salientes y
@@ -1521,7 +1521,7 @@ diferente de operaciones.
   \centering
   % TODO: incluir captura definitiva
   \includegraphics[width=0.9\textwidth]{Imagenes/Bitmap/ejemplo/flujo0_inicial.png}
-  \caption{Estado inicial del frontend, antes de aplicar ninguna acción:
+  \caption[Estado inicial del frontend]{Estado inicial del frontend, antes de aplicar ninguna acción:
   colección \textit{Movies} abierta y las cuatro entidades visibles.}
   \label{fig:ejemplo_estado_inicial}
 \end{figure}
@@ -1550,7 +1550,7 @@ géneros son \textit{Sci-Fi} y \textit{Drama}
   \centering
   % TODO: incluir captura definitiva
   \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo1_paso1.png}
-  \caption{Flujo~1, Paso~1.1. Tras aplicar \textit{Genres = Action},
+  \caption[Flujo~1, Paso~1.1]{Flujo~1, Paso~1.1. Tras aplicar \textit{Genres = Action},
   el panel de facetas muestra un único chip activo y la cuadrícula
   enumera tres películas.}
   \label{fig:flujo1_paso1}
@@ -1570,7 +1570,7 @@ visibles: $\{$\textit{Inception}, \textit{The Avengers}$\}$
   \centering
   % TODO: incluir captura definitiva
   \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo1_paso2.png}
-  \caption{Flujo~1, Paso~1.2. El panel de facetas combina un chip
+  \caption[Flujo~1, Paso~1.2]{Flujo~1, Paso~1.2. El panel de facetas combina un chip
   positivo (\textit{Genres = Action}) y otro negativo (\textit{Genres
   $\neq$ Drama}); en la cuadrícula quedan dos películas.}
   \label{fig:flujo1_paso2}
@@ -1590,7 +1590,7 @@ descartada. El resultado final es $\{$\textit{The Avengers}$\}$, una
 \begin{figure}[h]
   \centering
   \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo1_paso3.png}
-  \caption{Flujo~1, Paso~1.3. Tres chips activos en el panel de
+  \caption[Flujo~1, Paso~1.3]{Flujo~1, Paso~1.3. Tres chips activos en el panel de
   facetas y \textit{The Avengers} como único resultado en la
   cuadrícula central.}
   \label{fig:flujo1_paso3}
@@ -1611,7 +1611,7 @@ historial de navegación (Figura~\ref{fig:flujo1_state}).
   \texttt{rfilters}    = \{ 1 $\to$ \{ 3 $\to$ \{ Production $\to$ \{420\} \} \} \}\quad \texttt{notRfilters} = \{\,\} \\
   \texttt{linkList}    = [\,]\quad \texttt{unionSet} = [\,]
   \end{minipage}}
-  \caption{Estado final del Flujo~1, con un filtro inclusivo, uno de
+  \caption[Estado final del Flujo~1]{Estado final del Flujo~1, con un filtro inclusivo, uno de
   exclusión y uno de referencia activos.}
   \label{fig:flujo1_state}
 \end{figure}
@@ -1623,7 +1623,7 @@ combina un \texttt{EXISTS}, un \texttt{NOT EXISTS} y un segundo
 \texttt{EXISTS} que cruza la tabla \texttt{reference}, tal como
 recoge el Código~\ref{lst:flujo1}.
 
-\begin{lstlisting}[style=sqlStyle, label=lst:flujo1, caption=SQL acumulada al final del Flujo~1.]
+\begin{lstlisting}[style=sqlStyle, label=lst:flujo1, caption={[SQL del Flujo~1]SQL acumulada al final del Flujo~1.}]
 SELECT DISTINCT e.original_id, e.name
 FROM entities e
 JOIN collections c ON e.collection_global_id = c.global_id
@@ -1681,7 +1681,7 @@ true}, conserva una copia del \texttt{State} previo sobre
   \centering
   % TODO: incluir captura definitiva
   \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo2_paso1.png}
-  \caption{Flujo~2, Paso~2.1. El \textit{breadcrumb} indica
+  \caption[Flujo~2, Paso~2.1]{Flujo~2, Paso~2.1. El \textit{breadcrumb} indica
   \textit{Movies} $\to$ \textit{People (Actor)} y la cuadrícula
   contiene los tres actores presentes en alguna película.}
   \label{fig:flujo2_paso1}
@@ -1705,7 +1705,7 @@ volverá a tener efecto en el paso siguiente.
   \centering
   % TODO: incluir captura definitiva
   \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo2_paso2.png}
-  \caption{Flujo~2, Paso~2.2. El filtro \textit{Birthplace = Los
+  \caption[Flujo~2, Paso~2.2]{Flujo~2, Paso~2.2. El filtro \textit{Birthplace = Los
   Angeles} aparece como chip activo en el panel y deja una sola
   persona en la cuadrícula.}
   \label{fig:flujo2_paso2}
@@ -1736,7 +1736,7 @@ en el dataset.
   \centering
   % TODO: incluir captura definitiva
   \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo2_paso3.png}
-  \caption{Flujo~2, Paso~2.3. El \textit{breadcrumb} extendido
+  \caption[Flujo~2, Paso~2.3]{Flujo~2, Paso~2.3. El \textit{breadcrumb} extendido
   (\textit{Movies} $\to$ \textit{People (Actor)} $\to$
   \textit{Movies (Actor)}) y \textit{Inception} como único resultado
   reflejan la cadena completa de transiciones.}
@@ -1762,7 +1762,7 @@ $\mathbf{L}_1$, y por eso interviene en la SQL del retroceso.
   \quad$\mathbf{L}_1$ = \texttt{Link(forward=false, from=People, reason="Actor", state=$\langle$People + Birthplace=LA$\rangle$)} \\
   \texttt{unionSet} = [\,]
   \end{minipage}}
-  \caption{Estado final del Flujo~2. El filtro aplicado en
+  \caption[Estado final del Flujo~2]{Estado final del Flujo~2. El filtro aplicado en
   \textit{People} reside dentro del \texttt{state} de $\mathbf{L}_1$ y
   participa en la SQL recursiva del retroceso.}
   \label{fig:flujo2_state}
@@ -1776,7 +1776,7 @@ usa \texttt{rl0.source\_id} y, en su interior, materializa el filtro de
 corresponde al \texttt{forward} original de $\mathbf{L}_0$, sin filtros
 sobre \textit{Movies} (Código~\ref{lst:flujo2}).
 
-\begin{lstlisting}[style=sqlStyle, label=lst:flujo2, caption=SQL acumulada al final del Flujo~2: el filtro \textit{Birthplace = Los Angeles} aplicado en \textit{People} restringe el conjunto visible de \textit{Movies}.]
+\begin{lstlisting}[style=sqlStyle, label=lst:flujo2, caption={[SQL del Flujo~2]SQL acumulada al final del Flujo~2: el filtro \textit{Birthplace = Los Angeles} aplicado en \textit{People} restringe el conjunto visible de \textit{Movies}.}]
 SELECT DISTINCT e.original_id, e.name
 FROM entities e
 JOIN collections c ON e.collection_global_id = c.global_id
@@ -1827,7 +1827,7 @@ $\{$\textit{Inception}, \textit{Interstellar}$\}$
   \centering
   % TODO: incluir captura definitiva
   \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo3_paso1.png}
-  \caption{Flujo~3, Paso~3.1. \textit{Genres = Sci-Fi} como chip
+  \caption[Flujo~3, Paso~3.1]{Flujo~3, Paso~3.1. \textit{Genres = Sci-Fi} como chip
   activo y dos películas en la cuadrícula.}
   \label{fig:flujo3_paso1}
 \end{figure}
@@ -1847,7 +1847,7 @@ que el panel de unión refleja por primera vez el contexto guardado
   \centering
   % TODO: incluir captura definitiva
   \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo3_paso2.png}
-  \caption{Flujo~3, Paso~3.2. La interfaz expone simultáneamente el
+  \caption[Flujo~3, Paso~3.2]{Flujo~3, Paso~3.2. La interfaz expone simultáneamente el
   panel de unión con el contexto recién guardado
   (\textit{Movies + Sci-Fi}) y la cuadrícula sobre el nuevo \texttt{cur}
   vacío en \textit{People}.}
@@ -1866,7 +1866,7 @@ $\{$\textit{Christian Bale}$\}$
   \centering
   % TODO: incluir captura definitiva
   \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo3_paso3.png}
-  \caption{Flujo~3, Paso~3.3. El chip \textit{Birthplace = Haverfordwest}
+  \caption[Flujo~3, Paso~3.3]{Flujo~3, Paso~3.3. El chip \textit{Birthplace = Haverfordwest}
   reduce a una sola persona la cuadrícula de \textit{People},
   mientras que el panel de unión sigue conteniendo el contexto
   guardado en el paso anterior.}
@@ -1887,7 +1887,7 @@ otro sobre \textit{People} con el filtro \textit{Birthplace = Haverfordwest}
   \centering
   % TODO: incluir captura definitiva
   \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo3_paso4.png}
-  \caption{Flujo~3, Paso~3.4. La vista de unión combina los tres
+  \caption[Flujo~3, Paso~3.4]{Flujo~3, Paso~3.4. La vista de unión combina los tres
   resultados procedentes de las dos colecciones (dos películas en
   azul y una persona en verde), siguiendo el código cromático
   introducido en la Figura~\ref{fig:ejemplo_fichas}.}
@@ -1913,7 +1913,7 @@ limpio sobre \textit{Movies}, no influye en la respuesta del endpoint
   \texttt{mfilters} = \{\,\}\quad \texttt{notMfilters} = \{\,\}\quad \texttt{rfilters} = \{\,\}\quad \texttt{notRfilters} = \{\,\} \\
   \texttt{linkList} = [\,]
   \end{minipage}}
-  \caption{Estado final del Flujo~3. El \texttt{unionSet} retiene los
+  \caption[Estado final del Flujo~3]{Estado final del Flujo~3. El \texttt{unionSet} retiene los
   dos contextos sobre colecciones distintas; el \texttt{cur} actual
   está vacío.}
   \label{fig:flujo3_state}
@@ -1930,7 +1930,7 @@ proyección añade \texttt{c.original\_id AS collection\_id} para que el
 frontend pueda distinguir el origen de cada entidad en la respuesta
 combinada.
 
-\begin{lstlisting}[style=sqlStyle, label=lst:flujo3, caption=SQL emitida por \texttt{getUnionEntities} con dos contextos de colecciones distintas en el \texttt{unionSet}.]
+\begin{lstlisting}[style=sqlStyle, label=lst:flujo3, caption={[SQL del Flujo~3]SQL emitida por \texttt{getUnionEntities} con dos contextos de colecciones distintas en el \texttt{unionSet}.}]
 SELECT DISTINCT e.original_id, e.name, c.original_id AS collection_id
 FROM entities e
 JOIN collections c ON e.collection_global_id = c.global_id
@@ -2025,7 +2025,7 @@ insertarlos en la base de datos. Para valores numéricos, la función \texttt{bu
 agrupa cada valor en un intervalo de tamaño configurable, según la implementación
 recogida en el Código~\ref{lst:bucketRange}.
 
-\begin{lstlisting}[style=pythonStyle, caption=Función \texttt{bucket\_range} para discretizar valores numéricos, label=lst:bucketRange]
+\begin{lstlisting}[style=pythonStyle, caption={[Función \texttt{bucket\_range}]Función \texttt{bucket\_range} para discretizar valores numéricos}, label=lst:bucketRange]
 def bucket_range(value, bucket_size):
     bucket_start = int(num // bucket_size) * bucket_size
     return f"{format_number(bucket_start)}-{format_number(bucket_start + bucket_size - 1)}"
@@ -2065,7 +2065,7 @@ todas las peticiones mediante la anotación \texttt{@WebFilter("/*")} y añade l
 cabeceras necesarias en cada respuesta, tal y como se reproduce en el
 Código~\ref{lst:corsFilter}.
 
-\begin{lstlisting}[style=javaStyle, caption=Filtro \texttt{CORSFilter} para gestionar las cabeceras CORS, label=lst:corsFilter]
+\begin{lstlisting}[style=javaStyle, caption={[Filtro \texttt{CORSFilter}]Filtro \texttt{CORSFilter} para gestionar las cabeceras CORS}, label=lst:corsFilter]
 response.setHeader("Access-Control-Allow-Origin", origin);
 response.setHeader("Access-Control-Allow-Credentials", "true");
 response.setHeader("Access-Control-Allow-Methods",
