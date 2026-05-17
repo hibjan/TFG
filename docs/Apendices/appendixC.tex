@@ -1,0 +1,158 @@
+\chapter{Despliegue del sistema}
+\label{Appendix:despliegue}
+
+El sistema está pensado para operar como un conjunto de servicios
+independientes: una base de datos PostgreSQL, un backend Java sobre
+Apache Tomcat y un frontend estático servido a través de Nginx. Cuando
+se quiere compartir una instancia con terceros (por ejemplo, para la
+defensa del proyecto o para demostraciones puntuales) se añade un
+cuarto componente, un túnel \texttt{cloudflared}, que expone la
+aplicación al exterior sin necesidad de abrir puertos en el anfitrión.
+Este apéndice resume las decisiones de despliegue y los modos de
+arranque previstos. Los pasos exactos, junto con sus
+\emph{troubleshooting} habituales, están documentados en el
+\texttt{README.md} de la raíz del repositorio\footnote{\url{https://github.com/hibjan/TFG/blob/main/README.md}},
+al que se remite para la secuencia operativa concreta.
+
+\section{Modo de desarrollo}
+
+Durante el desarrollo se priorizan dos cosas: el aislamiento entre
+componentes y la velocidad de iteración. Por eso solo PostgreSQL se
+ejecuta como contenedor, mientras que backend y frontend se levantan
+directamente en la máquina del desarrollador. El contenedor de
+PostgreSQL se arranca con \texttt{docker-compose.dev.yml}, que monta el
+directorio \texttt{database/} sobre el punto de inicialización de la
+imagen oficial, lo que provoca que el esquema (descrito más adelante)
+se cree automáticamente en el primer arranque sin pasos manuales.
+
+El backend se compila con Maven y se despliega en una instalación
+local de Apache Tomcat 10.1 a través de Eclipse, lo que aporta
+recompilación incremental y depuración paso a paso. Las credenciales
+de la base de datos se inyectan al servidor como variables de entorno,
+leyendo los nombres definidos en \texttt{.env.db}
+(\texttt{DB\_HOST}, \texttt{DB\_NAME}, \texttt{DB\_USER},
+\texttt{DB\_PASS} y \texttt{DB\_PORT}), sin que valor alguno quede
+embebido en el código ni en el WAR. El frontend, por su parte, se sirve
+con el servidor de desarrollo de Vite, que ofrece recarga en caliente
+sobre los cambios y permite apuntar a un backend remoto modificando
+únicamente \texttt{VITE\_API\_BASE\_URL} en
+\texttt{.env.development.local}.
+
+Esta separación introduce una particularidad: durante el desarrollo,
+frontend y backend se sirven en orígenes distintos (puertos diferentes
+del mismo \texttt{localhost}), lo que obliga a configurar
+explícitamente CORS y a marcar las cookies de sesión como
+\texttt{SameSite=None}. La razón está discutida en el cuerpo del
+capítulo de desarrollo; el descriptor \texttt{web.xml} y el
+\texttt{context.xml} del backend incorporan esta configuración para
+que el navegador acepte la cookie de sesión en peticiones
+\emph{cross-site}. En el modo compartido, como se verá a continuación,
+el problema desaparece porque ambos servicios quedan tras un mismo
+origen.
+
+\section{Instancia compartida con túnel Cloudflare}
+
+Para compartir una instancia funcional con un público externo sin
+exigirle instalar nada, el stack completo se levanta con un único
+comando de \texttt{docker compose} sobre \texttt{docker-compose.prod.yml},
+que construye y orquesta los cuatro servicios y los conecta en una red
+interna privada. La elección de empaquetar también el backend y el
+frontend, y no solo la base de datos, responde a dos motivos. Por un
+lado, evita depender del entorno del anfitrión (versiones de Java, de
+Node, de Tomcat) y hace el despliegue reproducible. Por otro, permite
+unificar el frontend estático y la API tras un mismo origen mediante un
+reverse proxy de Nginx, lo que elimina por completo las complicaciones
+de CORS y cookies que sí están presentes durante el desarrollo.
+
+El servicio de frontend utiliza una imagen multi-etapa que primero
+ejecuta \texttt{npm run build} y a continuación copia los artefactos a
+una imagen \texttt{nginx:alpine} con una configuración personalizada.
+Esa configuración sirve los archivos estáticos en la raíz y hace de
+proxy hacia el contenedor del backend para las rutas bajo
+\texttt{/backend/}, de modo que el navegador percibe siempre un único
+dominio. El servicio de backend sigue un esquema análogo: una primera
+etapa compila el WAR con Maven y una segunda etapa lo despliega sobre
+\texttt{tomcat:10.1-jdk17}, aplicando además el ajuste de
+\texttt{CookieProcessor} necesario para sesiones \emph{cross-site}.
+
+\begin{figure}[!htb]
+  \centering
+    \hspace*{2.5cm}%
+  \begin{tikzpicture}[
+    node distance=1cm and 1cm,
+    every node/.style={font=\small},
+    box/.style={draw, rectangle, rounded corners, minimum width=5cm,
+                minimum height=0.9cm, align=center, fill=orange!10},
+    db/.style={draw, cylinder, shape border rotate=90, aspect=0.25,
+               minimum width=3cm, minimum height=1.2cm, align=center,
+               fill=blue!10},
+    arrow/.style={Latex-Latex, thick}
+  ]
+    \node[box, fill=yellow!40] (user)   {Usuario (navegador)};
+    \node[box, fill=red!10,    below=of user]    (cf)    {Cloudflare Edge\\\ttfamily https://*.trycloudflare.com};
+    \node[box, fill=red!10,    below=of cf]      (cfd)   {cloudflared (túnel saliente)};
+    \node[box,                 below=of cfd]     (nginx) {frontend --- Nginx\\(\texttt{:80} en el contenedor)};
+    \node[box,                 below=of nginx]   (tom)   {backend --- Tomcat\\(\texttt{:8080} en el contenedor)};
+    \node[db,                  below=of tom]     (pg)    {PostgreSQL\\(\texttt{:5432})};
+
+    \draw[arrow] (user)  -- node[right]{HTTPS} (cf);
+    \draw[arrow, pos=0.65] (cf)    -- node[right]{túnel cifrado} (cfd);
+    \draw[arrow] (cfd)   -- (nginx);
+    \draw[arrow] (nginx) -- node[right]{proxy \texttt{/backend/}} (tom);
+    \draw[arrow] (tom)   -- node[right]{JDBC} (pg);
+
+    \node[draw, dashed, fit=(cfd)(nginx)(tom)(pg),
+          inner ysep=0.6cm, inner xsep=1.5cm,
+          label=right:{Docker Compose}] {};
+  \end{tikzpicture}
+  \caption{Topología de la instancia compartida con túnel Cloudflare.}
+  \label{fig:prodDeployment}
+\end{figure}
+
+El componente diferencial es \texttt{cloudflared}, que abre un túnel
+saliente hacia la red de Cloudflare y obtiene a cambio una URL pública
+en el subdominio \texttt{*.try\allowbreak cloud\allowbreak flare.com}. Esto permite exponer la
+aplicación al exterior sin abrir puertos en el cortafuegos del
+anfitrión, sin configurar DNS y sin gestionar certificados TLS, ya que
+el cifrado y la terminación los proporciona Cloudflare en su extremo
+del túnel. La URL concreta se extrae de los logs del contenedor tras
+el arranque y puede compartirse directamente con quien deba acceder a
+la instancia. La topología resultante, presentada de forma coherente
+con la Figura~\ref{fig:arquitectura} del capítulo de arquitectura, se
+recoge en la Figura~\ref{fig:prodDeployment}.
+
+\FloatBarrier
+
+\section{Base de datos e ingesta inicial}
+
+El esquema relacional, descrito en el cuerpo de la memoria, se
+materializa en \texttt{database/01\_schema.sql}, que crea las cinco
+tablas (\texttt{datasets}, \texttt{collections}, \texttt{entities},
+\texttt{metadata} y \texttt{reference}) junto con sus claves foráneas e
+índices. Este archivo se monta como volumen en el directorio de
+inicialización de la imagen oficial de PostgreSQL, lo que provoca que se
+ejecute automáticamente la primera vez que el contenedor arranca con un
+volumen vacío. La convención de prefijos numéricos en los nombres de
+los scripts SQL permite añadir migraciones futuras sin alterar el
+mecanismo: PostgreSQL los ejecutará en orden lexicográfico durante el
+mismo arranque inicial.
+
+Una vez creado el esquema, la carga de un dataset concreto se realiza
+invocando \texttt{populate\_db\_jsonl.py} desde la máquina anfitriona,
+según se detalla en el Apéndice~\ref{Appendix:integracion}. El script
+publica los datos a través del puerto expuesto por el contenedor de
+PostgreSQL, leyendo las credenciales de \texttt{.env.db}. La separación
+entre creación del esquema (automática en el primer arranque) y carga
+de datasets (manual, posterior) hace el sistema flexible: la base de
+datos puede convivir con varios datasets independientes, cargados en
+momentos distintos, y un fallo durante la ingesta no compromete la
+estructura ya validada.
+
+Si en algún momento se desea regenerar el estado de la base de datos
+por completo, basta con detener el contenedor descartando el volumen
+asociado, lo que provoca que el siguiente arranque vuelva a ejecutar
+\texttt{01\_schema.sql} sobre un volumen vacío. Esta operación elimina
+todos los datasets cargados previamente y debe usarse, por tanto, con
+cuidado; el \texttt{README.md} la documenta como recurso de
+\emph{troubleshooting} para los casos en los que el estado de la base
+de datos haya quedado inconsistente.
