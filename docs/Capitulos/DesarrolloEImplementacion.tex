@@ -3,7 +3,256 @@
 \chapter{Desarrollo e Implementación}
 \label{cap:desarrolloImplementacion}
 
+Este capítulo presenta la implementación del sistema, trasladando al
+código y al esquema de base de datos las decisiones de diseño expuestas
+en el Capítulo~\ref{cap:arquitecturaMetodologia}. Su organización sigue
+un orden ascendente, de los componentes que sostienen al resto a las
+extensiones que aportan funcionalidad específica.
+
+La exposición comienza por el modelo de datos
+(Sección~\ref{sec:modeloDatos}), que sustenta tanto la persistencia en
+PostgreSQL como la representación en memoria del estado de exploración.
+Sobre esa base, la clase \texttt{State} y su gestor,
+\texttt{StateManager} (Sección~\ref{sec:representacionContexto}),
+articulan el contexto de un usuario en cada momento de la sesión. La
+Sección~\ref{sec:filtrado} describe los mecanismos de filtrado clásico
+y relacional, junto con la construcción dinámica de las consultas SQL
+parametrizadas que los trasladan al motor de base de datos. A partir
+de ese mecanismo común se introducen las dos extensiones que
+constituyen el aporte diferencial del sistema: la navegación
+transversal entre colecciones
+(Sección~\ref{sec:navegacion_transversal}) y las operaciones de unión
+sobre contextos independientes
+(Sección~\ref{sec:operaciones_conjuntos}). El capítulo cierra con una
+revisión de los obstáculos surgidos durante el desarrollo y las
+soluciones adoptadas en cada caso (Sección~\ref{sec:obstaculos}).
+
+\section{Modelo de datos}
+\label{sec:modeloDatos}
+
+La aplicación maneja dos representaciones complementarias de la
+información. La primera es un esquema relacional persistente, alojado
+en PostgreSQL, en el que se almacenan las entidades importadas de las
+fuentes externas (TMDB, DBLP, etc.) junto con sus metadatos y vínculos.
+El detalle del pipeline de integración con cada fuente (descarga,
+procesado e ingesta) se documenta en el
+Apéndice~\ref{Appendix:integracion}.
+La segunda es una representación en memoria del contexto de exploración
+de cada usuario, descrita en la
+Sección~\ref{sec:representacionContexto}, que se traduce dinámicamente
+a consultas sobre el esquema persistente.
+
+Esta sección se centra en la primera capa. Antes de detallar el esquema
+de tablas conviene partir de su contraparte conceptual, ya que el
+modelo Entidad-Relación captura las abstracciones que el esquema
+relacional se limita a codificar.
+
+    \subsection{Modelo Entidad-Relación}
+
+El modelo conceptual se articula en torno a cuatro entidades fuertes
+(\textit{Dataset}, \textit{Collection}, \textit{Entity} y
+\textit{Metadata}) y una relación N--N reflexiva sobre \textit{Entity},
+dotada de atributo propio, que materializa los vínculos tipados entre
+entidades.
+
+Un \textit{Dataset} representa una fuente de datos completa, como el
+catálogo de TMDB o un volcado de DBLP, y agrupa varias
+\textit{Collections}, que son los tipos de entidad expuestos por esa
+fuente. En el caso de TMDB, esas colecciones son \textit{Movies},
+\textit{People}, \textit{Studios}, \textit{TV Series} y
+\textit{Networks}. Cada \textit{Entity} pertenece a una única
+\textit{Collection}, y a esa entidad se asocian dos conjuntos abiertos
+de información: por un lado, una colección de \textit{Metadata} formada
+por pares clave-valor que describen atributos del dominio (género, año
+de estreno, idioma original, etc.); por otro, un número arbitrario de
+\textit{references} hacia otras entidades, etiquetadas con una
+\textit{reason} que indica el tipo de relación que las une
+(\textit{Director}, \textit{Actor}, \textit{Network}, etc.). La
+Figura~\ref{fig:erModel} resume estas entidades y las cardinalidades
+entre ellas.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+      every node/.style={font=\small},
+      entity/.style={draw, rectangle, rounded corners=2pt,
+                     minimum height=0.9cm, minimum width=2.4cm,
+                     fill=blue!10},
+      rel/.style={draw, diamond, aspect=2, fill=orange!15, inner sep=1pt},
+      attr/.style={draw, ellipse, fill=yellow!20, inner sep=2pt,
+                   font=\footnotesize\itshape},
+      line/.style={thick}
+    ]
+    \node[entity] (ds)  {Dataset};
+    \node[rel,    right=0.9cm of ds]  (r1)  {contiene};
+    \node[entity, right=0.9cm of r1]  (col) {Collection};
+    \node[rel,    below=0.9cm of col] (r2)  {agrupa};
+    \node[entity, below=0.9cm of r2]  (ent) {Entity};
+
+    \node[rel,    right=0.9cm of ent] (r3) {describe};
+    \node[entity, right=0.9cm of r3]  (md) {Metadata};
+
+    \node[rel, below=1.4cm of ent]    (r4) {reference};
+    \node[attr, below=0.5cm of r4]    (rs) {reason};
+
+    \draw[line] (ds)  -- node[above]{1} (r1);
+    \draw[line] (r1)  -- node[above]{N} (col);
+    \draw[line] (col) -- node[right]{1} (r2);
+    \draw[line] (r2)  -- node[right]{N} (ent);
+    \draw[line] (ent) -- node[above]{1} (r3);
+    \draw[line] (r3)  -- node[above]{N} (md);
+
+    % Relación reflexiva N--N sobre Entity con atributo reason
+    \draw[line] (ent) to[out=-110, in=110, looseness=1.3]
+        node[left,pos=0.5]{N (source)} (r4);
+    \draw[line] (ent) to[out=-70, in=70, looseness=1.3]
+        node[right,pos=0.5]{N (target)} (r4);
+    \draw[line] (r4) -- (rs);
+  \end{tikzpicture}
+  \caption{Diagrama Entidad-Relación del modelo de datos persistente.}
+  \label{fig:erModel}
+\end{figure}
+
+La relación \textit{reference} merece una observación específica. No
+es una asociación N--N pura, sino una relación con atributo propio, ya
+que cada vínculo lleva consigo la \textit{reason} que lo etiqueta. Este
+matiz, aparentemente menor en la fase conceptual, condiciona
+directamente la forma del esquema relacional: una relación con atributo
+no admite la simplificación habitual a una tabla de cruce y exige una
+tabla independiente, como se verá a continuación.
+
+    \subsection{Modelo relacional}
+
+La traducción del modelo conceptual a PostgreSQL distribuye estas
+entidades en cinco tablas: una por cada entidad fuerte y una adicional
+para la relación \textit{reference}, que por las razones recién
+expuestas requiere existencia propia. La
+Figura~\ref{fig:relationalModel} muestra el esquema implementado, con
+las claves primarias subrayadas y las claves foráneas en itálica. Para
+no recargar el diagrama, las restricciones de unicidad y los índices
+secundarios se omiten en la figura y se comentan más adelante, ya que
+forman parte de las decisiones de diseño que motivan este esquema..
+
+\begin{figure}[H]
+  \centering
+  \resizebox{\textwidth}{!}{%
+  \begin{tikzpicture}[
+      font=\footnotesize\ttfamily,
+      tblh/.style={fill=blue!25, draw, font=\footnotesize\bfseries,
+                   minimum height=0.55cm, inner sep=4pt, align=center,
+                   text width=3.6cm},
+      tbl/.style={draw, rectangle, fill=blue!5, inner sep=4pt,
+                  align=left, text width=3.6cm},
+      fk/.style={-Stealth, thick, blue!60!black}
+    ]
+    % datasets (arriba a la izquierda)
+    \node[tblh] (Hds) at (0,0) {datasets};
+    \node[tbl, below=-0.4pt of Hds.south, anchor=north] (Bds) {%
+      \underline{id} : SERIAL \\
+      name : VARCHAR \\
+      created\_at : TIMESTAMP
+    };
+
+    % collections (a la derecha de datasets)
+    \node[tblh, right=2.6cm of Hds] (Hcol) {collections};
+    \node[tbl, below=-0.4pt of Hcol.south, anchor=north] (Bcol) {%
+      \underline{global\_id} : SERIAL \\
+      \textit{dataset\_id} : INT FK \\
+      original\_id : INT \\
+      name : VARCHAR
+    };
+
+    % entities (debajo de collections)
+    \node[tblh, below=2.1cm of Bcol] (Hent) {entities};
+    \node[tbl, below=-0.4pt of Hent.south, anchor=north] (Bent) {%
+      \underline{global\_id} : SERIAL \\
+      \textit{collection\_global\_id} : INT FK \\
+      original\_id : INT \\
+      name : VARCHAR \\
+      contents : JSONB
+    };
+
+    % metadata (a la derecha de entities)
+    \node[tblh, right=2.6cm of Hent] (Hmd) {metadata};
+    \node[tbl, below=-0.4pt of Hmd.south, anchor=north] (Bmd) {%
+      \underline{id} : SERIAL \\
+      \textit{entity\_id} : INT FK \\
+      key : VARCHAR \\
+      value : VARCHAR
+    };
+
+    % reference (debajo de entities)
+    \node[tblh, below=2.1cm of Bent] (Href) {reference};
+    \node[tbl, below=-0.4pt of Href.south, anchor=north] (Bref) {%
+      \underline{id} : SERIAL \\
+      \textit{source\_id} : INT FK \\
+      \textit{target\_id} : INT FK \\
+      reason : VARCHAR
+    };
+
+    % Flechas FK (N..1)
+    \draw[fk] (Bcol.west) -- node[above,sloped,font=\footnotesize\rmfamily]{N..1} (Bds.east);
+    \draw[fk] (Hent.north) -- node[right,font=\footnotesize\rmfamily]{N..1} (Bcol.south);
+    \draw[fk] (Bmd.west) -- node[above,font=\footnotesize\rmfamily]{N..1} (Bent.east |- Bmd.west);
+    \draw[fk] (Href.north) to[bend left=22]
+        node[left,pos=0.5,font=\footnotesize\rmfamily]{source N..1} (Bent.south);
+    \draw[fk] (Href.north) to[bend right=22]
+        node[right,pos=0.5,font=\footnotesize\rmfamily]{target N..1} (Bent.south);
+  \end{tikzpicture}}
+  \caption{Modelo relacional implementado en PostgreSQL.}
+  \label{fig:relationalModel}
+\end{figure}
+
+Más allá del paso mecánico de entidades a tablas, el esquema incorpora
+tres decisiones de diseño que conviene comentar de forma explícita, ya
+que responden a requisitos concretos del sistema y no a la traducción
+E-R por defecto.
+
+\textbf{Clave dual \texttt{global\_id} / \texttt{original\_id}.}
+Tanto \texttt{collections} como \texttt{entities} mantienen dos
+identificadores. El primero, \texttt{global\_id}, es una clave primaria
+autogenerada que garantiza la unicidad global dentro de la base de
+datos y se utiliza de manera uniforme como clave foránea desde el resto
+del esquema. El segundo, \texttt{original\_id}, preserva el
+identificador heredado de la fuente externa y mantiene la trazabilidad
+con esa fuente, lo que permite reconciliar la información ante
+reimportaciones del mismo dataset sin romper las referencias internas.
+Las restricciones de unicidad
+(\texttt{UQ(dataset\_id, original\_id)} en \texttt{collections} y
+\texttt{UQ(collection\_global\_id, original\_id)} en \texttt{entities})
+imponen que el identificador original sea único \emph{dentro} de su
+contexto, dejando que distintos datasets reutilicen los mismos
+identificadores numéricos sin colisión.
+
+\textbf{Columna \texttt{contents} de tipo JSONB.}
+Cada entidad almacena, junto a sus metadatos normalizados, una copia
+del documento original en formato JSONB. Esta redundancia controlada
+cumple dos funciones complementarias. Por un lado, permite a la vista
+de detalle acceder a campos no indexados, como sinopsis, URLs de
+imagen u otros atributos del dominio que no se utilizan como facetas
+exploratorias, sin acoplar el esquema a cada particularidad de cada
+fuente. Por otro, mantiene desacoplada la ingesta respecto al esquema
+relacional: si una fuente nueva expone campos adicionales, basta con
+incluirlos en \texttt{contents} sin necesidad de migrar la base de
+datos.
+
+\textbf{Índices orientados a la consulta exploratoria.}
+Los índices definidos sobre \texttt{metadata(key, value)},
+\texttt{reference(source\_id, reason)} y
+\texttt{reference(target\_id, reason)} no son casuales. Reflejan
+directamente la forma de las subconsultas \texttt{EXISTS} que el
+\texttt{NavigationDAO} genera al traducir el estado del usuario a SQL,
+mecanismo descrito en detalle en la Sección~\ref{sec:filtrado}.
+Indexar \texttt{metadata} por la pareja \texttt{(key, value)} permite
+resolver eficientemente filtros del tipo ``género = Acción''. Indexar
+la tabla \texttt{reference} por las dos columnas más selectivas en
+cada dirección, \texttt{source\_id, reason} para el filtrado
+relacional directo y \texttt{target\_id, reason} para la navegación
+inversa, cubre los dos sentidos en que el sistema atraviesa las
+relaciones entre colecciones.
+
 \section{Representación del contexto de exploración}
+\label{sec:representacionContexto}
 
 Para comprender las decisiones de diseño del modelo de representación interno, es útil partir de un ejemplo
 concreto: la estructura del dataset de The Movie Database (TMDB), que fue la primera y principal fuente de datos
@@ -30,6 +279,99 @@ colecciones, etiquetados con un tipo de relación (\textit{reason}), que permite
 por asociación como navegar de una colección a otra siguiendo esos vínculos. Esta distinción
 --- metadatos para describir, referencias para relacionar --- es la que articula toda la
 representación del contexto de exploración.
+
+Estas dos abstracciones, metadatos y referencias, se materializan en
+código a través de tres clases que dan forma al modelo en memoria. La
+Figura~\ref{fig:umlClases} las resume y muestra cómo se relacionan
+entre sí, sirviendo de mapa antes de entrar en el detalle de cada una.
+La clase \texttt{State} encapsula los filtros activos y el historial
+de transiciones de una sesión; \texttt{StateManager} coordina el
+estado activo, la pila de historial y los contextos guardados para
+unión; \texttt{Link}, por último, captura una transición concreta
+entre colecciones.
+
+\begin{figure}[H]
+  \centering
+
+  \begin{tikzpicture}[
+      umlname/.style={
+        draw, rectangle, fill=blue!25, font=\footnotesize\bfseries,
+        align=center, inner sep=4pt
+      },
+      umlbody/.style={
+        draw, rectangle, fill=blue!5, font=\footnotesize\ttfamily,
+        align=left, inner sep=4pt
+      },
+      compose/.style={thick, {Diamond[length=3.5mm,width=2.5mm]}-},
+      aggreg/.style={thick, {Diamond[open,length=3.5mm,width=2.5mm]}-},
+      assoc/.style={thick, -Stealth},
+      lbl/.style={font=\footnotesize\rmfamily, fill=white, inner sep=2pt}
+    ]
+    % State (izquierda)
+    \node[umlname, text width=5.5cm] (StateN) at (0,0) {State};
+    \node[umlbody, text width=5.5cm, below=-0.4pt of StateN.south, anchor=north] (StateA) {%
+      - datasetId : int \\
+      - currentCollectionId : int \\
+      - mfilters : Map\string<Int, Map\string<Str, Set\string<Str\string>{}\string>{}\string> \\
+      - notMfilters : Map\string<Int, Map\string<Str, Set\string<Str\string>{}\string>{}\string> \\
+      - rfilters : Map\string<Int, Map\string<Int, Map\string<Str, Set\string<Int\string>{}\string>{}\string>{}\string> \\
+      - notRfilters : Map\string<Int, Map\string<Int, Map\string<Str, Set\string<Int\string>{}\string>{}\string>{}\string> \\
+      - links : List\string<Link\string>
+    };
+    \node[umlbody, text width=5.5cm, below=-0.4pt of StateA.south, anchor=north] (StateM) {%
+      + addMetadataFilter(String, String) : void \\
+      + removeMetadataFilter(String, String) : void \\
+      + addReferenceFilter(int, String, int) : void \\
+      + removeReferenceFilter(int, String, int) : void \\
+      + link(int, String) : void \\
+      + goback(int) : void
+    };
+
+
+    % StateManager (derecha)
+    \node[umlname, text width=5.5cm, right=4.5cm of StateN] (SMN) {StateManager};
+    \node[umlbody, text width=5.5cm, below=-0.4pt of SMN.south, anchor=north] (SMA) {%
+      - cur : State \\
+      - historyStack : Deque\string<State\string> \\
+      - unionSet : List\string<State\string> \\
+      - linkStack : Deque\string<Link\string>
+    };
+    \node[umlbody, text width=5.5cm, below=-0.4pt of SMA.south, anchor=north] (SMM) {%
+      + save() : void \\
+      + restore() : void \\
+      + link(int, String) : void \\
+      + goback() : void \\
+      + union(int) : void
+    };
+
+
+    % Link (abajo, centrado entre State y StateManager)
+    \node[umlname, text width=5.5cm, anchor=north] (LN)
+      at ($(StateM.south)!0.5!(SMM.south) + (0.65,-5)$) {Link};
+    \node[umlbody, text width=5.5cm, below=-0.4pt of LN.south, anchor=north] (LA) {%
+      - forward : boolean \\
+      - collectionId : int \\
+      - reason : String \\
+      - state : State
+    };
+
+    % Relaciones
+    % 1 cur: composición StateManager -> State
+    \draw[compose] (SMN.west) -- node[lbl,above]{1\ cur} (StateN.east);
+    % historyStack, unionSet: agregación horizontal (misma altura que StateA)
+    \draw[aggreg] (SMA.west) -- node[lbl,above]{*\ historyStack, unionSet}
+      (SMA.west -| StateA.east);
+    % links: State contiene Links
+    \draw[aggreg] (StateM.south east) -- ++(0,-0.5) -| node[lbl,pos=0.75,right]{*\ links} (LN.north west);
+    % linkStack: StateManager contiene Links
+    \draw[aggreg] (SMM.south) -- ++(0,-0.5) -| node[lbl,pos=0.75,below]{*\ linkStack} (LN.north east);
+    % Link tiene un State (composición, como cur)
+    \draw[compose] (LA.west) -- +(-0.6,0) |- node[lbl,pos=0.25,left]{1\ state} (StateM.south west);
+  \end{tikzpicture}
+  \caption{Diagrama UML de clases del modelo de exploración en memoria.
+  \texttt{State} en el momento de la transición.}
+  \label{fig:umlClases}
+\end{figure}
 
     \subsection{La clase \texttt{State}: filtros y contexto acumulado}
 
@@ -59,6 +401,63 @@ completo que el usuario ha recorrido entre colecciones.
 una copia profunda de todas sus estructuras internas, necesaria para preservar instantáneas
 del estado en distintos puntos de la sesión.
 
+A modo de ejemplo concreto, la Figura~\ref{fig:stateExample} muestra
+cómo se ve un \texttt{State} tras una secuencia típica de operaciones:
+el usuario parte de la colección \textit{Movies} en el dataset TMDB,
+añade un filtro de metadatos \textit{Genres = Action} y a continuación
+navega hacia \textit{People} siguiendo la relación \textit{Director}.
+La colección activa ha pasado a \textit{People}, pero el estado
+conserva tanto los filtros aplicados previamente sobre \textit{Movies}
+como una entrada en \texttt{links} que registra la transición y guarda
+una instantánea del estado en el instante del salto.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+      every node/.style={font=\footnotesize},
+      outer/.style={draw, rounded corners, fill=blue!5,
+                    inner sep=8pt, align=left},
+      header/.style={font=\footnotesize\bfseries},
+      field/.style={draw, rounded corners=2pt, fill=white,
+                    inner sep=4pt, align=left, font=\footnotesize\ttfamily},
+      snap/.style={draw, rounded corners=2pt, fill=yellow!15,
+                   inner sep=3pt, align=left, font=\scriptsize\ttfamily}
+    ]
+    \node[outer, text width=12cm] (state) {%
+      \begin{tabular}{@{}l@{}}
+        \textbf{State} \\[2pt]
+        \ttfamily datasetId = 1 \rmfamily (TMDB) \\
+        \ttfamily currentCollectionId = 3 \rmfamily (People) \\[4pt]
+      \end{tabular}
+      \\[-4pt]
+      \tikz[baseline]{\node[field, text width=11cm]{%
+        \textbf{mfilters}: \{\ 1 (Movies) $\to$ \{\ ``Genres'' $\to$
+        \{``Action''\}\ \}\ \}%
+      };} \\[3pt]
+      \tikz[baseline]{\node[field, text width=11cm]{%
+        \textbf{notMfilters} / \textbf{rfilters} / \textbf{notRfilters}: \{\ \} (vacíos)%
+      };} \\[3pt]
+      \tikz[baseline]{\node[field, text width=11cm]{%
+        \textbf{links}: \\[2pt]
+        \quad [0] Link(forward = true, collectionId = 1 (Movies), \\
+        \quad\phantom{[0] }reason = ``Director'', \\
+        \quad\phantom{[0] }state = \tikz[baseline]{\node[snap]{%
+          \textit{snapshot}: currentCollectionId = 1, \\
+          \phantom{snapshot:\ }mfilters = \{ Movies $\to$ Genres $\to$ Action \}, \\
+          \phantom{snapshot:\ }links = [\ ]%
+        };})%
+      };}%
+    };
+  \end{tikzpicture}
+  \caption[Ejemplo de objeto \texttt{State}]{Instantánea de un
+  \texttt{State} tras filtrar películas por \textit{Genres = Action}
+  y navegar a \textit{People} por la relación \textit{Director}. La
+  colección activa es ya \textit{People}, pero los filtros aplicados
+  sobre \textit{Movies} y la transición que cruzó al usuario quedan
+  registrados en \texttt{mfilters} y \texttt{links}, respectivamente.}
+  \label{fig:stateExample}
+\end{figure}
+
     \subsection{\texttt{StateManager}: gestión del ciclo de vida del estado}
 
 \texttt{StateManager} es el punto de entrada a través del cual los controladores interactúan
@@ -77,6 +476,13 @@ combinar mediante unión; al invocar \texttt{union()}, el estado activo se añad
 \texttt{unionSet} y \texttt{cur} se reinicializa con un estado limpio para continuar la
 exploración de manera independiente.
 
+A estas tres estructuras se suma una pila auxiliar, \texttt{linkStack}, que registra
+los \texttt{Link} hacia delante creados por \texttt{link()} y que \texttt{goback()}
+consume en orden inverso para saber qué transición revertir. A diferencia de las
+anteriores, \texttt{linkStack} no representa contexto de exploración por sí misma: el
+historial efectivo, el que el \texttt{NavigationDAO} traduce a SQL, vive dentro de cada
+\texttt{State} en su campo \texttt{links}.
+
 Es responsabilidad íntegra de \texttt{StateManager} la gestión de coherencia entre estas tres estructuras. 
 Por ejemplo, al ejecutar \texttt{link()} o \texttt{union()}, es
 \texttt{StateManager} quien decide cuándo realizar una copia profunda del estado activo
@@ -87,6 +493,85 @@ frontend --- \texttt{addMetadataFilter}, \texttt{removeReferenceFilter}, \texttt
 \texttt{goback}, \texttt{save}, \texttt{restore} y \texttt{union} --- delegando en
 \texttt{State} las operaciones sobre filtros, y aplicando directamente la lógica de
 coordinación cuando la operación afecta a más de una de sus estructuras internas.
+
+    \subsection{API REST: endpoints expuestos al cliente}
+    \label{subsec:endpoints}
+
+El modelo de exploración descrito hasta aquí permanecería inerte sin
+un mecanismo que lo expusiese al exterior. Esa función la cumple una
+API HTTP basada en \textit{servlets} anotados con \texttt{@WebServlet},
+en la que cada \textit{servlet} se ocupa de un recurso bien delimitado
+y delega la lógica en \texttt{StateManager} o en \texttt{NavigationDAO}
+según corresponda.
+
+La traducción del modelo a esta API sigue una asimetría intencionada
+entre escrituras y lecturas. Todas las acciones que modifican el
+estado de exploración se canalizan a través de un único
+\textit{endpoint}, \texttt{/api/navigation}, que recibe en el cuerpo
+de la petición un campo \texttt{action} cuyo valor discrimina entre
+las operaciones disponibles: añadir y retirar filtros de metadatos y
+de referencia, navegar por un enlace, deshacer una transición,
+restaurar el estado previo a una unión, abrir un nuevo bloque de
+unión o cambiar de colección. De este modo, el vocabulario público
+de \texttt{StateManager} se proyecta directamente sobre la superficie
+HTTP del backend, sin necesidad de multiplicar \textit{endpoints} por
+cada operación. Las consultas, por el contrario, sí justifican
+\textit{endpoints} independientes, ya que cada una devuelve una
+representación distinta del estado actual: las entidades visibles,
+el detalle de una entidad concreta, las facetas de metadatos, las
+facetas de referencia o los enlaces disponibles.
+
+La correspondencia entre cada URL y la clase \texttt{*Servlet} que la
+atiende es directa: \texttt{DatasetsServlet} resuelve
+\texttt{/api/datasets}, \texttt{MetadataFacetsServlet} resuelve
+\texttt{/api/facets/metadata}, y así sucesivamente. Todas las
+peticiones que requieren contexto de exploración recuperan el
+\texttt{StateManager} asociado a la sesión mediante
+\texttt{req.getSession()} y devuelven \texttt{HTTP 400} cuando no
+existe un estado activo, lo que garantiza que ningún \textit{endpoint}
+opere sobre un cliente que aún no se ha inicializado.
+
+El conjunto completo de \textit{endpoints} expuestos por el backend,
+junto con sus parámetros principales y la acción que desencadenan, se
+resume en la Tabla~\ref{tab:endpoints}.
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \renewcommand{\arraystretch}{1.2}
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{|l|p{4.1cm}|p{2.8cm}|p{4.7cm}|}
+    \hline
+    \textbf{Método} & \textbf{URL} & \textbf{Parámetros} & \textbf{Acción} \\
+    \hline
+    GET  & \texttt{/api/datasets}    & ---                       & Lista los \textit{datasets} disponibles \\
+    \hline
+    GET  & \texttt{/api/collections} & \texttt{datasetId}        & Lista las colecciones de un \textit{dataset} \\
+    \hline
+    GET  & \texttt{/api/session}     & ---                       & Devuelve el estado de la sesión activa \\
+    \hline
+    POST & \texttt{/api/session}     & \texttt{datasetId}, \texttt{collectionId} (cuerpo JSON) & Inicializa una sesión sobre un \textit{dataset} y una colección \\
+    \hline
+    GET  & \texttt{/api/entities}    & \texttt{page}, \texttt{size} & Entidades visibles tras aplicar los filtros activos (paginado) \\
+    \hline
+    GET  & \texttt{/api/entity}      & \texttt{id}, \texttt{collectionId} (opcional) & Detalle de una entidad: metadatos, recursos y referencias \\
+    \hline
+    GET  & \texttt{/api/facets/metadata}   & ---                 & Facetas de metadatos y filtros activos \\
+    \hline
+    GET  & \texttt{/api/facets/references} & ---                 & Facetas de referencia y filtros activos \\
+    \hline
+    GET  & \texttt{/api/facets/links}      & ---                 & Relaciones disponibles desde la colección actual \\
+    \hline
+    POST & \texttt{/api/navigation}  & \texttt{action} + parámetros propios de la acción & Aplica una acción sobre el estado: filtros (\texttt{add\_mfilter}, \texttt{rm\_mfilter}, \texttt{add\_not\_mfilter}, \texttt{rm\_not\_mfilter}, \texttt{add\_rfilter}, \texttt{rm\_rfilter}, \texttt{add\_not\_rfilter}, \texttt{rm\_not\_rfilter}), navegación (\texttt{link}, \texttt{goback}), unión (\texttt{union}, \texttt{change}) y restauración (\texttt{restore}) \\
+    \hline
+    GET  & \texttt{/api/union}       & \texttt{page}, \texttt{size} & Entidades del conjunto de unión (paginado) \\
+    \hline
+    GET  & \texttt{/api/resource/*}  & ruta como \texttt{pathInfo} & Sirve archivos del directorio de \textit{uploads} (imágenes y recursos asociados a entidades) \\
+    \hline
+  \end{tabular}
+  \caption{Endpoints REST expuestos por el backend.}
+  \label{tab:endpoints}
+\end{table}
 
 \section{Filtrado clásico y relacional}
 \label{sec:filtrado}
@@ -143,9 +628,10 @@ Cada filtro de inclusión se traduce en una subconsulta \texttt{EXISTS} sobre la
 \texttt{metadata}. Si el usuario ha seleccionado múltiples valores para el mismo atributo,
 se genera una cláusula \texttt{EXISTS} independiente por cada valor, lo que impone que la
 entidad deba satisfacer \textit{todos} ellos simultáneamente. Los filtros de exclusión
-(\texttt{notMfilters}) siguen la misma estructura pero con \texttt{NOT EXISTS}:
+(\texttt{notMfilters}) siguen la misma estructura pero con \texttt{NOT EXISTS}, como
+muestra el Código~\ref{lst:filtrosMetadata}.
 
-\begin{lstlisting}[style=javaStyle, caption=Filtros de metadatos]
+\begin{lstlisting}[style=javaStyle, caption=Filtros de metadatos, label=lst:filtrosMetadata]
 for (var entry : state.getMfilters().entrySet()) {
     String attr = entry.getKey();
     for (String val : entry.getValue()) {
@@ -178,9 +664,10 @@ Cada filtro de referencia está identificado por tres elementos: la colección r
 el tipo de relación (\textit{reason}) y el identificador de la entidad concreta. Al igual
 que con los metadatos, se genera una subconsulta \texttt{EXISTS} por cada combinación
 activa, realizando un \texttt{JOIN} entre la tabla \texttt{reference}, la tabla
-\texttt{entities} y la tabla \texttt{collections} para verificar la existencia de dicho vínculo:
+\texttt{entities} y la tabla \texttt{collections} para verificar la existencia de dicho
+vínculo, tal y como recoge el Código~\ref{lst:filtrosReferencia}.
 
-\begin{lstlisting}[style=javaStyle, caption=Filtros de referencia]
+\begin{lstlisting}[style=javaStyle, caption=Filtros de referencia, label=lst:filtrosReferencia]
 sql.append(" AND EXISTS ("
     + "SELECT 1 FROM reference " + r
     + " JOIN entities " + re + " ON " + r + ".target_id = " + re + ".global_id"
@@ -214,9 +701,10 @@ a través del endpoint \texttt{GET /api/facets}:
 Las \textbf{facetas de metadatos} se obtienen mediante \texttt{getFacets()}, que construye
 una subconsulta con los identificadores de las entidades actualmente visibles
 --- aplicando todos los filtros del estado --- y sobre ella ejecuta un \texttt{GROUP BY}
-sobre la tabla \texttt{metadata}:
+sobre la tabla \texttt{metadata}, según se aprecia en el
+Código~\ref{lst:computoFacetas}.
 
-\begin{lstlisting}[style=javaStyle, caption=Cómputo dinámico]
+\begin{lstlisting}[style=javaStyle, caption=Cómputo dinámico de facetas, label=lst:computoFacetas]
 String sql =
     "SELECT m.key, m.value, COUNT(*) as cnt "
     + "FROM metadata m "
@@ -271,59 +759,147 @@ parte del contexto de exploración con responsabilidad expresa, no un simple reg
 
 La transición entre colecciones se realiza mediante la operación \texttt{link}, que recibe
 el identificador de la colección destino y el tipo de relación a seguir. Su implementación
-en \texttt{StateManager} tiene tres efectos:
+en \texttt{StateManager}, reproducida en el Código~\ref{lst:link}, tiene cuatro efectos.
 
-\begin{lstlisting}[style=javaStyle, caption=Link]
-public void link(int env, String reason) {
-    this.linkList.add(new Link(true, this.cur.getCurrentCollectionId(),
-                               reason, new State(this.cur)));
-    this.cur.link(env, reason);
-    this.cur.setLinks(new ArrayList<>(this.linkList));
+\begin{lstlisting}[style=javaStyle, caption=Operación \texttt{link}, label=lst:link]
+public void link(int targetCollectionId, String reason) {
+    Link newLink = new Link(true, this.cur.getCurrentCollectionId(),
+                            reason, new State(this.cur));
+    this.cur.link(targetCollectionId, reason);
+    this.cur.getLinks().add(newLink);
+    this.linkStack.push(newLink);
 }
 \end{lstlisting}
 
-Primero, se añade un nuevo objeto \texttt{Link} al \texttt{linkList}, marcado como
-transición hacia delante (\texttt{forward = true}). Este objeto almacena la colección de
-origen, el tipo de relación seguida y una copia profunda del estado activo en el momento
-de la transición, preservando así los filtros que estaban activos antes del salto.
-Segundo, se actualiza la colección activa en \texttt{cur} a la colección destino.
-Tercero, se sincroniza la lista de links dentro del propio \texttt{State}, de forma que
-el \texttt{NavigationDAO} pueda accederla directamente al construir las queries.
+Primero, se construye un nuevo objeto \texttt{Link} marcado como transición hacia delante
+(\texttt{forward = true}). Este objeto almacena la colección de origen, el tipo de
+relación seguida y una copia profunda del estado activo en el momento de la transición,
+preservando así los filtros que estaban activos antes del salto. Segundo, se actualiza la
+colección activa en \texttt{cur} a la colección destino. Tercero, el nuevo \texttt{Link}
+se añade a la lista de transiciones del propio \texttt{State} (\texttt{cur.getLinks()}),
+que es la que el \texttt{NavigationDAO} consume al construir las queries. Cuarto, ese
+mismo \texttt{Link} se apila en \texttt{linkStack}, la pila auxiliar que mantiene
+\texttt{StateManager} para conocer cuál es la última transición revertible en una
+eventual operación de \texttt{goback}.
 
-La operación \texttt{goback} invierte la última transición registrada en el
-\texttt{linkList}. En lugar de eliminar el último \texttt{Link}, añade uno nuevo con la
-dirección invertida respecto al anterior ---si el último era hacia delante, el nuevo es
-hacia atrás, y viceversa--- y restaura como colección activa la colección de origen
-almacenada en ese \texttt{Link}:
+La Figura~\ref{fig:seqLink} resume la secuencia de mensajes entre el
+cliente, el \texttt{NavigationServlet} y el modelo en memoria al
+ejecutar una operación de \textit{link}. Se observa que el servlet
+invoca primero \texttt{save()} (volcando una copia del estado actual a
+\texttt{historyStack}) y a continuación \texttt{link()}, dentro de
+la cual \texttt{StateManager} actualiza tanto la colección activa de
+\texttt{cur} como sus listas internas \texttt{links} y \texttt{linkStack}.
 
-\begin{lstlisting}[style=javaStyle, caption=Goback]
+\begin{figure}[H]
+  \centering
+  \resizebox{\textwidth}{!}{%
+  \begin{sequencediagram}
+    \newthread{c}{:Cliente}
+    \newinst[2]{nav}{:NavigationServlet}
+    \newinst[2]{sm}{:StateManager}
+    \newinst[2]{state}{cur:State}
+
+    \begin{call}{c}{POST /api/navigation (action=link)}{nav}{HTTP 200 JSON}
+      \begin{call}{nav}{save()}{sm}{}
+        \begin{call}{sm}{historyStack.push(new State(cur))}{sm}{}
+        \end{call}
+      \end{call}
+      \begin{call}{nav}{link(collectionId, reason)}{sm}{}
+        \begin{call}{sm}{new Link(true, curColl, reason, new State(cur))}{sm}{}
+        \end{call}
+        \begin{call}{sm}{link(collectionId, reason)}{state}{}
+        \end{call}
+        \begin{call}{sm}{getLinks().add(newLink)}{state}{}
+        \end{call}
+        \begin{call}{sm}{linkStack.push(newLink)}{sm}{}
+        \end{call}
+      \end{call}
+    \end{call}
+  \end{sequencediagram}}
+  \caption[Diagrama de secuencia de \texttt{link}]{Secuencia de
+  mensajes durante la operación \texttt{link}. \texttt{save()} guarda
+  una copia profunda del estado en \texttt{historyStack}; a
+  continuación \texttt{link()} crea el nuevo \texttt{Link} con
+  instantánea del estado previo, actualiza \texttt{cur} y lo apila
+  tanto en \texttt{cur.getLinks()} como en \texttt{linkStack}.}
+  \label{fig:seqLink}
+\end{figure}
+
+La operación \texttt{goback} revierte la última transición hacia delante realizada en
+la sesión. Su implementación se apoya en \texttt{linkStack}: extrae de la pila el último
+\texttt{Link} apilado por \texttt{link()}, construye un nuevo \texttt{Link} con dirección
+hacia atrás (\texttt{forward = false}) que registra esa reversión en la lista de
+transiciones de \texttt{cur}, y restaura como colección activa la colección de origen
+almacenada en el \texttt{Link} extraído. El Código~\ref{lst:goback} reproduce el método
+completo.
+
+\begin{lstlisting}[style=javaStyle, caption=Operación \texttt{goback}, label=lst:goback]
 public void goback() {
-    Link last = this.linkList.get(this.linkList.size() - 1);
-    if (last.isForward()) {
-        this.linkList.add(new Link(false, this.cur.getCurrentCollectionId(),
-                                   last.getReason(), new State(this.cur)));
-    } else {
-        this.linkList.add(new Link(true, this.cur.getCurrentCollectionId(),
-                                   last.getReason(), new State(this.cur)));
-    }
-    this.cur.goback(last.getEnv());
-    this.cur.setLinks(new ArrayList<>(this.linkList));
+    Link last = this.linkStack.pop();
+    Link backLink = new Link(false, this.cur.getCurrentCollectionId(),
+                             last.getReason(), new State(this.cur));
+    this.cur.goback(last.getCollectionId());
+    this.cur.getLinks().add(backLink);
 }
 \end{lstlisting}
 
-El hecho de que \texttt{goback} añada un nuevo \texttt{Link} en lugar de eliminar el
-último tiene una consecuencia relevante: el historial es siempre creciente y nunca se
-borra. Esto significa que la query SQL resultante debe recorrer toda la cadena de
-transiciones acumuladas, incluyendo los retrocesos, para reconstruir fielmente el
-contexto de exploración.
+El hecho de que \texttt{goback} registre un nuevo \texttt{Link} en
+\texttt{cur.getLinks()} en lugar de eliminar el último tiene una consecuencia relevante:
+ese historial es siempre creciente y nunca se borra. Esto significa que la query SQL
+resultante debe recorrer toda la cadena de transiciones acumuladas, incluidos los
+retrocesos, para reconstruir fielmente el contexto de exploración. La pila
+\texttt{linkStack}, en cambio, sí pierde la entrada con cada \texttt{goback}, pero su rol
+es estrictamente operacional: indicar cuál es la próxima reversión legal y nada más.
+
+Esta asimetría queda reflejada en la
+Figura~\ref{fig:seqGoback}: \texttt{linkStack.pop()} consume la cabeza
+de la pila, mientras que el nuevo \texttt{Link} de retroceso se añade
+únicamente a \texttt{cur.getLinks()}, dejando la cadena efectiva del
+historial monótonamente creciente.
+
+\begin{figure}[H]
+  \centering
+  \resizebox{\textwidth}{!}{%
+  \begin{sequencediagram}
+    \newthread{c}{:Cliente}
+    \newinst[2]{nav}{:NavigationServlet}
+    \newinst[2]{sm}{:StateManager}
+    \newinst[2]{state}{cur:State}
+
+    \begin{call}{c}{POST /api/navigation (action=goback)}{nav}{HTTP 200 JSON}
+      \begin{call}{nav}{save()}{sm}{}
+        \begin{call}{sm}{historyStack.push(new State(cur))}{sm}{}
+        \end{call}
+      \end{call}
+      \begin{call}{nav}{goback()}{sm}{}
+        \begin{call}{sm}{last = linkStack.pop()}{sm}{}
+        \end{call}
+        \begin{call}{sm}{new Link(false, curColl, last.reason, new State(cur))}{sm}{}
+        \end{call}
+        \begin{call}{sm}{goback(last.collectionId)}{state}{}
+        \end{call}
+        \begin{call}{sm}{getLinks().add(backLink)}{state}{}
+        \end{call}
+      \end{call}
+    \end{call}
+  \end{sequencediagram}}
+  \caption[Diagrama de secuencia de \texttt{goback}]{Secuencia de
+  mensajes durante la operación \texttt{goback}. \texttt{linkStack}
+  sí se reduce con \texttt{pop()}, pero el historial efectivo en
+  \texttt{cur.getLinks()} crece con un nuevo \texttt{Link} marcado
+  como retroceso (\texttt{forward = false}), preservando toda la
+  cadena de transiciones para reconstruir el contexto en SQL.}
+  \label{fig:seqGoback}
+\end{figure}
 
     \subsection{Subconsultas anidadas: traducción del historial de \textit{links} a SQL}
 
 Cuando el estado contiene un historial de transiciones, \texttt{appendFilterClauses}
 no puede limitarse a aplicar los filtros del estado activo: debe también expresar en SQL
-la restricción que impone cada transición puesta anteriormente. Para ello utiliza una sobrecarga
-recursiva que recorre el \texttt{linkList} desde el último \texttt{Link} hacia el primero,
-generando en cada nivel una subconsulta anidada.
+la restricción que impone cada transición puesta anteriormente. Para ello utiliza una
+sobrecarga recursiva que recorre la lista de transiciones del estado
+(\texttt{state.getLinks()}) desde el último \texttt{Link} hacia el primero, generando en
+cada nivel una subconsulta anidada.
 
 La estructura de la recursión tiene la siguite definición: para cada nivel de profundidad, se aplican
 primero los filtros del estado en ese nivel mediante \texttt{appendStateFilters}, y a
@@ -331,9 +907,9 @@ continuación se genera una cláusula \texttt{AND ... IN (SELECT ...)} que restr
 entidades del nivel actual a aquellas que, a través de la relación registrada en el
 \texttt{Link}, están vinculadas a entidades del nivel siguiente. La dirección del
 \texttt{Link} determina qué columna de la tabla \texttt{reference} actúa como origen y
-cuál como destino:
+cuál como destino, como se observa en el Código~\ref{lst:subconsultasAnidadas}.
 
-\begin{lstlisting}[style=javaStyle, caption=Subconsultas anidadas]
+\begin{lstlisting}[style=javaStyle, caption=Subconsultas anidadas, label=lst:subconsultasAnidadas]
 if (link.isForward()) {
     sql.append(" AND " + e + ".global_id IN ("
         + "SELECT " + r_link + ".target_id FROM reference " + r_link
@@ -365,9 +941,9 @@ dinámicamente a partir del parámetro \texttt{depth} para evitar colisiones ent
 
 Retomando el ejemplo anterior --- películas de acción, navegación hacia \textit{People}
 por la relación \textit{Actor} --- la query resultante para obtener los actores visibles
-tendría la siguiente forma:
+adopta la forma mostrada en el Código~\ref{lst:queryResultante}.
 
-\begin{lstlisting}[style=sqlStyle, caption=Query resultante]
+\begin{lstlisting}[style=sqlStyle, caption=Query SQL resultante de la navegación transversal, label=lst:queryResultante]
 SELECT DISTINCT e.original_id, e.name
 FROM entities e
 JOIN collections c ON e.collection_global_id = c.global_id
@@ -407,31 +983,77 @@ acumulados hasta entonces.
 
     \subsection{Construcción del \texttt{unionSet}}
 
-La operación \texttt{union} en \texttt{StateManager} tiene cuatro efectos sobre el estado
-interno:
+La operación \texttt{union} en \texttt{StateManager} guarda el contexto actual para una
+unión posterior y reinicializa el estado activo desde cero. El Código~\ref{lst:union}
+reproduce su implementación, que delega la parte de reinicio en el método auxiliar
+\texttt{change}.
 
-\begin{lstlisting}[style=javaStyle, caption=Union]
+\begin{lstlisting}[style=javaStyle, caption=Operación \texttt{union}, label=lst:union]
 public void union(int collectionId) {
-    this.cur.setLinks(new ArrayList<>(this.linkList));
     this.unionSet.add(this.cur);
+    change(collectionId);
+}
+
+public void change(int collectionId) {
     this.historyStack.clear();
-    this.linkList.clear();
     this.cur = new State(this.datasetId, collectionId);
 }
 \end{lstlisting}
 
-Primero, sincroniza el historial de \textit{links} dentro del estado activo, de forma que
-el estado guardado que se va a preservar tenga acceso a la cadena de transiciones
-completa. Segundo, añade el estado activo actual al \texttt{unionSet} sin realizar ninguna
-copia, dado que \texttt{cur} va a ser reemplazado inmediatamente, no hay riesgo de que
-futuras modificaciones lo alteren. Tercero, vacía tanto la \texttt{historyStack} como el
-\texttt{linkList}, lo que disvincula completamente el nuevo contexto del anterior. Finalmente,
-inicializa \texttt{cur} con un estado limpio sobre la colección indicada, desde el que el
-usuario puede comenzar una exploración independiente.
+Primero, se añade el estado activo actual al \texttt{unionSet} sin realizar ninguna
+copia: \texttt{cur} va a ser reemplazado inmediatamente, por lo que no hay riesgo de
+que modificaciones posteriores alteren la entrada guardada, que ya contiene su propio
+historial de transiciones dentro de \texttt{cur.getLinks()}. A continuación se invoca
+\texttt{change}, que vacía la \texttt{historyStack} y reinicializa \texttt{cur} con un
+\texttt{State} limpio sobre la colección indicada. Ese nuevo estado arranca con su
+propia lista de transiciones vacía, lo que desvincula por completo el contexto recién
+iniciado del anterior.
 
 El \texttt{unionSet} puede acumular un número arbitrario de entradas repitiendo esta
 operación. Cada entrada es un estado completo e independiente, con su propia colección
 activa, sus propios filtros y su propio historial de transiciones.
+
+La Figura~\ref{fig:seqUnion} ilustra la secuencia de mensajes
+correspondiente. A diferencia de \texttt{link} y \texttt{goback}, la
+operación no toca \texttt{State} directamente: el estado anterior se
+añade tal cual a \texttt{unionSet} (sin copia profunda, dado que
+\texttt{cur} va a ser reemplazado), y \texttt{change()} instala un
+\texttt{State} recién creado como nuevo contexto activo.
+
+\begin{figure}[H]
+  \centering
+  \resizebox{\textwidth}{!}{%
+  \begin{sequencediagram}
+    \newthread{c}{:Cliente}
+    \newinst[2]{nav}{:NavigationServlet}
+    \newinst[2]{sm}{:StateManager}
+    \newinst[2]{state}{:State}
+
+    \begin{call}{c}{POST /api/navigation (action=union, collectionId)}{nav}{HTTP 200 JSON}
+      \begin{call}{nav}{save()}{sm}{}
+        \begin{call}{sm}{historyStack.push(new State(cur))}{sm}{}
+        \end{call}
+      \end{call}
+      \begin{call}{nav}{union(collectionId)}{sm}{}
+        \begin{call}{sm}{unionSet.add(cur)}{sm}{}
+        \end{call}
+        \begin{call}{sm}{change(collectionId)}{sm}{}
+          \begin{call}{sm}{historyStack.clear()}{sm}{}
+          \end{call}
+          \begin{call}{sm}{new State(datasetId, collectionId)}{state}{cur}
+          \end{call}
+        \end{call}
+      \end{call}
+    \end{call}
+  \end{sequencediagram}}
+  \caption[Diagrama de secuencia de \texttt{union}]{Secuencia de
+  mensajes durante la operación \texttt{union}. El estado activo
+  pasa a \texttt{unionSet} sin copia profunda y \texttt{change()}
+  vacía \texttt{historyStack} antes de reinicializar \texttt{cur} con
+  un \texttt{State} limpio sobre la colección indicada. La pila
+  \texttt{linkStack} no se modifica.}
+  \label{fig:seqUnion}
+\end{figure}
 
     \subsection{Resolución de la unión en base de datos}
 
@@ -441,9 +1063,9 @@ La consulta del \texttt{unionSet} se realiza a través del endpoint
 
 Ambos métodos construyen una única query que itera sobre todas las entradas del
 \texttt{unionSet} y concatena un bloque de condiciones por entrada, separados por
-\texttt{OR}:
+\texttt{OR}, como ilustra el Código~\ref{lst:queryUnion}.
 
-\begin{lstlisting}[style=javaStyle, caption=Query de unión]
+\begin{lstlisting}[style=javaStyle, caption=Query de unión, label=lst:queryUnion]
 for (int i = 0; i < unionSet.size(); i++) {
     State state = unionSet.get(i);
     if (i > 0) sql.append(" OR ");
@@ -471,6 +1093,102 @@ relación \textit{Actor}. Que ambas entradas compartan colección activa no es u
 del sistema: el campo \texttt{collection\_id} devuelto por \texttt{getUnionEntities()}
 indica a qué colección pertenece cada entidad del resultado, permitiendo al frontend
 distinguirlas cuando fuera necesario.
+
+\section{Desarrollo del frontend}
+\label{sec:frontend}
+
+Concluida la descripción del backend, queda por presentar la capa
+que el usuario percibe directamente. El frontend se concibió como una
+superficie de presentación deliberadamente delgada, cuya única
+responsabilidad consiste en renderizar el estado actual del servidor
+y en traducir las acciones del usuario en peticiones HTTP contra los
+\textit{endpoints} descritos en la Tabla~\ref{tab:endpoints}. El
+cliente no mantiene una copia del modelo de datos ni implementa una
+lógica propia de navegación: el \texttt{StateManager} del servidor es
+la única fuente de verdad, y la interfaz se limita a presentar lo que
+recibe y a invocar el \textit{endpoint} adecuado ante cada acción del
+usuario.
+
+    \subsection*{Tecnología y filosofía}
+
+Para una capa con esa responsabilidad acotada, recurrir a un
+\textit{framework} reactivo como React, Vue o Angular habría supuesto
+un sobrecoste injustificado. El cliente está implementado, por tanto,
+en JavaScript moderno con módulos \textit{ES}, sin dependencias de
+interfaz. Tres razones sostienen esta decisión. En primer lugar, su
+lógica se reduce a peticiones HTTP y a manipulación directa del DOM,
+sin estructuras de datos derivadas que justifiquen un sistema reactivo.
+En segundo lugar, la gestión del estado vive íntegramente en el
+servidor a través de \texttt{StateManager}, por lo que no es necesaria
+una capa equivalente en el cliente. Por último, mantener el código en
+JavaScript estándar facilita la lectura y la evolución del proyecto,
+especialmente en un contexto académico en el que la base de código
+debe poder revisarse sin requerir conocimientos específicos de un
+\textit{framework} concreto.
+
+La única dependencia de desarrollo es \textbf{Vite}, que actúa como
+servidor de desarrollo durante la iteración, con recarga en caliente,
+y como empaquetador de producción al generar el \textit{bundle}
+estático mediante \texttt{npm run build}.
+
+    \subsection*{Estructura}
+
+Sobre esa base mínima de herramientas, el árbol de directorios del
+cliente se organiza de forma plana y predecible:
+
+\begin{itemize}
+  \item \texttt{index.html}: punto de entrada HTML. Declara las
+    regiones visuales (selección de \textit{dataset}, selección de
+    colección y pantalla de navegación) y los contenedores donde el
+    \textit{script} inyecta dinámicamente facetas, entidades y
+    filtros activos.
+  \item \texttt{src/main.js}: punto de entrada JavaScript. Orquesta
+    la inicialización, mantiene un objeto \texttt{state} con la
+    información mínima necesaria para renderizar (identificadores y
+    nombres de la colección actual, historial de \textit{links} o
+    página activa, entre otros) y registra los \textit{listeners}
+    sobre los controles de la interfaz.
+  \item \texttt{src/api.js}: cliente HTTP, descrito más adelante.
+  \item \texttt{src/utils.js}: utilidades genéricas, como la
+    selección de nodos por \texttt{id} o el escape de HTML.
+  \item \texttt{src/components/}: piezas de interfaz reutilizables.
+    Cada archivo encapsula un componente independiente, con una API
+    mínima: combobox con búsqueda incremental para las facetas
+    (\texttt{Combobox.js}), \textit{chips} que representan los filtros
+    activos (\texttt{FilterTags.js}), ventana modal de detalle de
+    entidad (\texttt{Modal.js}), control de paginación
+    (\texttt{PaginationHandler.js}), reordenamiento de paneles por
+    \textit{drag and drop} (\texttt{PanelDragOrder.js}),
+    \textit{placeholders} de carga (\texttt{Skeleton.js}) y
+    notificaciones efímeras (\texttt{Toast.js}).
+  \item \texttt{src/styles/}: hojas de estilo
+    (\texttt{base.css}, \texttt{layout.css} y \texttt{main.css}).
+\end{itemize}
+
+    \subsection*{Comunicación con el backend}
+
+A todas estas piezas y a la orquestación de \texttt{main.js} les da
+soporte una capa transversal: el cliente HTTP centralizado en
+\texttt{src/api.js}. Esta pieza expone una única función,
+\texttt{api(endpoint, options)}, construida sobre \texttt{fetch}, que
+fija \texttt{mode: \string'cors\string'}, \texttt{credentials: \string'include\string'} y la
+cabecera \texttt{Content-Type: application/\-json}, serializa
+automáticamente el cuerpo de las peticiones \texttt{POST} y lanza una
+excepción si la respuesta no es satisfactoria. El uso de
+\texttt{credentials: \string'include\string'} es lo que garantiza que la cookie
+\texttt{JSESSIONID} viaje en cada petición, permitiendo al backend
+recuperar el \texttt{StateManager} asociado a la sesión.
+
+Coherente con la decisión arquitectónica que sitúa el estado en el
+servidor, el cliente no duplica esa información. Tras cada acción,
+ya sea aplicar un filtro, navegar por un enlace, retroceder o añadir
+al conjunto de unión, se invoca una función \texttt{refreshAll()} que
+vuelve a llamar a los \textit{endpoints} de facetas, entidades y
+unión, y repinta la interfaz con los datos recibidos. Esta estrategia,
+alineada con el espíritu HATEOAS discutido en el
+Capítulo~\ref{cap:estadoDeLaCuestion}, simplifica el razonamiento
+sobre coherencia: el servidor es la única fuente de verdad, y la
+interfaz refleja en todo momento el resultado que aquel devuelve.
 
 \section{Obstáculos encontrados y soluciones implementadas}
 \label{sec:obstaculos}
@@ -506,9 +1224,10 @@ datos y ejecución de queries que habrían dificultado la iteración rápida.
 
 La solución adoptada fue incorporar un mecanismo de filtrado por popularidad directamente
 en el script de procesamiento, controlado por las variables \texttt{FILTER\_TOP\_K\_POPULAR}
-y \texttt{TOP\_K\_COUNT}:
+y \texttt{TOP\_K\_COUNT}, configuradas como se muestra en el
+Código~\ref{lst:filtroPopularidad}.
 
-\begin{lstlisting}[style=pythonStyle]
+\begin{lstlisting}[style=pythonStyle, caption=Configuración del filtro por popularidad, label=lst:filtroPopularidad]
 FILTER_TOP_K_POPULAR = True
 TOP_K_COUNT = 5000
 \end{lstlisting}
@@ -518,6 +1237,9 @@ Con este mecanismo activo, el script ordena las películas y series por su campo
 más populares antes de generar el dataset de salida. Esto permitió trabajar durante el
 desarrollo con un subconjunto representativo y manejable, manteniendo la opción de
 escalar al dataset completo simplemente desactivando el filtro o aumentando el límite.
+La motivación de operar con un subconjunto y los detalles del script
+de procesado se desarrollan en el
+Apéndice~\ref{Appendix:integracion}.
 
     \subsection*{Valores numéricos y de fecha en los metadatos: la decisión de usar rangos}
 
@@ -530,9 +1252,10 @@ películas con exactamente 157 minutos de duración o con un presupuesto de exac
 
 La solución fue discretizar estos valores en rangos durante el procesamiento, antes de
 insertarlos en la base de datos. Para valores numéricos, la función \texttt{bucket\_range}
-agrupa cada valor en un intervalo de tamaño configurable:
+agrupa cada valor en un intervalo de tamaño configurable, según la implementación
+recogida en el Código~\ref{lst:bucketRange}.
 
-\begin{lstlisting}[style=pythonStyle]
+\begin{lstlisting}[style=pythonStyle, caption=Función \texttt{bucket\_range} para discretizar valores numéricos, label=lst:bucketRange]
 def bucket_range(value, bucket_size):
     bucket_start = int(num // bucket_size) * bucket_size
     return f"{format_number(bucket_start)}-{format_number(bucket_start + bucket_size - 1)}"
@@ -569,9 +1292,10 @@ cabeceras adecuadas para que el navegador autorice la comunicación.
 
 La solución fue implementar un filtro de servlet, \texttt{CORSFilter}, que intercepta
 todas las peticiones mediante la anotación \texttt{@WebFilter("/*")} y añade las
-cabeceras necesarias en cada respuesta:
+cabeceras necesarias en cada respuesta, tal y como se reproduce en el
+Código~\ref{lst:corsFilter}.
 
-\begin{lstlisting}[style=javaStyle]
+\begin{lstlisting}[style=javaStyle, caption=Filtro \texttt{CORSFilter} para gestionar las cabeceras CORS, label=lst:corsFilter]
 response.setHeader("Access-Control-Allow-Origin", origin);
 response.setHeader("Access-Control-Allow-Credentials", "true");
 response.setHeader("Access-Control-Allow-Methods",
@@ -591,7 +1315,83 @@ la cookie de sesión), por lo que el filtro lee el encabezado \texttt{Origin} de
 petición y lo devuelve como valor explícito. Complementariamente, fue necesario
 configurar el \texttt{CookieProcessor} en \texttt{context.xml} con
 \texttt{sameSiteCookies="None"} para que la cookie de sesión se enviara correctamente
-en peticiones cross-origin.
+en peticiones cross-origin. La configuración exacta del contenedor de
+servlets en los modos de desarrollo y de producción, junto con el
+empaquetado del backend tras un mismo origen mediante Nginx en
+producción, se describe en el Apéndice~\ref{Appendix:despliegue}.
+
+El flujo completo de una petición HTTP, desde el \textit{preflight}
+CORS hasta la respuesta JSON, se ilustra en la
+Figura~\ref{fig:httpFlow}. El diagrama distingue las dos fases que el
+navegador desencadena de manera automática para una petición
+cross-origin con credenciales: primero un \texttt{OPTIONS} que
+\texttt{CORSFilter} corta en cuanto inyecta las cabeceras, y a
+continuación la petición real, que recorre toda la cadena
+(filtro $\to$ servlet $\to$ DAO $\to$ JDBC $\to$ PostgreSQL) antes de
+devolver el cuerpo JSON.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[
+      node distance=0.55cm and 1.0cm,
+      every node/.style={font=\footnotesize, align=center},
+      block/.style={draw, rectangle, rounded corners,
+                    minimum width=5.4cm, minimum height=0.75cm,
+                    fill=blue!5},
+      filter/.style={draw, rectangle, rounded corners,
+                     minimum width=5.4cm, minimum height=0.75cm,
+                     fill=orange!10},
+      io/.style={draw, rectangle, rounded corners,
+                 minimum width=5.4cm, minimum height=0.75cm,
+                 fill=green!8},
+      db/.style={draw, rectangle, rounded corners,
+                 minimum width=5.4cm, minimum height=0.75cm,
+                 fill=teal!8},
+      arrow/.style={-Latex, thick}
+    ]
+    \node[io] (opt)
+      {Cliente: \texttt{OPTIONS /api/\ldots}\\(preflight CORS)};
+    \node[filter, below=of opt] (cors1)
+      {\texttt{CORSFilter}: inyecta cabeceras\\
+       \texttt{Access-Control-Allow-*} y responde \texttt{200}};
+    \node[io, below=of cors1] (req)
+      {Cliente: petición real (\texttt{GET}/\texttt{POST} /api/\ldots)\\
+       con \texttt{Cookie: JSESSIONID}};
+    \node[filter, below=of req] (cors2)
+      {\texttt{CORSFilter}: añade cabeceras CORS\\
+       y delega con \texttt{chain.doFilter()}};
+    \node[block, below=of cors2] (route)
+      {Tomcat enruta al \texttt{Servlet} por \texttt{@WebServlet}};
+    \node[block, below=of route] (session)
+      {\texttt{req.getSession()} $\to$\\
+       \texttt{(StateManager) session.getAttribute("navState")}};
+    \node[block, below=of session] (dao)
+      {\texttt{Servlet} $\to$ \texttt{NavigationDAO} con el estado};
+    \node[db, below=of dao] (db)
+      {\texttt{NavigationDAO} $\to$ JDBC (\texttt{PreparedStatement})\\
+       $\to$ PostgreSQL};
+    \node[io, below=of db] (resp)
+      {\texttt{Servlet} serializa con Jackson\\
+       $\to$ \texttt{HTTP 200} \texttt{application/json}};
+
+    \draw[arrow] (opt) -- (cors1);
+    \draw[arrow] (cors1) -- node[right]{respuesta vacía} (req);
+    \draw[arrow] (req) -- (cors2);
+    \draw[arrow] (cors2) -- (route);
+    \draw[arrow] (route) -- (session);
+    \draw[arrow] (session) -- (dao);
+    \draw[arrow] (dao) -- (db);
+    \draw[arrow] (db) -- (resp);
+  \end{tikzpicture}
+  \caption[Flujo de una petición HTTP]{Flujo completo de una petición
+  HTTP en el sistema. La fase de \textit{preflight} (parte superior) se
+  resuelve íntegramente en \texttt{CORSFilter}, sin alcanzar al servlet.
+  La petición real (parte inferior) atraviesa el filtro, el routing por
+  anotación, la recuperación del \texttt{StateManager} en la sesión HTTP,
+  la consulta a través de \texttt{NavigationDAO} y JDBC, y termina con
+  una respuesta JSON serializada por Jackson.}
+  \label{fig:httpFlow}
+\end{figure}
 
     \subsection*{El diseño de \texttt{goback} y sus implicaciones}
 
@@ -600,33 +1400,23 @@ iteraciones. La dificultad radicó en que revertir una transición entre colecci
 es simplemente volver a la colección anterior: es volver al estado exacto que existía
 antes de la transición, incluyendo todos los filtros que estaban activos en ese momento.
 
-Un primer enfoque consistió en eliminar el último \texttt{Link} del \texttt{linkList}
-al ejecutar \texttt{goback}, restaurando la colección activa a la del enlace eliminado.
+Un primer enfoque consistió en eliminar el último \texttt{Link} del historial al
+ejecutar \texttt{goback}, restaurando la colección activa a la del enlace eliminado.
 Este enfoque resultó problemático porque el historial perdía información: si el usuario
 navegaba hacia adelante, retrocedía y volvía a navegar, la cadena de transiciones no
 reflejaba fielmente el recorrido real, y las subconsultas generadas por
 \texttt{appendFilterClauses} producían resultados incorrectos.
 
-La solución adoptada fue tratar \texttt{goback} de forma simétrica a \texttt{link}:
-en lugar de eliminar el último \texttt{Link}, se añade uno nuevo con la dirección
-invertida, preservando el historial completo de forma creciente:
-
-\begin{lstlisting}[style=javaStyle]
-public void goback() {
-    Link last = this.linkList.get(this.linkList.size() - 1);
-    if (last.isForward()) {
-        this.linkList.add(new Link(false,
-            this.cur.getCurrentCollectionId(),
-            last.getReason(), new State(this.cur)));
-    } else {
-        this.linkList.add(new Link(true,
-            this.cur.getCurrentCollectionId(),
-            last.getReason(), new State(this.cur)));
-    }
-    this.cur.goback(last.getEnv());
-    this.cur.setLinks(new ArrayList<>(this.linkList));
-}
-\end{lstlisting}
+La solución adoptada fue convertir \texttt{goback} en una operación aditiva sobre el
+historial: en lugar de borrar el último \texttt{Link}, añade uno nuevo a la lista de
+transiciones del estado con la dirección invertida (\texttt{forward = false}),
+preservando así el historial completo de forma creciente. Para saber qué transición debe
+revertirse en cada \texttt{goback}, \texttt{StateManager} mantiene una pila auxiliar,
+\texttt{linkStack}, que solo registra los enlaces hacia delante creados por
+\texttt{link()}; \texttt{goback} extrae el último elemento de esa pila para conocer la
+colección de origen y la razón del salto que se va a deshacer, dejando el historial
+real, residente en \texttt{cur.getLinks()}, intacto y monótonamente creciente. La
+implementación final coincide con la mostrada en el Código~\ref{lst:goback}.
 
 La consecuencia de este diseño, descrita en la sección~\ref{sec:navegacion_transversal},
 es que \texttt{appendFilterClauses} debe recorrer toda la cadena acumulada, incluidos los

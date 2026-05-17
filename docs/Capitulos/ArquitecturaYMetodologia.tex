@@ -12,7 +12,7 @@ un sistema modular, escalable, mantenible y flexible en la integración de base 
 \section{Metodología de Ingeniería del Software}
 
 Este Trabajo de Fin de Grado se ha organizado por principios de Ingeniería de Software fundamentados en el paradigma ágil.
-Como se estableció en el plan de trabajo, hemos optado por \textbf{Scrum} como referencia, adaptando sus características 
+Como se estableció en el plan de trabajo, hemos optado por \textbf{Scrum} \citep{hanser2026scrum} como referencia, adaptando sus características
 a las particuladades de un equipo reducido de dos personas. La adaptación resultó esencial para mantener la 
 disciplina y estructura ofrecida por el modelo ágil sin introducir una sobrecarga innecesaria.
 
@@ -40,9 +40,21 @@ y la combinación de resultados, se desarrollaron mediante periodos de trabajo i
 y validación de cada componente. En cambio, el resto de tareas de menor complejidad o con menor dependencia técnica se 
 fueron abordando progresivamente siguiendo la prioridad establecida en el \textit{backlog}.
 
-Los criterios de priorización y la planificación de las tareas se realizaron en coordinación con la tutoría del proyecto, 
-llevando a cabo revisiones periódicas y ajustes continuos. De esta forma, los objetivos de cada iteración se adaptaban en 
+Los criterios de priorización y la planificación de las tareas se realizaron en coordinación con la tutoría del proyecto,
+llevando a cabo revisiones periódicas y ajustes continuos. De esta forma, los objetivos de cada iteración se adaptaban en
 función de los resultados obtenidos y de los obstáculos técnicos que iban apareciendo durante el desarrollo.
+
+El \textit{backlog} del proyecto se gestionó en GitHub
+Projects\footnote{\url{https://github.com/users/hibjan/projects/5/views/1}} y
+recoge la priorización descrita, como se observa en la
+Figura~\ref{fig:backlog}.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=1\textwidth]{Imagenes/Bitmap/backlog.png}
+  \caption{Captura del backlog del proyecto en GitHub Projects.}
+  \label{fig:backlog}
+\end{figure}
 
     \subsection*{Trabajo colaborativo en un equipo reducido}
 
@@ -56,7 +68,7 @@ frente los problemas técnicos.
     \subsection*{Control de versiones y gestión del código fuente}
 
 En virtud de la necesidad de mantener la integridad del código y facilitar el trabajo colaborativo, hemos 
-utilizado Git como sistema de control de versiones distribuido. El repositorio principal se alojó en GitHub 
+utilizado Git como sistema de control de versiones distribuido. El repositorio principal se alojó en GitHub\footnote{\url{https://github.com/hibjan/TFG}}
 y se empleó una estrategia de ramificación sencilla : una rama principal (\texttt{main}) para el código 
 estable y funcional, y ramas de características (\textit{feature branches}) para el desarrollo de nuevos 
 componentes antes de su integración final. Con esa metodología, hemos podido trabajar en paralelo sin conflictos 
@@ -73,16 +85,54 @@ necesidad de realizar modificaciones significativas o profundas en su arquitectu
 
 \section{Arquitectura del Sistema}
 
-Para permitir la exposición de la lógica del motor de exploración y su respectivo consumo por parte de aplicaciones, 
-hemos diseñado una arquitectura fundamentada en el modelo Cliente-Servidor. Desde el lado del servidor (\textit{backend}), 
-la aplicación favorece el desacoplamiento al basarse en capas bien definidas. Esta sección se dedica a detallar la capa de 
-control, responsable de enrutar las distintas peticiones HTTP, y la capa de filtros, encargada de controlar las políticas 
+Para permitir la exposición de la lógica del motor de exploración y su respectivo consumo por parte de aplicaciones,
+hemos diseñado una arquitectura fundamentada en el modelo Cliente-Servidor. Desde el lado del servidor (\textit{backend}),
+la aplicación favorece el desacoplamiento al basarse en capas bien definidas. Esta sección se dedica a detallar la capa de
+control, responsable de enrutar las distintas peticiones HTTP, y la capa de filtros, encargada de controlar las políticas
 de acceso y seguridad.
+
+La Figura~\ref{fig:arquitectura} resume las capas que constituyen el sistema
+y su flujo principal de comunicación, desde el cliente web hasta la base de
+datos relacional.
+
+\begin{figure}[h]
+  \centering
+  \hspace*{2cm}%
+  \begin{tikzpicture}[
+    node distance=1.5cm and 1.5cm,
+    every node/.style={font=\small},
+    box/.style={draw, rectangle, rounded corners, minimum width=4cm,
+                minimum height=0.9cm, align=center, fill=orange!10},
+    db/.style={draw, cylinder, shape border rotate=90, aspect=0.25,
+               minimum width=3cm, minimum height=1.2cm, align=center,
+               fill=blue!10},
+    arrow/.style={Latex-Latex, thick}
+  ]
+    \node[box, fill=yellow!40] (frontend) {Frontend (Vanilla JS + Vite)};
+    \node[box, below=of frontend] (cors)  {CORS Filter};
+    \node[box, below=of cors]     (ctrl)  {Servlets (capa de control)};
+    \node[box, below=of ctrl]     (mgr)   {StateManager + State + Link\\(modelo en sesión HTTP)};
+    \node[box, below=of mgr]      (dao)   {DAO (NavigationDAO, DatabaseService)};
+    \node[db,  below=of dao]      (db)    {PostgreSQL};
+
+    \draw[arrow] (frontend) -- node[right, pos=0.6]{HTTP / JSON} (cors);
+    \draw[arrow] (cors)     -- (ctrl);
+    \draw[arrow] (ctrl)     -- node[right]{lectura/escritura de estado} (mgr);
+    \draw[arrow] (mgr)      -- node[right]{construcción de query} (dao);
+    \draw[arrow] (dao)      -- node[right, pos=0.4]{JDBC} (db);
+
+    \node[draw, dashed, fit=(cors)(ctrl)(mgr)(dao),
+          inner ysep=1cm, inner xsep=1.5cm,
+          label=right:{Apache Tomcat}] {};
+  \end{tikzpicture}
+  \caption{Arquitectura general del sistema en capas.}
+  \label{fig:arquitectura}
+\end{figure}
 
     \subsection*{Diseño de la API y Controladores}
 
 Hemos optado por implementar la interfaz de comunicación entre el cliente web y el motor de navegación
-usando una API de estilo REST, siguiendo la especificación de \textit{Servlets} de Java (\texttt{HttpServlet}).
+usando una API de estilo REST, siguiendo la especificación de \textit{Servlets} de Java (\texttt{HttpServlet}) \citep{hunter2001servlets}.
 Esta elección viene de priorizar un control directo sobre las peticiones y respuestas HTTP frente al uso de
 frameworks web de más alto nivel (como Spring Boot), que aunque facilitan el desarrollo de aplicaciones web
 tradicionales, introducen una mayor complejidad estructural y una capa adicional de abstracción que no resulta
@@ -94,7 +144,7 @@ motor de navegación y generar la respuesta correspondiente en formato JSON. Emp
 para mantener una separación explícita entre la lógica de navegación y la capa de acceso web. Además permitió un 
 control más preciso de la gestión de sesiones, el formato de las respuestas y el flujo de las peticiones HTTP.
 
-Para ejecutar la aplicación se ha utilizado Apache Tomcat como contenedor de \textit{Servlets}. Nos hemos inclinado por 
+Para ejecutar la aplicación se ha utilizado Apache Tomcat \citep{brittain2007tomcat} como contenedor de \textit{Servlets}. Nos hemos inclinado por
 Tomcat frente a otras opciones principalmente por la naturaleza del proyecto. Tomcat es un contenedor
 considerablemente ligero, enfocado en la ejecución de aplicaciones basadas en \textit{Servlets} y JSP, lo que lo convierte en
 una solución adecuada para trabajar directamente con la API de Java sin generar dependencias adicionales.
@@ -192,6 +242,24 @@ por un conjunto de atributos (\textbf{metadatos}), mientras que las interaccione
 expresan mediante relaciones explícitamente manifiestas. Esta separación permite tratar de forma homogénea tanto el
 filtrado por atributos (por ejemplo, características propias de una entidad) como la exploración
 relacional (navegación entre entidades conectadas).
+
+Esta representación se materializa en un esquema relacional almacenado en
+PostgreSQL y compuesto por cinco tablas: \texttt{datasets},
+\texttt{collections}, \texttt{entities}, \texttt{metadata} y
+\texttt{reference}. Los \textit{datasets} agrupan colecciones, cada
+colección contiene entidades y cada entidad lleva asociado un número
+arbitrario de filas de metadatos. Para evitar fijar el conjunto de
+atributos por anticipado (requisito incompatible con la naturaleza
+heterogénea de las fuentes integradas), la tabla \texttt{metadata}
+sigue un patrón clave/valor que asocia cada entidad con tantos pares
+\texttt{(key, value)} como atributos posea. De manera análoga, la tabla
+\texttt{reference} materializa las relaciones entre entidades como filas de
+primera clase, con un identificador de origen, uno de destino y una
+\textit{razón} que cualifica el tipo de vínculo. Esta uniformidad permite
+que la incorporación de nuevos tipos de atributos o nuevas clases de
+relaciones no requiera modificar el esquema. El detalle del modelo
+relacional y de las restricciones de integridad asociadas se presenta en
+el Capítulo~\ref{cap:desarrolloImplementacion}.
 
 Al mismo tiempo, esta representación actúa como una capa de abstracción sobre las fuentes de
 datos, unificando conjuntos heterogéneos bajo una estructura común e independiente de su formato u origen.

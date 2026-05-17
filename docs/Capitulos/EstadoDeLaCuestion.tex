@@ -85,7 +85,8 @@ proporcionar un vocabulario formal para describir documentos interconectados. \c
 ofrecen una revisión panorámica de esta familia de modelos que conviene resumir aquí, porque
 varias de sus categorías son directamente trasladables a las decisiones de diseño de nuestro sistema.
 
-El primero y más antiguo de estos modelos es el HAM (\textit{Hypertext Abstract Machine}), concebido
+El primero y más antiguo de estos modelos es el HAM (\textit{Hypertext Abstract Machine})
+\citep{campbell1988ham}, concebido
 como una máquina servidor de propósito general para almacenar sistemas de hipertexto. Su modelo de
 memoria distingue cinco objetos básicos: grafos, contextos, nodos, enlaces entre nodos y atributos
 semánticos. La correspondencia entre estas cinco abstracciones y los componentes de nuestro sistema
@@ -101,7 +102,33 @@ tabla \texttt{reference}, que registran asociaciones bidireccionales entre entid
 \textit{razón} (\textit{Director}, \textit{Actor}, etc.) que tipifica la naturaleza del vínculo. Los
 \textit{atributos semánticos} del HAM, expresados en aquel modelo como pares clave-valor adheridos
 a nodos y enlaces, tienen un reflejo casi idéntico en nuestra tabla \texttt{metadata}, que asocia a cada
-entidad un conjunto de pares atributo-valor sobre los que opera el filtrado clásico.
+entidad un conjunto de pares atributo-valor sobre los que opera el filtrado clásico. La
+Tabla~\ref{tab:hamMapping} sintetiza esta correspondencia.
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{@{}p{0.22\textwidth}p{0.34\textwidth}p{0.38\textwidth}@{}}
+    \toprule
+    \textbf{Objeto HAM} & \textbf{En nuestro sistema} & \textbf{Nota} \\
+    \midrule
+    Grafo               & tablas \texttt{collections} y \texttt{reference}
+                        & Universo global de entidades y vínculos tipados \\
+    Nodo                & filas de \texttt{entities}
+                        & Unidad atómica del dominio \\
+    Enlace              & filas de \texttt{reference}
+                        & Asociaciones bidireccionales con razón \\
+    Atributo semántico  & filas de \texttt{metadata}
+                        & Pares atributo-valor para filtrado \\
+    Contexto            & clase \texttt{State}
+                        & Vista por sesión, separada del grafo persistente \\
+    \bottomrule
+  \end{tabular}
+  \caption[Correspondencia HAM]{%
+    Correspondencia entre los cinco objetos básicos del modelo HAM
+    \citep{campbell1988ham} y los componentes equivalentes de nuestro
+    sistema.}
+  \label{tab:hamMapping}
+\end{table}
 
 El paralelismo se completa, y resulta especialmente revelador, en el caso del \textit{contexto}.
 El contexto del HAM se concibe como un fragmento de datos del grafo que recoge una vista parcial
@@ -114,12 +141,12 @@ del dominio, persistentes y compartidos, y contexto de exploración, momentáneo
 decisión que se detalla en el capítulo de arquitectura, encuentra aquí su raíz conceptual.
 
 El segundo modelo de referencia, conceptualmente posterior y más elaborado, es el modelo Dexter
-(\textit{Dexter Hypertext Reference Model}). Dexter organiza el sistema de hipermedia en tres capas
+(\textit{Dexter Hypertext Reference Model}) \citep{halasz1994dexter}. Dexter organiza el sistema de hipermedia en tres capas
 con interfaces bien definidas. Una capa de almacenamiento, donde residen los componentes
 persistentes y sus enlaces. Una capa de ejecución, que coordina las sesiones de usuario y la
 instanciación de los componentes activos. Y una capa intracomponente, que describe la estructura
 interna de cada componente y se conecta con el resto a través de un mecanismo explícito de
-\textit{anclajes} (\textit{anchors}). Esta triple separación encuentra paralelismos en la arquitectura de
+\textit{anclajes} (\textit{anchors}) (Figura~\ref{fig:dexterCapas}). Esta triple separación encuentra paralelismos en la arquitectura de
 nuestro sistema, donde la capa de persistencia (PostgreSQL y la capa DAO), la capa de ejecución
 (\texttt{StateManager} y los \textit{servlets} que orquestan la sesión) y la capa de presentación
 (\textit{frontend}) cumplen funciones análogas. Más relevante aún es la noción de \textit{enlace} en
@@ -130,6 +157,16 @@ dirección, la razón de la relación y una copia del estado en el momento de re
 esta misma tradición. La transición no es un efecto secundario opaco de hacer clic en un elemento,
 sino un objeto explícito y persistente, cuya cadena conforma el historial de exploración y se integra
 literalmente en la consulta SQL que se construye en cada petición.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.7\textwidth]{Imagenes/Bitmap/dexter_capas.png}
+  \caption[Capas del modelo Dexter]{Las tres capas del modelo Dexter,
+    con las interfaces \textit{Presentation Specifications} y
+    \textit{Anchoring} entre ellas. Figura tomada de Halasz y Schwartz
+    (1994) \citep{halasz1994dexter}.}
+  \label{fig:dexterCapas}
+\end{figure}
 
 Una tercera línea, mucho más reciente y específicamente vinculada al desarrollo web moderno, es la
 recuperación de la idea de \textit{Hypermedia As The Engine Of Application State} (HATEOAS),
@@ -185,7 +222,8 @@ revisión de estos dos polos basta para situar el espacio que nuestra propuesta 
 Clavy es una plataforma experimental para la gestión de repositorios de objetos de aprendizaje con
 estructuras dinámicamente reconfigurables, desarrollada a lo largo de la última década en la Universidad
 Complutense de Madrid \citep{gayoso2016siie}. Su rasgo distintivo, frente a las propuestas estándar
-de repositorios de objetos de aprendizaje basadas en esquemas fijos como LOM o IMS CP, es
+de repositorios de objetos de aprendizaje basadas en esquemas fijos como LOM \citep{ieee_lom_2002}
+o IMS CP \citep{ims_cp_2004}, es
 permitir que cada repositorio defina su propio esquema de metadatos, que ese esquema se construya
 de forma inductiva a medida que se cataloga la colección, y que sea reconfigurable en cualquier momento
 por los usuarios. Esta filosofía bottom-up acerca a Clavy a las folksonomías y, más en general, a los
@@ -203,13 +241,23 @@ Clavy reside en que la jerarquía de elementos del esquema, presentada al usuari
 facetada del espacio de navegación, puede modificarse en cualquier momento sin necesidad de
 reorganizar la colección \citep{gayoso2016isd}. Para hacer compatibles ambos requisitos, los autores
 demostraron que el comportamiento del sistema podía caracterizarse como un autómata de navegación
-finito independiente de la jerarquía. Dado que ese autómata puede, en el peor caso, crecer
+finito independiente de la jerarquía (Figura~\ref{fig:clavyAutomata}). Dado que ese autómata puede, en el peor caso, crecer
 exponencialmente con respecto al tamaño de la colección, la línea posterior de la plataforma se ha
 dedicado a desarrollar estrategias de indexación y de \textit{caching} que aproximan el comportamiento
 deseado sin materializar el autómata por completo. Este conjunto de técnicas incluye una estrategia
 basada en la identificación de estados equivalentes (estados que filtran exactamente el mismo conjunto
 de objetos, aunque procedan de combinaciones distintas de etiquetas), que permite reducir
 sustancialmente el coste de las operaciones de navegación \citep{gayoso2019smartcache}.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/clavy_automata.png}
+  \caption[Autómata de navegación de Clavy]{Autómata de navegación de
+    Clavy: los estados son conjuntos de objetos y las transiciones
+    están etiquetadas con pares atributo-valor. Figura tomada de
+    Gayoso et al. (2016) \citep{gayoso2016siie}.}
+  \label{fig:clavyAutomata}
+\end{figure}
 
 En paralelo a la consolidación del modelo de navegación, Clavy ha evolucionado para acomodar
 necesidades expresivas más sofisticadas. La incorporación de elementos multivaluados, esto es, de
@@ -218,7 +266,7 @@ fue un paso importante en escenarios reales como las bibliotecas digitales human
 objeto típicamente representa una obra con varios contribuidores, cada uno con sus propios atributos
 \citep{gayoso2023siie}. La caracterización de estos esquemas como un tipo restringido de gramática
 EBNF abre además la posibilidad de extender el modelo a estructuras alternativas y recursivas,
-acercándolo al espíritu de los lenguajes generalizados de marcado. La aplicabilidad práctica de la
+acercándolo al espíritu de los lenguajes generalizados de marcado \citep{coombs1987markup}. La aplicabilidad práctica de la
 plataforma se ha demostrado en repositorios reales de humanidades, lingüística y, recientemente,
 medicina, donde Clavy ha servido como soporte para generar paquetes de contenido educativo
 estandarizado a partir de colecciones médicas existentes \citep{buendia2019medsys}.
@@ -259,7 +307,34 @@ es, la construcción incremental de consultas SQL que reflejen un contexto de na
 con filtros relacionales, transiciones tipadas entre colecciones y combinaciones de conjuntos sobre
 contextos independientes. Es en ese desplazamiento del foco, desde el problema de la indexación hacia
 el de la traducción dinámica de un estado de exploración complejo a una consulta ejecutable, donde
-nuestra propuesta complementa, sin solapar, la línea de trabajo de Clavy.
+nuestra propuesta complementa, sin solapar, la línea de trabajo de Clavy
+(Tabla~\ref{tab:clavyComparativa}).
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{@{}p{0.20\textwidth}p{0.36\textwidth}p{0.36\textwidth}@{}}
+    \toprule
+    \textbf{Eje} & \textbf{Clavy} & \textbf{Nuestro motor} \\
+    \midrule
+    Estructura de la colección
+      & Homogénea, esquema único reconfigurable
+      & Estratificada en subcolecciones tipadas con relaciones explícitas \\
+    Primitivas de navegación
+      & Filtrado por etiquetas
+      & Filtrado por etiquetas y referencias, navegación transversal, y operación de unión \\
+    Esquema
+      & \textit{Bottom-up}, reconfigurable en caliente
+      & Estable, definido a priori \\
+    Estrategia de indexación
+      & Autómatas, dendrogramas, cachés selectivas
+      & Delegada en PostgreSQL; foco en traducción a SQL \\
+    \bottomrule
+  \end{tabular}
+  \caption[Comparativa Clavy]{Síntesis de las
+    diferencias entre la plataforma Clavy y nuestro motor de
+    exploración a lo largo de cuatro ejes clave.}
+  \label{tab:clavyComparativa}
+\end{table}
 
 \subsection{Knowledge Navigator y la exploración asistida por modelos del lenguaje}
 \label{subsec:knowledgenav}
@@ -272,7 +347,18 @@ recupera centenares de documentos relevantes, los embebe en un espacio vectorial
 mediante clustering probabilístico (modelos de mezcla gaussiana sobre embeddings reducidos con UMAP),
 y delega en un modelo de lenguaje las tareas de etiquetar cada \textit{cluster} con un nombre y una
 descripción, filtrar aquellos que resultan poco relevantes para la consulta original y organizar los
-resultantes en una jerarquía temática de dos niveles que el usuario puede recorrer.
+resultantes en una jerarquía temática de dos niveles que el usuario puede recorrer
+(Figura~\ref{fig:knowledgeNavFlujo}).
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.95\textwidth]{Imagenes/Bitmap/knowledgenav_workflow.png}
+  \caption[Flujo de Knowledge Navigator]{Flujo de Knowledge Navigator:
+    recuperación, \textit{embedding} y \textit{clustering}, lectura
+    por el modelo del lenguaje y organización temática final. Figura
+    tomada de Katz et al. (2024) \citep{katz2024knowledgenav}.}
+  \label{fig:knowledgeNavFlujo}
+\end{figure}
 
 La filiación de Knowledge Navigator con la tradición clásica de \textit{cluster-based browsing} es
 declarada por sus propios autores, que sitúan su propuesta como una recuperación moderna del
