@@ -1,0 +1,172 @@
+{
+    "collections": [
+        {
+            "name": "Movies",
+            "id": 1
+        },
+        {
+            "name": "People",
+            "id": 2
+        },
+        {
+            "name": "Studios",
+            "id": 3
+        }
+    ],
+    "objects": [
+        {
+            "id": 27205,
+            "collection_id": 1,
+            "metadata": {
+                "Genres": ["Action", "Sci-Fi"],
+                "Year": ["2010"]
+            },
+            "references": [
+                {"reason": "Director",   "reference_id": 525,  "reference_collection_id": 2},
+                {"reason": "Actor",      "reference_id": 6193, "reference_collection_id": 2},
+                {"reason": "Production", "reference_id": 174,  "reference_collection_id": 3}
+            ],
+            "contents": {
+                "Name": "Inception",
+                "description": "A thief who steals corporate secrets through dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O."
+            }
+        },
+        {
+            "id": 157336,
+            "collection_id": 1,
+            "metadata": {
+                "Genres": ["Sci-Fi", "Drama"],
+                "Year": ["2014"]
+            },
+            "references": [
+                {"reason": "Director",   "reference_id": 525, "reference_collection_id": 2},
+                {"reason": "Production", "reference_id": 174, "reference_collection_id": 3}
+            ],
+            "contents": {
+                "Name": "Interstellar",
+                "description": "A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival."
+            }
+        },
+        {
+            "id": 24428,
+            "collection_id": 1,
+            "metadata": {
+                "Genres": ["Action"],
+                "Year": ["2012"]
+            },
+            "references": [
+                {"reason": "Actor",      "reference_id": 3223, "reference_collection_id": 2},
+                {"reason": "Production", "reference_id": 420,  "reference_collection_id": 3}
+            ],
+            "contents": {
+                "Name": "The Avengers",
+                "description": "Earth's mightiest heroes must come together to stop Loki and his alien army from enslaving humanity."
+            }
+        },
+        {
+            "id": 49026,
+            "collection_id": 1,
+            "metadata": {
+                "Genres": ["Action", "Drama"],
+                "Year": ["2012"]
+            },
+            "references": [
+                {"reason": "Director",   "reference_id": 525,  "reference_collection_id": 2},
+                {"reason": "Actor",      "reference_id": 3894, "reference_collection_id": 2},
+                {"reason": "Production", "reference_id": 174,  "reference_collection_id": 3}
+            ],
+            "contents": {
+                "Name": "The Dark Knight Rises",
+                "description": "Eight years after the Joker's reign of anarchy, Batman is forced from his exile to confront the masked terrorist Bane."
+            }
+        },
+        {
+            "id": 525,
+            "collection_id": 2,
+            "metadata": {
+                "Birthplace": ["London"]
+            },
+            "references": [
+                {"reason": "Director", "reference_id": 27205,  "reference_collection_id": 1},
+                {"reason": "Director", "reference_id": 157336, "reference_collection_id": 1},
+                {"reason": "Director", "reference_id": 49026,  "reference_collection_id": 1}
+            ],
+            "contents": {
+                "Name": "Christopher Nolan",
+                "description": "British-American filmmaker known for his cerebral, often nonlinear storytelling."
+            }
+        },
+        {
+            "id": 6193,
+            "collection_id": 2,
+            "metadata": {
+                "Birthplace": ["Los Angeles"]
+            },
+            "references": [
+                {"reason": "Actor", "reference_id": 27205, "reference_collection_id": 1}
+            ],
+            "contents": {
+                "Name": "Leonardo DiCaprio",
+                "description": "American actor known for his work in biopics and period films."
+            }
+        },
+        {
+            "id": 3223,
+            "collection_id": 2,
+            "metadata": {
+                "Birthplace": ["New York"]
+            },
+            "references": [
+                {"reason": "Actor", "reference_id": 24428, "reference_collection_id": 1}
+            ],
+            "contents": {
+                "Name": "Robert Downey Jr.",
+                "description": "American actor whose career has included critical and popular success."
+            }
+        },
+        {
+            "id": 3894,
+            "collection_id": 2,
+            "metadata": {
+                "Birthplace": ["Haverfordwest"]
+            },
+            "references": [
+                {"reason": "Actor", "reference_id": 49026, "reference_collection_id": 1}
+            ],
+            "contents": {
+                "Name": "Christian Bale",
+                "description": "English actor known for his intensive method approach to acting."
+            }
+        },
+        {
+            "id": 174,
+            "collection_id": 3,
+            "metadata": {
+                "Founded": ["1923"]
+            },
+            "references": [
+                {"reason": "Production", "reference_id": 27205,  "reference_collection_id": 1},
+                {"reason": "Production", "reference_id": 157336, "reference_collection_id": 1},
+                {"reason": "Production", "reference_id": 49026,  "reference_collection_id": 1}
+            ],
+            "contents": {
+                "Name": "Warner Bros. Pictures",
+                "description": "American film and entertainment studio headquartered in Burbank, California."
+            }
+        },
+        {
+            "id": 420,
+            "collection_id": 3,
+            "metadata": {
+                "Founded": ["1993"]
+            },
+            "references": [
+                {"reason": "Production", "reference_id": 24428, "reference_collection_id": 1}
+            ],
+            "contents": {
+                "Name": "Marvel Studios",
+                "description": "American film and television studio that is a subsidiary of Walt Disney Studios."
+            }
+        }
+    ]
+}
