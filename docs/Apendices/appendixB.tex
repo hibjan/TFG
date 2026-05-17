@@ -96,13 +96,13 @@ etapa compila el WAR con Maven y una segunda etapa lo despliega sobre
     \node[db,                  below=of tom]     (pg)    {PostgreSQL\\(\texttt{:5432})};
 
     \draw[arrow] (user)  -- node[right]{HTTPS} (cf);
-    \draw[arrow, pos=0.55] (cf)    -- node[right]{túnel cifrado} (cfd);
+    \draw[arrow, pos=0.65] (cf)    -- node[right]{túnel cifrado} (cfd);
     \draw[arrow] (cfd)   -- (nginx);
     \draw[arrow] (nginx) -- node[right]{proxy \texttt{/backend/}} (tom);
     \draw[arrow] (tom)   -- node[right]{JDBC} (pg);
 
     \node[draw, dashed, fit=(cfd)(nginx)(tom)(pg),
-          inner ysep=0.4cm, inner xsep=1.5cm,
+          inner ysep=0.6cm, inner xsep=1.5cm,
           label=right:{Docker Compose}] {};
   \end{tikzpicture}
   \caption{Topología de la instancia compartida con túnel Cloudflare.}
