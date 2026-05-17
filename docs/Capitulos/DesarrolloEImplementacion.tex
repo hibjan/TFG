@@ -368,7 +368,7 @@ entre colecciones.
     % Link tiene un State (composición, como cur)
     \draw[compose] (LA.west) -- +(-0.6,0) |- node[lbl,pos=0.25,left]{1\ state} (StateM.south west);
   \end{tikzpicture}
-  \caption{Diagrama UML de clases del modelo de exploración en memoria.
+  \caption[Diagrama UML del modelo de exploración]{Diagrama UML de clases del modelo de exploración en memoria.
   \texttt{State} en el momento de la transición.}
   \label{fig:umlClases}
 \end{figure}
@@ -943,7 +943,7 @@ Retomando el ejemplo anterior --- películas de acción, navegación hacia \text
 por la relación \textit{Actor} --- la query resultante para obtener los actores visibles
 adopta la forma mostrada en el Código~\ref{lst:queryResultante}.
 
-\begin{lstlisting}[style=sqlStyle, caption=Query SQL resultante de la navegación transversal, label=lst:queryResultante]
+\begin{lstlisting}[style=sqlStyle, caption={[Query SQL de la navegación transversal]Query SQL resultante de la navegación transversal}, label=lst:queryResultante]
 SELECT DISTINCT e.original_id, e.name
 FROM entities e
 JOIN collections c ON e.collection_global_id = c.global_id
@@ -1190,6 +1190,775 @@ Capítulo~\ref{cap:estadoDeLaCuestion}, simplifica el razonamiento
 sobre coherencia: el servidor es la única fuente de verdad, y la
 interfaz refleja en todo momento el resultado que aquel devuelve.
 
+\section{Ejemplo ilustrativo (recorrido end-to-end)}
+\label{sec:ejemplo_recorrido}
+\shorthandoff{"}
+\sloppy
+
+Las secciones anteriores han presentado por separado las piezas que
+componen el motor de navegación: el \texttt{State} acumulado, las
+transformaciones que aplica \texttt{StateManager}, la traducción a SQL
+realizada por \texttt{NavigationDAO} y el flujo HTTP que conecta el
+frontend con todo lo anterior. La presente sección integra esas piezas
+en un ejemplo ilustrativo, ejecutado sobre un dataset deliberadamente
+reducido. El objetivo es mostrar cómo cada acción primitiva del API
+(\texttt{add\_mfilter}, \texttt{add\_not\_mfilter},
+\texttt{add\_rfilter}, \texttt{link}, \texttt{goback} y \texttt{union})
+modifica de manera observable el conjunto de entidades visibles, y
+permitir al lector seguir paso a paso la evolución conjunta del estado
+interno del sistema y de la consulta SQL que esa acción provoca.
+
+Para que cada operación quede plenamente apreciada, el ejemplo se
+organiza en tres flujos independientes. Cada flujo arranca desde el
+estado inicial sobre el dataset y demuestra una categoría distinta de
+operaciones: el primero acota progresivamente un conjunto dentro de una
+sola colección, el segundo viaja entre colecciones aplicando filtros en
+destino que repercuten en el conjunto de origen, y el tercero combina
+contextos construidos por separado sobre colecciones diferentes. Dentro
+de cada flujo, todos los pasos exhiben la acción invocada por el usuario
+y el conjunto que resulta, mientras que el \texttt{State} completo, la
+consulta SQL y la captura de la interfaz se presentan al final como
+síntesis del recorrido.
+
+El dataset que sustenta el ejemplo se distribuye junto al código fuente,
+en el archivo \path{scripts/test/example_dataset.json}, siguiendo el
+mismo formato (un objeto JSON con los campos \texttt{collections} y
+\texttt{objects}) que el resto de \textit{datasets} de prueba presentes
+en \path{scripts/test/}. Las capturas que acompañan a cada flujo se
+obtuvieron ejecutando el sistema sobre ese dataset y reproduciendo
+manualmente la secuencia de acciones correspondiente.
+
+\subsection{Mini-dataset reproducible}
+\label{subsec:ejemplo_dataset}
+
+El dataset agrupa tres colecciones cuyos tamaños se han elegido
+deliberadamente asimétricos: cuatro entidades en \textit{Movies}, cuatro
+en \textit{People} y dos en \textit{Studios}. La asimetría persigue que
+los filtros y las navegaciones produzcan resultados informativos, ni
+vacíos ni saturados, sobre conjuntos lo bastante pequeños como para que
+el lector pueda comprobar mentalmente cada paso. La
+Tabla~\ref{tab:ejemplo_datasets} y la Tabla~\ref{tab:ejemplo_collections}
+reflejan, respectivamente, el \textit{dataset} y las colecciones que lo
+componen, tal y como aparecen físicamente en la base de datos.
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{|c|l|l|}
+    \hline
+    \textbf{id} & \textbf{name} & \textbf{created\_at} \\ \hline
+    1 & tmdb-toy & 2025-01-01 \\ \hline
+  \end{tabular}
+  \caption{Tabla \texttt{datasets} del mini-dataset.}
+  \label{tab:ejemplo_datasets}
+\end{table}
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{|c|c|c|l|}
+    \hline
+    \textbf{global\_id} & \textbf{dataset\_id} & \textbf{original\_id} & \textbf{name} \\ \hline
+    1 & 1 & 1 & Movies  \\ \hline
+    2 & 1 & 2 & People  \\ \hline
+    3 & 1 & 3 & Studios \\ \hline
+  \end{tabular}
+  \caption[Tabla \texttt{collections} del mini-dataset]{Tabla \texttt{collections}: tres colecciones bajo el \textit{dataset} \texttt{tmdb-toy}.}
+  \label{tab:ejemplo_collections}
+\end{table}
+
+\FloatBarrier
+
+Las entidades concretas se reparten por colección en las
+Tablas~\ref{tab:ejemplo_movies}, \ref{tab:ejemplo_people}
+y~\ref{tab:ejemplo_studios}. Por brevedad se omite la columna
+\texttt{contents}, cuyo único uso relevante en este recorrido es el
+nombre de la entidad, ya reflejado en la columna \textbf{name}.
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{|c|c|c|l|}
+    \hline
+    \textbf{global\_id} & \textbf{collection\_global\_id} & \textbf{original\_id} & \textbf{name} \\ \hline
+    10 & 1 &  27205 & Inception              \\ \hline
+    11 & 1 & 157336 & Interstellar           \\ \hline
+    12 & 1 &  24428 & The Avengers           \\ \hline
+    13 & 1 &  49026 & The Dark Knight Rises  \\ \hline
+  \end{tabular}
+  \caption[Tabla \texttt{entities} --- \textit{Movies}]{Tabla \texttt{entities} restringida a la colección \textit{Movies}.}
+  \label{tab:ejemplo_movies}
+\end{table}
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{|c|c|c|l|}
+    \hline
+    \textbf{global\_id} & \textbf{collection\_global\_id} & \textbf{original\_id} & \textbf{name} \\ \hline
+    20 & 2 &  525 & Christopher Nolan \\ \hline
+    21 & 2 & 6193 & Leonardo DiCaprio \\ \hline
+    22 & 2 & 3223 & Robert Downey Jr. \\ \hline
+    23 & 2 & 3894 & Christian Bale    \\ \hline
+  \end{tabular}
+  \caption[Tabla \texttt{entities} --- \textit{People}]{Tabla \texttt{entities} restringida a la colección \textit{People}.}
+  \label{tab:ejemplo_people}
+\end{table}
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{|c|c|c|l|}
+    \hline
+    \textbf{global\_id} & \textbf{collection\_global\_id} & \textbf{original\_id} & \textbf{name} \\ \hline
+    30 & 3 & 174 & Warner Bros. Pictures \\ \hline
+    31 & 3 & 420 & Marvel Studios        \\ \hline
+  \end{tabular}
+  \caption[Tabla \texttt{entities} --- \textit{Studios}]{Tabla \texttt{entities} restringida a la colección \textit{Studios}.}
+  \label{tab:ejemplo_studios}
+\end{table}
+
+\FloatBarrier
+
+A continuación, la Tabla~\ref{tab:ejemplo_metadata} recoge los metadatos
+vinculados a cada entidad. Las películas se anotan con género
+(\texttt{Genres}) y año (\texttt{Year}), las personas con su lugar de
+nacimiento (\texttt{Birthplace}) y los estudios con su año de fundación
+(\texttt{Founded}). Son precisamente estos pares clave/valor los que
+darán soporte a los filtros \texttt{add\_mfilter} y
+\texttt{add\_not\_mfilter} en las escenas posteriores.
+
+\begin{table}[h]
+  \centering
+  \footnotesize
+  \begin{tabular}{|c|c|l|l|}
+    \hline
+    \textbf{id} & \textbf{entity\_id} & \textbf{key} & \textbf{value} \\ \hline
+    1  & 10 & Genres     & Action        \\ \hline
+    2  & 10 & Genres     & Sci-Fi        \\ \hline
+    3  & 10 & Year       & 2010          \\ \hline
+    4  & 11 & Genres     & Sci-Fi        \\ \hline
+    5  & 11 & Genres     & Drama         \\ \hline
+    6  & 11 & Year       & 2014          \\ \hline
+    7  & 12 & Genres     & Action        \\ \hline
+    8  & 12 & Year       & 2012          \\ \hline
+    9  & 13 & Genres     & Action        \\ \hline
+    10 & 13 & Genres     & Drama         \\ \hline
+    11 & 13 & Year       & 2012          \\ \hline
+    12 & 20 & Birthplace & London        \\ \hline
+    13 & 21 & Birthplace & Los Angeles   \\ \hline
+    14 & 22 & Birthplace & New York      \\ \hline
+    15 & 23 & Birthplace & Haverfordwest \\ \hline
+    16 & 30 & Founded    & 1923          \\ \hline
+    17 & 31 & Founded    & 1993          \\ \hline
+  \end{tabular}
+  \caption[Tabla \texttt{metadata} del mini-dataset]{Tabla \texttt{metadata}: pares clave/valor por entidad.}
+  \label{tab:ejemplo_metadata}
+\end{table}
+
+\FloatBarrier
+
+Cierra el dataset la Tabla~\ref{tab:ejemplo_reference}, que enumera las
+aristas almacenadas en la tabla \texttt{reference} mediante las columnas
+\textit{source\_id}, \textit{target\_id} y \textit{reason}. Estas filas
+son las que sostienen tanto a \texttt{add\_rfilter} como a \texttt{link}.
+Por las decisiones de diseño descritas en la
+Sección~\ref{sec:modeloDatos}, cada relación se persiste de forma
+explícita en sus dos sentidos. La arista \textit{Director} entre
+\textit{Inception} y \textit{Christopher Nolan}, por ejemplo, aparece
+tanto como $(10 \to 20)$ como $(20 \to 10)$, lo que permite al motor
+recorrerla con la misma eficiencia en cualquier dirección de
+navegación.
+
+\begin{table}[h]
+  \centering
+  \footnotesize
+  \begin{tabular}{|c|c|c|l|l|}
+    \hline
+    \textbf{id} & \textbf{source\_id} & \textbf{target\_id} & \textbf{reason} & \textbf{sentido} \\ \hline
+    1  & 10 & 20 & Director   & Inception $\to$ Nolan    \\ \hline
+    2  & 10 & 21 & Actor      & Inception $\to$ DiCaprio \\ \hline
+    3  & 10 & 30 & Production & Inception $\to$ Warner   \\ \hline
+    4  & 11 & 20 & Director   & Interstellar $\to$ Nolan  \\ \hline
+    5  & 11 & 30 & Production & Interstellar $\to$ Warner \\ \hline
+    6  & 12 & 22 & Actor      & Avengers $\to$ Downey     \\ \hline
+    7  & 12 & 31 & Production & Avengers $\to$ Marvel     \\ \hline
+    8  & 13 & 20 & Director   & TDKR $\to$ Nolan     \\ \hline
+    9  & 13 & 23 & Actor      & TDKR $\to$ Bale      \\ \hline
+    10 & 13 & 30 & Production & TDKR $\to$ Warner    \\ \hline
+    11 & 20 & 10 & Director   & Nolan $\leftarrow$ Inception      \\ \hline
+    12 & 20 & 11 & Director   & Nolan $\leftarrow$ Interstellar   \\ \hline
+    13 & 20 & 13 & Director   & Nolan $\leftarrow$ TDKR           \\ \hline
+    14 & 21 & 10 & Actor      & DiCaprio $\leftarrow$ Inception   \\ \hline
+    15 & 22 & 12 & Actor      & Downey $\leftarrow$ Avengers      \\ \hline
+    16 & 23 & 13 & Actor      & Bale $\leftarrow$ TDKR            \\ \hline
+    17 & 30 & 10 & Production & Warner $\leftarrow$ Inception     \\ \hline
+    18 & 30 & 11 & Production & Warner $\leftarrow$ Interstellar  \\ \hline
+    19 & 30 & 13 & Production & Warner $\leftarrow$ TDKR          \\ \hline
+    20 & 31 & 12 & Production & Marvel $\leftarrow$ Avengers      \\ \hline
+  \end{tabular}
+  \caption[Tabla \texttt{reference} del mini-dataset]{Tabla \texttt{reference}: aristas dirigidas entre entidades. La
+  columna \textit{sentido} es meramente explicativa.}
+  \label{tab:ejemplo_reference}
+\end{table}
+
+\FloatBarrier
+
+\subsection{Vista esquemática del dataset}
+\label{subsec:ejemplo_esquema}
+
+Las tablas anteriores son indispensables para reproducir el dataset,
+pero su forma tabular oculta la estructura relacional que subyace al
+ejemplo. Para complementarlas, la Figura~\ref{fig:ejemplo_fichas} ofrece
+una vista alternativa en la que cada entidad recibe una ficha propia con
+sus metadatos y sus referencias salientes. Conviene tenerla a mano
+durante el recorrido posterior, pues constituye un mapa visual de las
+conexiones que las escenas van explotando una tras otra.
+
+\begin{figure}[h]
+  \centering
+  \footnotesize
+
+  {\bfseries\color{blue!60!black} Movies}\par\vspace{2pt}
+  \fcolorbox{blue!60!black}{blue!5}{\begin{minipage}{0.44\linewidth}\ttfamily
+  Inception\quad(id=10, oid=27205)\\
+  $\bullet$ Genres: Action, Sci-Fi\\
+  $\bullet$ Year: 2010\\
+  $\to$ Director:   Christopher Nolan\\
+  $\to$ Actor:      Leonardo DiCaprio\\
+  $\to$ Production: Warner Bros.
+  \end{minipage}}\hfill
+  \fcolorbox{blue!60!black}{blue!5}{\begin{minipage}{0.44\linewidth}\ttfamily
+  Interstellar\quad(id=11, oid=157336)\\
+  $\bullet$ Genres: Sci-Fi, Drama\\
+  $\bullet$ Year: 2014\\
+  $\to$ Director:   Christopher Nolan\\
+  $\to$ Production: Warner Bros.
+  \end{minipage}}
+
+  \vspace{3pt}
+
+  \fcolorbox{blue!60!black}{blue!5}{\begin{minipage}{0.44\linewidth}\ttfamily
+  The Avengers\quad(id=12, oid=24428)\\
+  $\bullet$ Genres: Action\\
+  $\bullet$ Year: 2012\\
+  $\to$ Actor:      Robert Downey Jr.\\
+  $\to$ Production: Marvel Studios
+  \end{minipage}}\hfill
+  \fcolorbox{blue!60!black}{blue!5}{\begin{minipage}{0.44\linewidth}\ttfamily
+  TDKR\quad(id=13, oid=49026)\\
+  $\bullet$ Genres: Action, Drama\\
+  $\bullet$ Year: 2012\\
+  $\to$ Director:   Christopher Nolan\\
+  $\to$ Actor:      Christian Bale\\
+  $\to$ Production: Warner Bros.
+  \end{minipage}}
+
+  \vspace{8pt}
+
+  {\bfseries\color{green!45!black} People}\par\vspace{2pt}
+  \fcolorbox{green!50!black}{green!7}{\begin{minipage}{0.44\linewidth}\ttfamily
+  Christopher Nolan\quad(id=20, oid=525)\\
+  $\bullet$ Birthplace: London\\
+  $\leftarrow$ Director: Inception\\
+  $\leftarrow$ Director: Interstellar\\
+  $\leftarrow$ Director: TDKR
+  \end{minipage}}\hfill
+  \fcolorbox{green!50!black}{green!7}{\begin{minipage}{0.44\linewidth}\ttfamily
+  Leonardo DiCaprio\quad(id=21, oid=6193)\\
+  $\bullet$ Birthplace: Los Angeles\\
+  $\leftarrow$ Actor: Inception
+  \end{minipage}}
+
+  \vspace{3pt}
+
+  \fcolorbox{green!50!black}{green!7}{\begin{minipage}{0.44\linewidth}\ttfamily
+  Robert Downey Jr.\quad(id=22, oid=3223)\\
+  $\bullet$ Birthplace: New York\\
+  $\leftarrow$ Actor: The Avengers
+  \end{minipage}}\hfill
+  \fcolorbox{green!50!black}{green!7}{\begin{minipage}{0.44\linewidth}\ttfamily
+  Christian Bale\quad(id=23, oid=3894)\\
+  $\bullet$ Birthplace: Haverfordwest\\
+  $\leftarrow$ Actor: TDKR
+  \end{minipage}}
+
+  \vspace{8pt}
+
+  {\bfseries\color{orange!80!black} Studios}\par\vspace{2pt}
+  \fcolorbox{orange!80!black}{orange!10}{\begin{minipage}{0.44\linewidth}\ttfamily
+  Warner Bros. Pictures\quad(id=30, oid=174)\\
+  $\bullet$ Founded: 1923\\
+  $\leftarrow$ Production: Inception\\
+  $\leftarrow$ Production: Interstellar\\
+  $\leftarrow$ Production: TDKR
+  \end{minipage}}\hfill
+  \fcolorbox{orange!80!black}{orange!10}{\begin{minipage}{0.44\linewidth}\ttfamily
+  Marvel Studios\quad(id=31, oid=420)\\
+  $\bullet$ Founded: 1993\\
+  $\leftarrow$ Production: The Avengers
+  \end{minipage}}
+  \caption[Fichas por entidad del mini-dataset]{Fichas por entidad del mini-dataset, agrupadas por colección
+  y coloreadas en consecuencia: \textit{Movies} en azul, \textit{People}
+  en verde y \textit{Studios} en naranja. Los puntos resumen los
+  metadatos; las flechas $\to$ marcan referencias salientes y
+  $\leftarrow$ referencias entrantes.}
+  \label{fig:ejemplo_fichas}
+\end{figure}
+
+\FloatBarrier
+
+\subsection{Estado inicial}
+\label{subsec:ejemplo_estado_inicial}
+
+Cada uno de los tres flujos que siguen arranca desde el estado inicial
+del sistema: el frontend acaba de abrir la colección \textit{Movies}
+sobre el dataset descrito, no hay ningún filtro activo y la cuadrícula
+central enumera las cuatro películas
+(Figura~\ref{fig:ejemplo_estado_inicial}). Internamente, el
+\texttt{StateManager} mantiene un único \texttt{State} sin
+\texttt{links} ni \texttt{unionSet}, y todos los mapas de filtros
+están vacíos. A partir de ese punto, cada flujo aplica
+una secuencia distinta de acciones para ilustrar una categoría
+diferente de operaciones.
+
+\begin{figure}[h]
+  \centering
+  % TODO: incluir captura definitiva
+  \includegraphics[width=0.9\textwidth]{Imagenes/Bitmap/ejemplo/flujo0_inicial.png}
+  \caption[Estado inicial del frontend]{Estado inicial del frontend, antes de aplicar ninguna acción:
+  colección \textit{Movies} abierta y las cuatro entidades visibles.}
+  \label{fig:ejemplo_estado_inicial}
+\end{figure}
+
+\FloatBarrier
+
+\subsection{Flujo 1: acotación dentro de una colección}
+\label{subsec:flujo_acotacion}
+
+El primer flujo demuestra los tres operadores de filtrado disponibles
+sobre una misma colección, encadenados de modo que cada uno reduzca de
+manera observable el conjunto de entidades visibles. Es la forma de
+exploración más cercana al funcionamiento de un buscador clásico, y
+cubre las acciones \texttt{add\_mfilter}, \texttt{add\_not\_mfilter} y
+\texttt{add\_rfilter}.
+
+\textbf{Paso 1.1.} Sobre las cuatro películas iniciales, el usuario
+invoca \texttt{addMetadataFilter} con la clave \texttt{"Genres"} y el
+valor \texttt{"Action"}. El conjunto se reduce a tres entidades:
+$\{$\textit{Inception}, \textit{The Avengers}, \textit{The Dark Knight
+Rises}$\}$. \textit{Interstellar} queda fuera, ya que sus únicos
+géneros son \textit{Sci-Fi} y \textit{Drama}
+(Figura~\ref{fig:flujo1_paso1}).
+
+\begin{figure}[h]
+  \centering
+  % TODO: incluir captura definitiva
+  \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo1_paso1.png}
+  \caption[Flujo~1, Paso~1.1]{Flujo~1, Paso~1.1. Tras aplicar \textit{Genres = Action},
+  el panel de facetas muestra un único chip activo y la cuadrícula
+  enumera tres películas.}
+  \label{fig:flujo1_paso1}
+\end{figure}
+
+\FloatBarrier
+
+\textbf{Paso 1.2.} Para descartar también las películas dramáticas, el
+usuario añade un filtro de exclusión:
+\texttt{addNotMetadataFilter} con clave \texttt{"Genres"} y valor
+\texttt{"Drama"}. \textit{The Dark Knight Rises}, que combina
+\textit{Action} y \textit{Drama}, desaparece, dejando dos entidades
+visibles: $\{$\textit{Inception}, \textit{The Avengers}$\}$
+(Figura~\ref{fig:flujo1_paso2}).
+
+\begin{figure}[h]
+  \centering
+  % TODO: incluir captura definitiva
+  \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo1_paso2.png}
+  \caption[Flujo~1, Paso~1.2]{Flujo~1, Paso~1.2. El panel de facetas combina un chip
+  positivo (\textit{Genres = Action}) y otro negativo (\textit{Genres
+  $\neq$ Drama}); en la cuadrícula quedan dos películas.}
+  \label{fig:flujo1_paso2}
+\end{figure}
+
+\FloatBarrier
+
+\textbf{Paso 1.3.} Finalmente, el usuario filtra por estudio productor
+con \texttt{addReferenceFilter}, pasando como colección referenciada el
+$3$ (\textit{Studios}), como motivo \texttt{"Production"} y como
+identificador externo el $420$ (\textit{Marvel Studios}).
+\textit{Inception}, producida por \textit{Warner Bros.}, queda
+descartada. El resultado final es $\{$\textit{The Avengers}$\}$, una
+única entidad de las cuatro iniciales
+(Figura~\ref{fig:flujo1_paso3}).
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo1_paso3.png}
+  \caption[Flujo~1, Paso~1.3]{Flujo~1, Paso~1.3. Tres chips activos en el panel de
+  facetas y \textit{The Avengers} como único resultado en la
+  cuadrícula central.}
+  \label{fig:flujo1_paso3}
+\end{figure}
+
+\FloatBarrier
+
+\textbf{State.} Tras los tres pasos, el \texttt{cur} acumula los tres
+filtros sobre \textit{Movies} y permanece desligado de cualquier
+historial de navegación (Figura~\ref{fig:flujo1_state}).
+
+\begin{figure}[h]
+  \centering
+  \fbox{\begin{minipage}{0.92\linewidth}\small
+  \texttt{cur.currentCollectionId} = Movies (1) \\
+  \texttt{mfilters}    = \{ 1 $\to$ \{ Genres $\to$ \{Action\} \} \} \\
+  \texttt{notMfilters} = \{ 1 $\to$ \{ Genres $\to$ \{Drama\} \} \} \\
+  \texttt{rfilters}    = \{ 1 $\to$ \{ 3 $\to$ \{ Production $\to$ \{420\} \} \} \}\quad \texttt{notRfilters} = \{\,\} \\
+  \texttt{linkList}    = [\,]\quad \texttt{unionSet} = [\,]
+  \end{minipage}}
+  \caption[Estado final del Flujo~1]{Estado final del Flujo~1, con un filtro inclusivo, uno de
+  exclusión y uno de referencia activos.}
+  \label{fig:flujo1_state}
+\end{figure}
+
+\textbf{SQL.} Como la lista de \texttt{links} sigue vacía, la
+sobrecarga simple de \texttt{appendFilterClauses} se limita a invocar a
+\texttt{appendStateFilters} en el nivel exterior. La consulta resultante
+combina un \texttt{EXISTS}, un \texttt{NOT EXISTS} y un segundo
+\texttt{EXISTS} que cruza la tabla \texttt{reference}, tal como
+recoge el Código~\ref{lst:flujo1}.
+
+\begin{lstlisting}[style=sqlStyle, label=lst:flujo1, caption={[SQL del Flujo~1]SQL acumulada al final del Flujo~1.}]
+SELECT DISTINCT e.original_id, e.name
+FROM entities e
+JOIN collections c ON e.collection_global_id = c.global_id
+WHERE c.dataset_id = 1 AND c.original_id = 1
+  AND EXISTS     (SELECT 1 FROM metadata m0
+                  WHERE m0.entity_id = e.global_id
+                    AND m0.key = 'Genres' AND m0.value = 'Action')
+  AND NOT EXISTS (SELECT 1 FROM metadata m0
+                  WHERE m0.entity_id = e.global_id
+                    AND m0.key = 'Genres' AND m0.value = 'Drama')
+  AND EXISTS     (SELECT 1 FROM reference r0
+                  JOIN entities re0 ON r0.target_id = re0.global_id
+                  JOIN collections rc0 ON re0.collection_global_id = rc0.global_id
+                  WHERE r0.source_id = e.global_id
+                    AND rc0.original_id = 3 AND rc0.dataset_id = 1
+                    AND r0.reason = 'Production' AND re0.original_id = 420)
+ORDER BY e.name LIMIT 40 OFFSET 0
+\end{lstlisting}
+
+\FloatBarrier
+
+\subsection{Flujo 2: navegación entre colecciones}
+\label{subsec:flujo_navegacion}
+
+El segundo flujo parte de nuevo del estado inicial y muestra cómo se
+encadenan \texttt{link} y \texttt{goback} alrededor de un filtro
+intermedio para responder preguntas que ningún filtro local podría
+plantear. Cada uno de los tres pasos admite una lectura semántica
+clara: al saltar a \textit{People} estamos preguntando qué personas
+son actoras en alguna película visible, al filtrar dentro de
+\textit{People} restringimos esa pregunta a las que además cumplen
+una propiedad concreta, y al volver a \textit{Movies} obtenemos, en
+sentido inverso, las películas cuyo reparto incluye precisamente a
+esas personas.
+
+\textbf{Paso 2.1.} Sobre las cuatro películas iniciales, y sin ningún
+filtro activo sobre \textit{Movies}, el usuario sigue la relación
+\textit{Actor} invocando \texttt{link} con destino $2$
+(\textit{People}) y motivo \texttt{"Actor"}. Al partir de una
+colección sin filtros, la pregunta que el sistema responde es la más
+amplia posible en este sentido: ¿qué personas figuran como actoras de
+alguna película del catálogo? El motor recorre las aristas
+\textit{Actor} desde cada película hacia su reparto, y la vista pasa
+de las cuatro películas iniciales a las tres personas que aparecen
+como actores: $\{$\textit{Leonardo DiCaprio}, \textit{Robert Downey
+Jr.}, \textit{Christian Bale}$\}$. \textit{Christopher Nolan}, que
+sólo figura en el dataset como director, queda lógicamente fuera
+(Figura~\ref{fig:flujo2_paso1}). Internamente, el
+\texttt{StateManager} apila un \texttt{Link} con \texttt{forward =
+true}, conserva una copia del \texttt{State} previo sobre
+\textit{Movies} y desplaza \texttt{cur.currentCollectionId} a
+\textit{People}.
+
+\begin{figure}[h]
+  \centering
+  % TODO: incluir captura definitiva
+  \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo2_paso1.png}
+  \caption[Flujo~2, Paso~2.1]{Flujo~2, Paso~2.1. El \textit{breadcrumb} indica
+  \textit{Movies} $\to$ \textit{People (Actor)} y la cuadrícula
+  contiene los tres actores presentes en alguna película.}
+  \label{fig:flujo2_paso1}
+\end{figure}
+
+\FloatBarrier
+
+\textbf{Paso 2.2.} Ya en \textit{People}, el usuario añade un filtro
+sobre el nuevo \texttt{cur} mediante \texttt{addMetadataFilter} con
+clave \texttt{"Birthplace"} y valor \texttt{"Los Angeles"}. La
+pregunta del paso anterior queda refinada: ¿qué personas son actoras
+de alguna película y, además, nacieron en Los Angeles? El conjunto se
+restringe a $\{$\textit{Leonardo DiCaprio}$\}$, único actor del
+dataset con esa ciudad como lugar de nacimiento
+(Figura~\ref{fig:flujo2_paso2}). Conviene observar que el filtro se
+almacena en el \texttt{State} de \textit{People}, no en el de
+\textit{Movies}, pero queda registrado dentro del \texttt{linkList} y
+volverá a tener efecto en el paso siguiente.
+
+\begin{figure}[h]
+  \centering
+  % TODO: incluir captura definitiva
+  \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo2_paso2.png}
+  \caption[Flujo~2, Paso~2.2]{Flujo~2, Paso~2.2. El filtro \textit{Birthplace = Los
+  Angeles} aparece como chip activo en el panel y deja una sola
+  persona en la cuadrícula.}
+  \label{fig:flujo2_paso2}
+\end{figure}
+
+\FloatBarrier
+
+\textbf{Paso 2.3.} Para regresar a \textit{Movies}, el usuario invoca
+\texttt{goback()}. Como se detalló en la
+Sección~\ref{sec:navegacion_transversal}, esta operación no elimina
+el \texttt{Link} anterior, sino que apila un segundo \texttt{Link}
+con \texttt{forward = false} sobre el primero. El \texttt{cur} vuelve
+a \textit{Movies} y la pregunta se invierte respecto al paso 2.1:
+ahora interrogamos qué películas tienen en su reparto a alguna de
+esas personas filtradas, es decir, a algún actor nacido en Los
+Angeles. La generación de SQL recorre la cadena
+\textit{Movies} $\to$ \textit{People} $\to$ \textit{Movies}
+arrastrando el filtro \textit{Birthplace} guardado en el \texttt{Link}
+intermedio, y devuelve las películas cuyo reparto incluye a alguna
+de esas personas. El resultado es una única película,
+$\{$\textit{Inception}$\}$, en la que actúa \textit{DiCaprio}
+(Figura~\ref{fig:flujo2_paso3}). Sin el filtro intermedio sobre
+\textit{People}, el viaje de ida y vuelta habría devuelto las cuatro
+películas originales, esto es, todas las que cuentan con algún actor
+en el dataset.
+
+\begin{figure}[h]
+  \centering
+  % TODO: incluir captura definitiva
+  \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo2_paso3.png}
+  \caption[Flujo~2, Paso~2.3]{Flujo~2, Paso~2.3. El \textit{breadcrumb} extendido
+  (\textit{Movies} $\to$ \textit{People (Actor)} $\to$
+  \textit{Movies (Actor)}) y \textit{Inception} como único resultado
+  reflejan la cadena completa de transiciones.}
+  \label{fig:flujo2_paso3}
+\end{figure}
+
+\FloatBarrier
+
+\textbf{State.} El \texttt{linkList} contiene ahora dos entradas, una
+hacia adelante y otra de retroceso (Figura~\ref{fig:flujo2_state}). El
+filtro de \textit{Birthplace}, aunque ya no aparezca activo en el
+\texttt{cur} actual (que está sobre \textit{Movies}), vive dentro de la
+copia profunda del \texttt{State} sobre \textit{People} guardada en
+$\mathbf{L}_1$, y por eso interviene en la SQL del retroceso.
+
+\begin{figure}[h]
+  \centering
+  \fbox{\begin{minipage}{0.95\linewidth}\small
+  \texttt{cur.currentCollectionId} = Movies (1) \\
+  \texttt{mfilters}    = \{\,\}\quad \texttt{notMfilters} = \{\,\}\quad \texttt{rfilters} = \{\,\}\quad \texttt{notRfilters} = \{\,\} \\
+  \texttt{linkList} = [\, $\mathbf{L}_0$,\; $\mathbf{L}_1$ \,] \\
+  \quad$\mathbf{L}_0$ = \texttt{Link(forward=true,  from=Movies, reason="Actor", state=$\langle$Movies sin filtros$\rangle$)} \\
+  \quad$\mathbf{L}_1$ = \texttt{Link(forward=false, from=People, reason="Actor", state=$\langle$People + Birthplace=LA$\rangle$)} \\
+  \texttt{unionSet} = [\,]
+  \end{minipage}}
+  \caption[Estado final del Flujo~2]{Estado final del Flujo~2. El filtro aplicado en
+  \textit{People} reside dentro del \texttt{state} de $\mathbf{L}_1$ y
+  participa en la SQL recursiva del retroceso.}
+  \label{fig:flujo2_state}
+\end{figure}
+
+\textbf{SQL.} La sobrecarga recursiva de \texttt{appendFilterClauses}
+recorre el \texttt{linkList} de fuera hacia adentro y emite dos niveles
+de subconsulta anidada. La rama \texttt{backward} de $\mathbf{L}_1$
+usa \texttt{rl0.source\_id} y, en su interior, materializa el filtro de
+\textit{Birthplace} aplicado durante el Paso~2.2. La rama interna
+corresponde al \texttt{forward} original de $\mathbf{L}_0$, sin filtros
+sobre \textit{Movies} (Código~\ref{lst:flujo2}).
+
+\begin{lstlisting}[style=sqlStyle, label=lst:flujo2, caption={[SQL del Flujo~2]SQL acumulada al final del Flujo~2: el filtro \textit{Birthplace = Los Angeles} aplicado en \textit{People} restringe el conjunto visible de \textit{Movies}.}]
+SELECT DISTINCT e.original_id, e.name
+FROM entities e
+JOIN collections c ON e.collection_global_id = c.global_id
+WHERE c.dataset_id = 1 AND c.original_id = 1
+  AND e.global_id IN (
+    SELECT rl0.source_id FROM reference rl0
+    JOIN entities e1 ON rl0.target_id = e1.global_id
+    JOIN collections c1 ON e1.collection_global_id = c1.global_id
+    WHERE c1.dataset_id = 1 AND c1.original_id = 2
+      AND rl0.reason = 'Actor'
+      AND EXISTS (SELECT 1 FROM metadata m1
+                  WHERE m1.entity_id = e1.global_id
+                    AND m1.key = 'Birthplace' AND m1.value = 'Los Angeles')
+      AND e1.global_id IN (
+        SELECT rl1.target_id FROM reference rl1
+        JOIN entities e2 ON rl1.source_id = e2.global_id
+        JOIN collections c2 ON e2.collection_global_id = c2.global_id
+        WHERE c2.dataset_id = 1 AND c2.original_id = 1
+          AND rl1.reason = 'Actor'
+      )
+  )
+ORDER BY e.name LIMIT 40 OFFSET 0
+\end{lstlisting}
+
+El recorrido completo de las dos transiciones, junto con el resultado
+final de una sola película, queda reflejado en la
+Figura~\ref{fig:flujo2_paso3}. La diferencia con el inicio del flujo
+es notable: se ha pasado de cuatro entidades a una mediante un filtro
+aplicado en otra colección.
+
+\FloatBarrier
+
+\subsection{Flujo 3: unión de contextos independientes}
+\label{subsec:flujo_union}
+
+El tercer flujo parte una vez más del estado inicial y explora la
+última operación del API. La acción \texttt{union} permite guardar un
+contexto construido sobre una colección, comenzar otro independiente
+sobre otra colección distinta y combinar ambos en una sola respuesta.
+
+\textbf{Paso 3.1.} Sobre las cuatro películas iniciales, el usuario
+aplica \texttt{addMetadataFilter} con clave \texttt{"Genres"} y valor
+\texttt{"Sci-Fi"}. El conjunto visible se reduce a
+$\{$\textit{Inception}, \textit{Interstellar}$\}$
+(Figura~\ref{fig:flujo3_paso1}).
+
+\begin{figure}[h]
+  \centering
+  % TODO: incluir captura definitiva
+  \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo3_paso1.png}
+  \caption[Flujo~3, Paso~3.1]{Flujo~3, Paso~3.1. \textit{Genres = Sci-Fi} como chip
+  activo y dos películas en la cuadrícula.}
+  \label{fig:flujo3_paso1}
+\end{figure}
+
+\FloatBarrier
+
+\textbf{Paso 3.2.} A continuación, el usuario invoca \texttt{union(2)}
+para guardar el contexto recién construido y abrir uno nuevo sobre
+\textit{People}. La operación traslada el \texttt{cur} actual al
+\texttt{unionSet} y lo sustituye por un \texttt{State} en blanco sobre
+\textit{People}. La cuadrícula pasa a mostrar las cuatro personas del
+dataset, ya que el nuevo contexto no tiene aún filtros activos, mientras
+que el panel de unión refleja por primera vez el contexto guardado
+(Figura~\ref{fig:flujo3_paso2}).
+
+\begin{figure}[h]
+  \centering
+  % TODO: incluir captura definitiva
+  \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo3_paso2.png}
+  \caption[Flujo~3, Paso~3.2]{Flujo~3, Paso~3.2. La interfaz expone simultáneamente el
+  panel de unión con el contexto recién guardado
+  (\textit{Movies + Sci-Fi}) y la cuadrícula sobre el nuevo \texttt{cur}
+  vacío en \textit{People}.}
+  \label{fig:flujo3_paso2}
+\end{figure}
+
+\FloatBarrier
+
+\textbf{Paso 3.3.} Sobre \textit{People}, el usuario aplica
+\texttt{addMetadataFilter} con clave \texttt{"Birthplace"} y valor
+\texttt{"Haverfordwest"}. El conjunto se restringe a
+$\{$\textit{Christian Bale}$\}$
+(Figura~\ref{fig:flujo3_paso3}).
+
+\begin{figure}[h]
+  \centering
+  % TODO: incluir captura definitiva
+  \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo3_paso3.png}
+  \caption[Flujo~3, Paso~3.3]{Flujo~3, Paso~3.3. El chip \textit{Birthplace = Haverfordwest}
+  reduce a una sola persona la cuadrícula de \textit{People},
+  mientras que el panel de unión sigue conteniendo el contexto
+  guardado en el paso anterior.}
+  \label{fig:flujo3_paso3}
+\end{figure}
+
+\FloatBarrier
+
+\textbf{Paso 3.4.} Por último, el usuario invoca de nuevo
+\texttt{union(1)} para añadir también este segundo contexto al
+\texttt{unionSet} y comenzar uno nuevo sobre \textit{Movies}. Tras este
+paso, el \texttt{unionSet} contiene dos entradas heterogéneas: un
+\texttt{State} sobre \textit{Movies} con el filtro \textit{Sci-Fi}, y
+otro sobre \textit{People} con el filtro \textit{Birthplace = Haverfordwest}
+(Figura~\ref{fig:flujo3_paso4}).
+
+\begin{figure}[h]
+  \centering
+  % TODO: incluir captura definitiva
+  \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo3_paso4.png}
+  \caption[Flujo~3, Paso~3.4]{Flujo~3, Paso~3.4. La vista de unión combina los tres
+  resultados procedentes de las dos colecciones (dos películas en
+  azul y una persona en verde), siguiendo el código cromático
+  introducido en la Figura~\ref{fig:ejemplo_fichas}.}
+  \label{fig:flujo3_paso4}
+\end{figure}
+
+\FloatBarrier
+
+\textbf{State.} La Figura~\ref{fig:flujo3_state} muestra el contenido
+del \texttt{unionSet} al final del flujo. El nuevo \texttt{cur},
+limpio sobre \textit{Movies}, no influye en la respuesta del endpoint
+\texttt{/api/union}, que opera exclusivamente sobre las entradas del
+\texttt{unionSet}.
+
+\begin{figure}[h]
+  \centering
+  \fbox{\begin{minipage}{0.95\linewidth}\small
+  \texttt{unionSet} = [ \\
+  \quad$\langle$ Movies (1), \texttt{mfilters} = \{ Genres $\to$ \{Sci-Fi\} \} $\rangle$, \\
+  \quad$\langle$ People (2), \texttt{mfilters} = \{ Birthplace $\to$ \{Haverfordwest\} \} $\rangle$ \\
+  ] \\
+  \texttt{cur.currentCollectionId} = Movies (1) \\
+  \texttt{mfilters} = \{\,\}\quad \texttt{notMfilters} = \{\,\}\quad \texttt{rfilters} = \{\,\}\quad \texttt{notRfilters} = \{\,\} \\
+  \texttt{linkList} = [\,]
+  \end{minipage}}
+  \caption[Estado final del Flujo~3]{Estado final del Flujo~3. El \texttt{unionSet} retiene los
+  dos contextos sobre colecciones distintas; el \texttt{cur} actual
+  está vacío.}
+  \label{fig:flujo3_state}
+\end{figure}
+
+\textbf{SQL.} Al solicitar \texttt{GET /api/union}, el método
+\texttt{getUnionEntities(unionSet, page, size)} construye un único
+\texttt{SELECT} con un bloque \texttt{WHERE} por entrada del
+\texttt{unionSet}, separados por \texttt{OR}. Cada bloque vuelve a
+invocar \texttt{appendFilterClauses} con su propio \texttt{State}, de
+modo que las dos colecciones del \texttt{unionSet} dan lugar a dos
+ramas independientes en la condición (Código~\ref{lst:flujo3}). La
+proyección añade \texttt{c.original\_id AS collection\_id} para que el
+frontend pueda distinguir el origen de cada entidad en la respuesta
+combinada.
+
+\begin{lstlisting}[style=sqlStyle, label=lst:flujo3, caption={[SQL del Flujo~3]SQL emitida por \texttt{getUnionEntities} con dos contextos de colecciones distintas en el \texttt{unionSet}.}]
+SELECT DISTINCT e.original_id, e.name, c.original_id AS collection_id
+FROM entities e
+JOIN collections c ON e.collection_global_id = c.global_id
+WHERE
+  ( c.dataset_id = 1 AND c.original_id = 1
+    AND EXISTS (SELECT 1 FROM metadata m0
+                WHERE m0.entity_id = e.global_id
+                  AND m0.key = 'Genres' AND m0.value = 'Sci-Fi')
+  )
+  OR
+  ( c.dataset_id = 1 AND c.original_id = 2
+    AND EXISTS (SELECT 1 FROM metadata m0
+                WHERE m0.entity_id = e.global_id
+                  AND m0.key = 'Birthplace' AND m0.value = 'Haverfordwest')
+  )
+ORDER BY e.name LIMIT 40 OFFSET 0
+\end{lstlisting}
+
+\textbf{Resultado.} El bloque~1 aporta $\{$\textit{Inception},
+\textit{Interstellar}$\}$. El bloque~2 aporta $\{$\textit{Christian Bale}$\}$. 
+La respuesta combina las tres entidades en una única lista,
+con su \texttt{collection\_id} explícito en cada fila para que la
+interfaz pueda renderizarlas según su tipo. 
+
+\FloatBarrier
+\fussy
+\shorthandon{"}
+
 \section{Obstáculos encontrados y soluciones implementadas}
 \label{sec:obstaculos}
 
@@ -1206,14 +1975,15 @@ acumulados, transiciones --- no tiene un equivalente directo en los sistemas de 
 de datos más habituales, lo que dificultó establecer desde el principio una representación
 interna clara.
 
-El prototipo inicial no distinguía con precisión entre el estado de navegación del usuario
-y los datos del dominio, mezclando responsabilidades que en el diseño final quedaron
-separadas en capas distintas: el modelo (\texttt{State}, \texttt{StateManager}), la capa
-de acceso a datos (\texttt{NavigationDAO}) y los controladores. Esta confusión generó
-deuda técnica temprana que fue necesario resolver antes de poder implementar mecanismos
-más complejos como la navegación transversal o las operaciones de unión. La separación
-de responsabilidades que se describe a lo largo de este capítulo es, en parte, el
-resultado directo de haber identificado y corregido esas imprecisiones del prototipo.
+La historia de ese aprendizaje y las lecciones del prototipo previo se relatan ya en la
+sección~\ref{subsec:prototipoModeloFormal} del capítulo de arquitectura, donde además se
+formaliza el modelo definitivo. A los efectos de este capítulo basta con dejar constancia
+del coste técnico que tuvo aquella confusión: una deuda temprana que fue necesario
+resolver antes de poder implementar mecanismos más complejos como la navegación
+transversal o las operaciones de unión, y que motivó la separación estricta de
+responsabilidades entre modelo (\texttt{State}, \texttt{StateManager}), capa de acceso a
+datos (\texttt{NavigationDAO}) y controladores que se describe a lo largo de este
+capítulo.
 
     \subsection*{Tamaño de las colecciones y trabajo con subconjuntos}
 
@@ -1255,7 +2025,7 @@ insertarlos en la base de datos. Para valores numéricos, la función \texttt{bu
 agrupa cada valor en un intervalo de tamaño configurable, según la implementación
 recogida en el Código~\ref{lst:bucketRange}.
 
-\begin{lstlisting}[style=pythonStyle, caption=Función \texttt{bucket\_range} para discretizar valores numéricos, label=lst:bucketRange]
+\begin{lstlisting}[style=pythonStyle, caption={[Función \texttt{bucket\_range}]Función \texttt{bucket\_range} para discretizar valores numéricos}, label=lst:bucketRange]
 def bucket_range(value, bucket_size):
     bucket_start = int(num // bucket_size) * bucket_size
     return f"{format_number(bucket_start)}-{format_number(bucket_start + bucket_size - 1)}"
@@ -1295,7 +2065,7 @@ todas las peticiones mediante la anotación \texttt{@WebFilter("/*")} y añade l
 cabeceras necesarias en cada respuesta, tal y como se reproduce en el
 Código~\ref{lst:corsFilter}.
 
-\begin{lstlisting}[style=javaStyle, caption=Filtro \texttt{CORSFilter} para gestionar las cabeceras CORS, label=lst:corsFilter]
+\begin{lstlisting}[style=javaStyle, caption={[Filtro \texttt{CORSFilter}]Filtro \texttt{CORSFilter} para gestionar las cabeceras CORS}, label=lst:corsFilter]
 response.setHeader("Access-Control-Allow-Origin", origin);
 response.setHeader("Access-Control-Allow-Credentials", "true");
 response.setHeader("Access-Control-Allow-Methods",
