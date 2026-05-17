@@ -43,7 +43,7 @@ entidad dentro de su colección, \texttt{metadata} con los atributos
 filtrables agrupados por clave, \texttt{references} con los vínculos
 tipados hacia otras entidades del mismo archivo y \texttt{contents}
 con el texto descriptivo y los recursos externos. El
-Listado~\ref{lst:jsonlSchema} reproduce un fragmento ilustrativo del
+Código~\ref{lst:jsonlSchema} reproduce un fragmento ilustrativo del
 formato.
 
 \begin{lstlisting}[style=jsonStyle, caption=Esquema del JSONL intermedio, label=lst:jsonlSchema]
@@ -193,7 +193,7 @@ ingerirse directamente sin pasos de validación adicionales.
 \section{Ingesta en PostgreSQL}
 
 La etapa final del pipeline es común a ambas fuentes y se implementa en
-\texttt{scripts/populate\_db\_jsonl.py}. El script consume un archivo
+\texttt{scripts/\allowbreak populate\_\allowbreak db\_\allowbreak jsonl.py}. El script consume un archivo
 JSONL cuyo primer registro describe las colecciones y los registros
 siguientes son objetos individuales, y los inserta en las cinco tablas
 del esquema (\texttt{datasets}, \texttt{collections}, \texttt{entities},
@@ -224,7 +224,7 @@ independientes sobre la misma base de datos.
 \section{Ejecución completa desde cero}
 
 Para reproducir el pipeline completo desde un repositorio recién
-clonado los pasos son los descritos en el Listado~\ref{lst:pipelineRun}.
+clonado los pasos son los descritos en el Código~\ref{lst:pipelineRun}.
 Se asume que la base de datos ya está arrancada (véase el
 Apéndice~\ref{Appendix:despliegue}) y que las variables de entorno
 están definidas en \texttt{.env.db} y \texttt{.env.thirdparty}.

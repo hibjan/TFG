@@ -54,6 +54,7 @@ apache-tomcat-*/
 *.out
 *.toc
 *.synctex.gz
+*.lol
 
 # vite
 npm-debug.log*

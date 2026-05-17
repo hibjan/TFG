@@ -75,23 +75,11 @@ etapa compila el WAR con Maven y una segunda etapa lo despliega sobre
 \texttt{tomcat:10.1-jdk17}, aplicando además el ajuste de
 \texttt{CookieProcessor} necesario para sesiones \emph{cross-site}.
 
-El componente diferencial es \texttt{cloudflared}, que abre un túnel
-saliente hacia la red de Cloudflare y obtiene a cambio una URL pública
-en el subdominio \texttt{*.trycloudflare.com}. Esto permite exponer la
-aplicación al exterior sin abrir puertos en el cortafuegos del
-anfitrión, sin configurar DNS y sin gestionar certificados TLS, ya que
-el cifrado y la terminación los proporciona Cloudflare en su extremo
-del túnel. La URL concreta se extrae de los logs del contenedor tras
-el arranque y puede compartirse directamente con quien deba acceder a
-la instancia. La topología resultante, presentada de forma coherente
-con la Figura~\ref{fig:arquitectura} del capítulo de arquitectura, se
-recoge en la Figura~\ref{fig:prodDeployment}.
-
-\begin{figure}[H]
+\begin{figure}[!htb]
   \centering
     \hspace*{2.5cm}%
   \begin{tikzpicture}[
-    node distance=1.5cm and 1.5cm,
+    node distance=1cm and 1cm,
     every node/.style={font=\small},
     box/.style={draw, rectangle, rounded corners, minimum width=5cm,
                 minimum height=0.9cm, align=center, fill=orange!10},
@@ -114,12 +102,26 @@ recoge en la Figura~\ref{fig:prodDeployment}.
     \draw[arrow] (tom)   -- node[right]{JDBC} (pg);
 
     \node[draw, dashed, fit=(cfd)(nginx)(tom)(pg),
-          inner ysep=1cm, inner xsep=1.5cm,
+          inner ysep=0.4cm, inner xsep=1.5cm,
           label=right:{Docker Compose}] {};
   \end{tikzpicture}
   \caption{Topología de la instancia compartida con túnel Cloudflare.}
   \label{fig:prodDeployment}
 \end{figure}
+
+El componente diferencial es \texttt{cloudflared}, que abre un túnel
+saliente hacia la red de Cloudflare y obtiene a cambio una URL pública
+en el subdominio \texttt{*.try\allowbreak cloud\allowbreak flare.com}. Esto permite exponer la
+aplicación al exterior sin abrir puertos en el cortafuegos del
+anfitrión, sin configurar DNS y sin gestionar certificados TLS, ya que
+el cifrado y la terminación los proporciona Cloudflare en su extremo
+del túnel. La URL concreta se extrae de los logs del contenedor tras
+el arranque y puede compartirse directamente con quien deba acceder a
+la instancia. La topología resultante, presentada de forma coherente
+con la Figura~\ref{fig:arquitectura} del capítulo de arquitectura, se
+recoge en la Figura~\ref{fig:prodDeployment}.
+
+\FloatBarrier
 
 \section{Base de datos e ingesta inicial}
 

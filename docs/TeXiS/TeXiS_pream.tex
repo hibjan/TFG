@@ -590,14 +590,25 @@
 % Para poder  incluir código  fuente resaltado fácilmente.   El tamaño
 % básico de la letra, pequeño.
 \usepackage{listings}
-\lstset{basicstyle=\small}
-\lstset{showstringspaces=false}
-\lstset{tabsize=3}
+\lstset{basicstyle=\small,showstringspaces=false,tabsize=3,float=htbp,floatplacement=htbp}
+% Reducir el espacio que LaTeX inserta alrededor de floats "in-text"
+% (por defecto 12pt). Hace que las figuras, tablas y listados queden
+% más pegados al texto que los introduce.
+\setlength{\intextsep}{6pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{10pt plus 2pt minus 4pt}
+% Evita que LaTeX estire verticalmente las páginas para justificar el
+% margen inferior. Sin esto, las páginas con un float que no llena
+% completamente el cuerpo distribuyen el sobrante como glue alrededor
+% del float, creando espacios visibles arriba/abajo de los listados.
+\raggedbottom
 
 % Para poder utilizar el entorno tabularx, que sirve para hacer tablas
 % con  párrafos, sin tener  que indicar  el ancho  de cada  columna de
 % párrafo particular.
 \usepackage{tabularx}
+
+% Reglas tipográficas profesionales para tablas (\toprule, \midrule, \bottomrule).
+\usepackage{booktabs}
 
 % Definimos  los  nombres para  las  tablas  y  el índice  de  tablas,
 % sobreescribiendo los de babel, que los llama 'cuadros'.
@@ -607,8 +618,8 @@
   \def\listfigurename{Índice de figuras}%
   \def\listtablename{Índice de tablas}%
   \def\chaptername{Cap\'itulo}%
-  \def\lstlistingname{Listado}%
-  \def\lstlistlistingname{Índice de listados}%
+  \def\lstlistingname{Código}%
+  \def\lstlistlistingname{Índice de códigos}%
 }
 
 % Definimos los nombres en inglés para que ponga figures y tables
@@ -775,6 +786,7 @@
 
 %%% Los nuestros:
 \usepackage{float}
+\usepackage{placeins}
 
 \usepackage{xcolor}
 
@@ -789,7 +801,8 @@
     numbers=left,
     numberstyle=\tiny,
     frame=single,
-    backgroundcolor=\color{blue!5}
+    backgroundcolor=\color{blue!5},
+    float=htbp
 }
 
 \lstdefinestyle{sqlStyle}{
@@ -802,7 +815,8 @@
     numbers=left,
     numberstyle=\tiny,
     frame=single,
-    backgroundcolor=\color{teal!5}
+    backgroundcolor=\color{teal!5},
+    float=htbp
 }
 
 \lstdefinestyle{pythonStyle}{
@@ -815,7 +829,8 @@
     numbers=left,
     numberstyle=\tiny,
     frame=single,
-    backgroundcolor=\color{violet!5}
+    backgroundcolor=\color{violet!5},
+    float=htbp
 }
 
 \lstdefinestyle{jsonStyle}{
@@ -840,7 +855,8 @@
     numbers=left,
     numberstyle=\tiny,
     frame=single,
-    backgroundcolor=\color{yellow!5}
+    backgroundcolor=\color{yellow!5},
+    float=htbp
 }
 
 \lstdefinelanguage{Golang}{
@@ -868,7 +884,8 @@
     numbers=left,
     numberstyle=\tiny,
     frame=single,
-    backgroundcolor=\color{cyan!5}
+    backgroundcolor=\color{cyan!5},
+    float=htbp
 }
 
 \lstdefinestyle{bashStyle}{
@@ -881,7 +898,8 @@
     numbers=left,
     numberstyle=\tiny,
     frame=single,
-    backgroundcolor=\color{gray!5}
+    backgroundcolor=\color{gray!5},
+    float=htbp
 }
 
 \lstdefinestyle{xmlStyle}{
@@ -894,7 +912,8 @@
     numbers=left,
     numberstyle=\tiny,
     frame=single,
-    backgroundcolor=\color{blue!5}
+    backgroundcolor=\color{blue!5},
+    float=htbp
 }
 
 % TikZ para diagramas vectoriales (p.ej. figura de arquitectura)

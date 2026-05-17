@@ -629,7 +629,7 @@ Cada filtro de inclusión se traduce en una subconsulta \texttt{EXISTS} sobre la
 se genera una cláusula \texttt{EXISTS} independiente por cada valor, lo que impone que la
 entidad deba satisfacer \textit{todos} ellos simultáneamente. Los filtros de exclusión
 (\texttt{notMfilters}) siguen la misma estructura pero con \texttt{NOT EXISTS}, como
-muestra el Listado~\ref{lst:filtrosMetadata}.
+muestra el Código~\ref{lst:filtrosMetadata}.
 
 \begin{lstlisting}[style=javaStyle, caption=Filtros de metadatos, label=lst:filtrosMetadata]
 for (var entry : state.getMfilters().entrySet()) {
@@ -665,7 +665,7 @@ el tipo de relación (\textit{reason}) y el identificador de la entidad concreta
 que con los metadatos, se genera una subconsulta \texttt{EXISTS} por cada combinación
 activa, realizando un \texttt{JOIN} entre la tabla \texttt{reference}, la tabla
 \texttt{entities} y la tabla \texttt{collections} para verificar la existencia de dicho
-vínculo, tal y como recoge el Listado~\ref{lst:filtrosReferencia}.
+vínculo, tal y como recoge el Código~\ref{lst:filtrosReferencia}.
 
 \begin{lstlisting}[style=javaStyle, caption=Filtros de referencia, label=lst:filtrosReferencia]
 sql.append(" AND EXISTS ("
@@ -702,7 +702,7 @@ Las \textbf{facetas de metadatos} se obtienen mediante \texttt{getFacets()}, que
 una subconsulta con los identificadores de las entidades actualmente visibles
 --- aplicando todos los filtros del estado --- y sobre ella ejecuta un \texttt{GROUP BY}
 sobre la tabla \texttt{metadata}, según se aprecia en el
-Listado~\ref{lst:computoFacetas}.
+Código~\ref{lst:computoFacetas}.
 
 \begin{lstlisting}[style=javaStyle, caption=Cómputo dinámico de facetas, label=lst:computoFacetas]
 String sql =
@@ -759,7 +759,7 @@ parte del contexto de exploración con responsabilidad expresa, no un simple reg
 
 La transición entre colecciones se realiza mediante la operación \texttt{link}, que recibe
 el identificador de la colección destino y el tipo de relación a seguir. Su implementación
-en \texttt{StateManager}, reproducida en el Listado~\ref{lst:link}, tiene cuatro efectos.
+en \texttt{StateManager}, reproducida en el Código~\ref{lst:link}, tiene cuatro efectos.
 
 \begin{lstlisting}[style=javaStyle, caption=Operación \texttt{link}, label=lst:link]
 public void link(int targetCollectionId, String reason) {
@@ -830,7 +830,7 @@ la sesión. Su implementación se apoya en \texttt{linkStack}: extrae de la pila
 \texttt{Link} apilado por \texttt{link()}, construye un nuevo \texttt{Link} con dirección
 hacia atrás (\texttt{forward = false}) que registra esa reversión en la lista de
 transiciones de \texttt{cur}, y restaura como colección activa la colección de origen
-almacenada en el \texttt{Link} extraído. El Listado~\ref{lst:goback} reproduce el método
+almacenada en el \texttt{Link} extraído. El Código~\ref{lst:goback} reproduce el método
 completo.
 
 \begin{lstlisting}[style=javaStyle, caption=Operación \texttt{goback}, label=lst:goback]
@@ -907,7 +907,7 @@ continuación se genera una cláusula \texttt{AND ... IN (SELECT ...)} que restr
 entidades del nivel actual a aquellas que, a través de la relación registrada en el
 \texttt{Link}, están vinculadas a entidades del nivel siguiente. La dirección del
 \texttt{Link} determina qué columna de la tabla \texttt{reference} actúa como origen y
-cuál como destino, como se observa en el Listado~\ref{lst:subconsultasAnidadas}.
+cuál como destino, como se observa en el Código~\ref{lst:subconsultasAnidadas}.
 
 \begin{lstlisting}[style=javaStyle, caption=Subconsultas anidadas, label=lst:subconsultasAnidadas]
 if (link.isForward()) {
@@ -941,7 +941,7 @@ dinámicamente a partir del parámetro \texttt{depth} para evitar colisiones ent
 
 Retomando el ejemplo anterior --- películas de acción, navegación hacia \textit{People}
 por la relación \textit{Actor} --- la query resultante para obtener los actores visibles
-adopta la forma mostrada en el Listado~\ref{lst:queryResultante}.
+adopta la forma mostrada en el Código~\ref{lst:queryResultante}.
 
 \begin{lstlisting}[style=sqlStyle, caption=Query SQL resultante de la navegación transversal, label=lst:queryResultante]
 SELECT DISTINCT e.original_id, e.name
@@ -984,7 +984,7 @@ acumulados hasta entonces.
     \subsection{Construcción del \texttt{unionSet}}
 
 La operación \texttt{union} en \texttt{StateManager} guarda el contexto actual para una
-unión posterior y reinicializa el estado activo desde cero. El Listado~\ref{lst:union}
+unión posterior y reinicializa el estado activo desde cero. El Código~\ref{lst:union}
 reproduce su implementación, que delega la parte de reinicio en el método auxiliar
 \texttt{change}.
 
@@ -1063,7 +1063,7 @@ La consulta del \texttt{unionSet} se realiza a través del endpoint
 
 Ambos métodos construyen una única query que itera sobre todas las entradas del
 \texttt{unionSet} y concatena un bloque de condiciones por entrada, separados por
-\texttt{OR}, como ilustra el Listado~\ref{lst:queryUnion}.
+\texttt{OR}, como ilustra el Código~\ref{lst:queryUnion}.
 
 \begin{lstlisting}[style=javaStyle, caption=Query de unión, label=lst:queryUnion]
 for (int i = 0; i < unionSet.size(); i++) {
@@ -1225,7 +1225,7 @@ datos y ejecución de queries que habrían dificultado la iteración rápida.
 La solución adoptada fue incorporar un mecanismo de filtrado por popularidad directamente
 en el script de procesamiento, controlado por las variables \texttt{FILTER\_TOP\_K\_POPULAR}
 y \texttt{TOP\_K\_COUNT}, configuradas como se muestra en el
-Listado~\ref{lst:filtroPopularidad}.
+Código~\ref{lst:filtroPopularidad}.
 
 \begin{lstlisting}[style=pythonStyle, caption=Configuración del filtro por popularidad, label=lst:filtroPopularidad]
 FILTER_TOP_K_POPULAR = True
@@ -1253,7 +1253,7 @@ películas con exactamente 157 minutos de duración o con un presupuesto de exac
 La solución fue discretizar estos valores en rangos durante el procesamiento, antes de
 insertarlos en la base de datos. Para valores numéricos, la función \texttt{bucket\_range}
 agrupa cada valor en un intervalo de tamaño configurable, según la implementación
-recogida en el Listado~\ref{lst:bucketRange}.
+recogida en el Código~\ref{lst:bucketRange}.
 
 \begin{lstlisting}[style=pythonStyle, caption=Función \texttt{bucket\_range} para discretizar valores numéricos, label=lst:bucketRange]
 def bucket_range(value, bucket_size):
@@ -1293,7 +1293,7 @@ cabeceras adecuadas para que el navegador autorice la comunicación.
 La solución fue implementar un filtro de servlet, \texttt{CORSFilter}, que intercepta
 todas las peticiones mediante la anotación \texttt{@WebFilter("/*")} y añade las
 cabeceras necesarias en cada respuesta, tal y como se reproduce en el
-Listado~\ref{lst:corsFilter}.
+Código~\ref{lst:corsFilter}.
 
 \begin{lstlisting}[style=javaStyle, caption=Filtro \texttt{CORSFilter} para gestionar las cabeceras CORS, label=lst:corsFilter]
 response.setHeader("Access-Control-Allow-Origin", origin);
@@ -1416,7 +1416,7 @@ revertirse en cada \texttt{goback}, \texttt{StateManager} mantiene una pila auxi
 \texttt{link()}; \texttt{goback} extrae el último elemento de esa pila para conocer la
 colección de origen y la razón del salto que se va a deshacer, dejando el historial
 real, residente en \texttt{cur.getLinks()}, intacto y monótonamente creciente. La
-implementación final coincide con la mostrada en el Listado~\ref{lst:goback}.
+implementación final coincide con la mostrada en el Código~\ref{lst:goback}.
 
 La consecuencia de este diseño, descrita en la sección~\ref{sec:navegacion_transversal},
 es que \texttt{appendFilterClauses} debe recorrer toda la cadena acumulada, incluidos los
