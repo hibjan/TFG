@@ -23,14 +23,95 @@ La validación funcional del motor se ha realizado de manera incremental durante
 sobre dos volcados de catálogos públicos de naturaleza estructural muy distinta: TMDB
 (\textit{The Movie Database}), que reúne películas, series y personas con metadatos descriptivos
 y relaciones de participación, y DBLP, una base bibliográfica que reúne publicaciones
-científicas, autores e instituciones. La elección deliberada de dos dominios separados ha
-permitido comprobar empíricamente que las primitivas del motor (filtrado facetado, navegación
+científicas, autores y lugares de publicación. La elección deliberada de dos dominios separados
+ha permitido comprobar empíricamente que las primitivas del motor (filtrado facetado, navegación
 transversal mediante \textit{links} y operaciones de conjunto) generalizan sin necesidad de
 modificaciones sustanciales del modelo relacional, y constituye uno de los argumentos centrales
 del trabajo. Las decisiones de diseño y los obstáculos encontrados durante esta integración se
-detallan en el capítulo~\ref{cap:desarrolloImplementacion} y no se reproducen aquí. El resto
-del presente capítulo se concentra en la evaluación con usuarios, donde reside el grueso de
-la evidencia empírica recogida.
+detallan en el capítulo~\ref{cap:desarrolloImplementacion}; en lo que sigue se aporta evidencia
+visual de la equivalencia operativa de ambos dominios.
+
+La equivalencia entre ambos dominios se manifiesta ya en las pantallas previas a la navegación.
+La figura~\ref{fig:seleccionDataset} muestra la primera pantalla del sistema, donde se ofrecen
+los dos datasets disponibles. La lista se construye dinámicamente a partir de la tabla
+\texttt{datasets} de PostgreSQL, de manera que añadir un nuevo dominio sólo requiere extender
+los datos, no la interfaz. Una vez elegido uno, la pantalla siguiente expone las colecciones
+publicadas por ese dataset (figura~\ref{fig:seleccionColecciones}): la disposición, tipografía
+y controles son idénticos en ambos casos, lo que cambia es únicamente el conjunto de colecciones
+ofrecidas, que proviene de la tabla \texttt{collections} poblada por los pipelines de ingesta
+descritos en el Apéndice~\ref{Appendix:integracion}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.45\textwidth]{Imagenes/Bitmap/validacion/seleccion_dataset.png}
+\caption[Pantalla de selección de \textit{Dataset}]{Pantalla de entrada: selección de \textit{Dataset}.}
+\label{fig:seleccionDataset}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\subfloat[][Colecciones expuestas por TMDB.]{%
+  \includegraphics[width=0.45\textwidth]{Imagenes/Bitmap/validacion/seleccion_colecciones_tmdb.png}
+  \label{fig:coleccionesTMDB}}%
+\qquad
+\subfloat[][Colecciones expuestas por DBLP.]{%
+  \includegraphics[width=0.45\textwidth]{Imagenes/Bitmap/validacion/seleccion_colecciones_dblp.png}
+  \label{fig:coleccionesDBLP}}
+\caption[Selección de colección tras escoger \textit{Dataset}]{Selección de \textit{Collection} en cada uno de los dos dominios.}
+\label{fig:seleccionColecciones}
+\end{figure}
+
+Una vez dentro de la vista de navegación se hace patente la equivalencia operativa del motor.
+La figura~\ref{fig:dosDominios} muestra dos estados análogos: en TMDB, la colección
+\textit{Movies} restringida por el filtro de metadatos \textit{Genre = Drama}; en DBLP, la
+colección \textit{Publications} restringida por el filtro \textit{NumberOfCreators} en el rango
+\textit{5--9}. Ambas vistas exhiben los mismos paneles (Filtros, \textit{Filtered Collection},
+\textit{Links}, \textit{Union Set}) en las mismas posiciones, e idénticos controles de filtrado
+e inclusión\,/\,exclusión; lo único que cambia es el contenido, producto de cargar un
+\textit{Dataset} distinto sin modificar ni el esquema relacional ni la lógica del motor. La
+transversalidad del modelo de \textit{links} se demuestra de manera análoga: pulsar sobre
+\textit{Persons} en TMDB o sobre \textit{Authors} en DBLP produce el mismo tipo de navegación,
+sin que el motor sepa que pasa de películas a artículos científicos.
+
+\begin{figure}[H]
+\centering
+\subfloat[][TMDB: \textit{Movies} filtradas por \textit{Genre = Drama}.]{%
+  \includegraphics[width=0.95\textwidth]{Imagenes/Bitmap/validacion/tmdb_movies_drama.png}
+  \label{fig:dominioTMDB}}\\[0.6em]
+\subfloat[][DBLP: \textit{Publications} filtradas por \textit{NumberOfCreators = 5--9}.]{%
+  \includegraphics[width=0.95\textwidth]{Imagenes/Bitmap/validacion/dblp_publications_creators.png}
+  \label{fig:dominioDBLP}}
+\caption[Misma interfaz aplicada a TMDB y DBLP]{Estado análogo del motor de exploración sobre ambos dominios.}
+\label{fig:dosDominios}
+\end{figure}
+
+La equivalencia se extiende también a la vista de inspección. La figura~\ref{fig:dosDetalles}
+recoge el modal de detalle abierto sobre una entidad de cada dominio: una película de TMDB y una
+publicación de DBLP. La estructura del modal y la manera de presentar los metadatos son
+idénticas; los campos mostrados se obtienen de la tabla \texttt{metadata} para la entidad
+concreta, sin que el \textit{frontend} conozca el dominio, lo que permite que el mismo
+componente sirva para cualquier dataset sin código específico.
+
+\begin{figure}[H]
+\centering
+\subfloat[][Detalle de una película (TMDB).]{%
+  \includegraphics[width=0.45\textwidth]{Imagenes/Bitmap/validacion/tmdb_detalle_pelicula.png}
+  \label{fig:detalleTMDB}}%
+\qquad
+\subfloat[][Detalle de una publicación (DBLP).]{%
+  \includegraphics[width=0.45\textwidth]{Imagenes/Bitmap/validacion/dblp_detalle_publicacion.png}
+  \label{fig:detalleDBLP}}
+\caption[Modal de detalle aplicado a TMDB y DBLP]{Modal de detalle de una entidad sobre cada dominio.}
+\label{fig:dosDetalles}
+\end{figure}
+
+La conclusión de esta validación funcional es que el motor cumple su pretensión de
+generalidad: los mismos paneles, controles y operaciones funcionan sobre dos dominios de
+estructura y temática muy distintas sin necesidad de tocar ni el esquema relacional ni el
+código del motor. La evaluación con usuarios que ocupa el resto del capítulo se desarrolla,
+por razones de familiaridad del participante, exclusivamente sobre TMDB; los hallazgos de
+usabilidad recogidos a continuación son, en su mayoría, independientes del dominio concreto
+sobre el que se navegue.
 
 \section{Evaluación de usabilidad con usuarios}
 \label{sec:evalUsabilidad}

@@ -17,7 +17,7 @@ Sobre esa base, la clase \texttt{State} y su gestor,
 articulan el contexto de un usuario en cada momento de la sesión. La
 Sección~\ref{sec:filtrado} describe los mecanismos de filtrado clásico
 y relacional, junto con la construcción dinámica de las consultas SQL
-parametrizadas que los trasladan al motor de base de datos. A partir
+parametrizadas que traducen estos mecanismos y su contexto al motor de base de datos. A partir
 de ese mecanismo común se introducen las dos extensiones que
 constituyen el aporte diferencial del sistema: la navegación
 transversal entre colecciones
@@ -131,7 +131,7 @@ Figura~\ref{fig:relationalModel} muestra el esquema implementado, con
 las claves primarias subrayadas y las claves foráneas en itálica. Para
 no recargar el diagrama, las restricciones de unicidad y los índices
 secundarios se omiten en la figura y se comentan más adelante, ya que
-forman parte de las decisiones de diseño que motivan este esquema..
+forman parte de las decisiones de diseño que motivan este esquema.
 
 \begin{figure}[H]
   \centering
@@ -407,7 +407,7 @@ el usuario parte de la colección \textit{Movies} en el dataset TMDB,
 añade un filtro de metadatos \textit{Genres = Action} y a continuación
 navega hacia \textit{People} siguiendo la relación \textit{Director}.
 La colección activa ha pasado a \textit{People}, pero el estado
-conserva tanto los filtros aplicados previamente sobre \textit{Movies}
+conserva tanto los filtros aplicados previamente sobre \textit{Movies},
 como una entrada en \texttt{links} que registra la transición y guarda
 una instantánea del estado en el instante del salto.
 
@@ -513,7 +513,7 @@ las operaciones disponibles: añadir y retirar filtros de metadatos y
 de referencia, navegar por un enlace, deshacer una transición,
 restaurar el estado previo a una unión, abrir un nuevo bloque de
 unión o cambiar de colección. De este modo, el vocabulario público
-de \texttt{StateManager} se proyecta directamente sobre la superficie
+de \texttt{StateManager} se proyecta directamente sobre la capa
 HTTP del backend, sin necesidad de multiplicar \textit{endpoints} por
 cada operación. Las consultas, por el contrario, sí justifican
 \textit{endpoints} independientes, ya que cada una devuelve una
@@ -1099,7 +1099,7 @@ distinguirlas cuando fuera necesario.
 
 Concluida la descripción del backend, queda por presentar la capa
 que el usuario percibe directamente. El frontend se concibió como una
-superficie de presentación deliberadamente delgada, cuya única
+capa de presentación deliberadamente delgada, cuya única
 responsabilidad consiste en renderizar el estado actual del servidor
 y en traducir las acciones del usuario en peticiones HTTP contra los
 \textit{endpoints} descritos en la Tabla~\ref{tab:endpoints}. El
@@ -1653,7 +1653,7 @@ encadenan \texttt{link} y \texttt{goback} alrededor de un filtro
 intermedio para responder preguntas que ningún filtro local podría
 plantear. Cada uno de los tres pasos admite una lectura semántica
 clara: al saltar a \textit{People} estamos preguntando qué personas
-son actoras en alguna película visible, al filtrar dentro de
+son actores en alguna película visible, al filtrar dentro de
 \textit{People} restringimos esa pregunta a las que además cumplen
 una propiedad concreta, y al volver a \textit{Movies} obtenemos, en
 sentido inverso, las películas cuyo reparto incluye precisamente a
@@ -1738,7 +1738,7 @@ en el dataset.
   \includegraphics[width=0.85\textwidth]{Imagenes/Bitmap/ejemplo/flujo2_paso3.png}
   \caption[Flujo~2, Paso~2.3]{Flujo~2, Paso~2.3. El \textit{breadcrumb} extendido
   (\textit{Movies} $\to$ \textit{People (Actor)} $\to$
-  \textit{Movies (Actor)}) y \textit{Inception} como único resultado
+  \textit{Movies (Actor)}) e \textit{Inception} como único resultado
   reflejan la cadena completa de transiciones.}
   \label{fig:flujo2_paso3}
 \end{figure}
@@ -2167,8 +2167,11 @@ devolver el cuerpo JSON.
 
 La operación \texttt{goback} fue uno de los puntos del diseño que requirió más
 iteraciones. La dificultad radicó en que revertir una transición entre colecciones no
-es simplemente volver a la colección anterior: es volver al estado exacto que existía
-antes de la transición, incluyendo todos los filtros que estaban activos en ese momento.
+es simplemente volver a la colección anterior: además de restaurar el estado concreto
+que existía antes de la transición, con todos los filtros que estaban activos en ese
+momento, hay que restringir los objetos de la colección de destino a aquellos que
+apuntan a los elementos actualmente seleccionados, preservando así la coherencia del
+recorrido relacional.
 
 Un primer enfoque consistió en eliminar el último \texttt{Link} del historial al
 ejecutar \texttt{goback}, restaurando la colección activa a la del enlace eliminado.
