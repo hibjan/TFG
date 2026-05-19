@@ -19,7 +19,7 @@ En los últimos tiempos hemos pasado por un gran cambio en el paradigma de consu
 El acúmulo cuantitativo de contenidos digitales ha sobrepasado su umbral cualitativo y hoy supone una 
 manera distinta de relacionarse con ello.
 La abundancia de información genera una "sobrecarga de información" (o \textit{information overload}), 
-en la cual todo y cualquier usuario necesita de una cantidad cada vez mayor de tiempo para navegar.
+en la cual el usuario necesita de una cantidad cada vez mayor de tiempo para navegar.
 Eso se hace especialmente evidente en las plataformas digitales, en particular las de streaming multimedia 
 (como Netflix, Disney+ y HBO Max), en las que difícilmente encontramos qué consumir sin invertir un tiempo sustancial 
 en ello.
@@ -126,7 +126,8 @@ backlog inicial (\textit{Product Backlog}) con los requisitos fundamentales del 
 periódicas de seguimiento (\textit{Sprint Reviews}), que permiten evaluar cada incremento del software, adaptar la
 planificación de acuerdo con los problemas y obstáculos encontrados, en conjunto con la tutoría del profesor.
 
-Con respecto a la macroplanificación, el proyecto se estructuró en dos grandes fases secuenciales de desarrollo:
+Con respecto a la macroplanificación, el proyecto se estructuró en dos grandes fases secuenciales de desarrollo, 
+las cuales se describen a continuación en sendas subsecciones.
 
 \subsection{Fase 1: Investigación y Prototipo en Java (Septiembre 2025 - Enero 2026)}
 Con el objetivo de validar completa y rigurosamente la viabilidad del motor de navegación y los algoritmos involucrados,
@@ -149,7 +150,7 @@ gestionar el historial, los filtros de metadatos, los filtros relacionales y los
 
 Para empezar la validación del motor de navegación, hemos optado por integrar la base de datos pública 
 TMBD (\textit{The Movie Database}), que permite obterner información sobre películas, series y personas.
-Además de consumir la API, se diseño un proceso de transformación y almacenamiento de los datos en nuestro modelo relacional,
+Además de consumir la API, se diseñó un proceso de transformación y almacenamiento de los datos en nuestro modelo relacional,
 permitiendo adaptar la estructura de TMDB a las necesidades de navegación del motor.
 \end{itemize}
 
@@ -165,18 +166,21 @@ con seguridad y de manera estructurada, las capacidades del motor (\texttt{Facet
 
 \item \textbf{Desarrollo del Frontend:}
 
-Trás definir la API, se desarrolló una interfaz web para la interacción con el motor de navegación.
+Tras definir la API, se desarrolló una interfaz web para la interacción con el motor de navegación.
 Entre sus principales componentes están: el área de resultados, sistema de filtrado dinámico de metadatos,
 controles de navegación de estados, conjunto de controles de filtros y exploración de relaciones. 
 Todo desde el paradigma de API RESTful con actualizacion dinámica.
 
 \item \textbf{Pruebas de Integración y Refinamiento:}
-Unimos todos los componentes, hemos hecho pruebas de carga con los \textit{datasets} completos y evaluado la experiencia
+Unimos todos los componentes, hicimos pruebas de carga con los \textit{datasets} completos y evaluamos la experiencia
 de usuario (\textit{UX}).
 
 \end{itemize}
 
 \subsection{Cronograma de Ejecución y Diagrama Gantt}
+
+En la Figura~\ref{fig:diagramaGantt} se muestra el cronograma de actividades realizadas.
+Este cronograma evoluciona como sigue:
 
 \begin{itemize}
 \item \textbf{Septiembre 2025: }
