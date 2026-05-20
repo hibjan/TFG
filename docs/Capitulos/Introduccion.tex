@@ -219,3 +219,53 @@ Revisiones finales de la memoria, preparación de la presentación, ensayo y def
 \caption{Diagrama Gantt TFG}
 \label{fig:diagramaGantt}
 \end{figure}
+
+\section{Organización de la memoria}
+\label{sec:organizacionMemoria}
+
+El resto de la memoria se estructura en cinco capítulos numerados, una sección de
+\textit{Contribuciones Personales} y tres apéndices, organizados según una progresión clásica
+de planteamiento, diseño, implementación, validación y cierre.
+
+El capítulo~\ref{cap:estadoDeLaCuestion}, \textbf{Estado de la Cuestión}, sitúa el trabajo en el
+marco teórico de la navegación basada en etiquetas y en los modelos de hipermedia estructurada,
+y revisa los trabajos relacionados con los que el sistema dialoga de manera más directa, en
+particular la plataforma Clavy y las propuestas recientes basadas en grandes modelos del
+lenguaje. Aquí se identifica qué decisiones del proyecto son herederas de aportaciones previas
+y cuáles toman deliberadamente otro camino.
+
+El capítulo~\ref{cap:arquitecturaMetodologia}, \textbf{Arquitectura y Metodología}, presenta
+la organización del proceso de ingeniería del software seguido, con la adopción de \textbf{Scrum}
+adaptada a un equipo reducido, y la arquitectura global del sistema en términos de capas, módulos
+y contratos entre ellos. Cierra con la descripción de la capa de persistencia y de la estrategia
+de acceso a datos sobre PostgreSQL.
+
+El capítulo~\ref{cap:desarrolloImplementacion}, \textbf{Desarrollo e Implementación}, profundiza
+en los componentes concretos que materializan las primitivas del motor. Recorre, por este orden,
+el modelo de datos relacional, la representación del contexto de exploración (la máquina de
+estados), el filtrado clásico y relacional, la navegación transversal mediante \textit{links},
+las operaciones de conjuntos sobre los resultados parciales, el desarrollo del cliente web y los
+obstáculos encontrados junto con las soluciones aplicadas.
+
+El capítulo~\ref{cap:pruebasValidacion}, \textbf{Pruebas y Validación}, recoge la validación del
+sistema desde dos perspectivas complementarias. La primera, funcional, sobre los dos dominios de
+prueba seleccionados (TMDB y DBLP). La segunda, que ocupa el grueso del capítulo, es la
+evaluación formal de usabilidad con usuarios externos siguiendo un protocolo de
+\textit{think-aloud} acompañado de los cuestionarios SUS y SEQ. Se reportan los resultados
+cuantitativos, los hallazgos cualitativos, las iteraciones de interfaz derivadas y los casos de
+uso validados, y se cierra con la enumeración explícita de las limitaciones del estudio.
+
+El capítulo~\ref{cap:conclusiones}, \textbf{Conclusiones y Trabajo Futuro}, sintetiza el grado de
+cumplimiento de los objetivos planteados en este capítulo, reconoce los límites del sistema
+entregado y enumera las cinco líneas de continuación naturales identificadas a partir del estado
+del trabajo. La sección de \textit{Contribuciones Personales} que sigue al capítulo de
+Conclusiones documenta el reparto del trabajo entre los dos autores.
+
+Tres apéndices completan la memoria. El apéndice~\ref{Appendix:Guion} reproduce el guion completo
+de la evaluación de usabilidad, de manera que el estudio pueda replicarse sin modificaciones por
+terceros. El apéndice~\ref{Appendix:integracion} describe la integración e ingesta de las fuentes
+de datos externas (TMDB y DBLP), con detalle de los \textit{scripts} de captura y transformación.
+El apéndice~\ref{Appendix:despliegue} documenta el despliegue del sistema sobre contenedores y
+recoge las decisiones operativas que permiten reproducir el entorno de ejecución. Las versiones
+en inglés de la Introducción y de las Conclusiones, exigidas por la normativa del grado, se
+incluyen como capítulos no numerados al final de la memoria.
