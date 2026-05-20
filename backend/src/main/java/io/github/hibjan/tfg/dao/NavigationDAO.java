@@ -332,8 +332,6 @@ public class NavigationDAO {
         sqlBuilder.append(") AND rc.dataset_id = ?");
         params.add(state.getDatasetId());
 
-        appendTargetAvailabilityConstraint(sqlBuilder, params, state, "te", "rc");
-
         sqlBuilder.append(" GROUP BY rc.original_id, rc.name, r.reason, te.original_id, te.name");
         sqlBuilder.append(" ORDER BY rc.name, r.reason, cnt DESC, te.name");
 
@@ -373,12 +371,6 @@ public class NavigationDAO {
                     entity.put("id", rs.getInt("entity_id"));
                     entity.put("name", rs.getString("entity_name"));
                     entity.put("count", rs.getInt("cnt"));
-
-                    // Check if this specific reference filter is already active
-                    // Set<Integer> activeIds = state.getRfilters().get(key);
-                    // entity.put("active", activeIds != null &&
-                    // activeIds.contains(rs.getInt("entity_id")));
-
                     entities.add(entity);
                 }
             }
@@ -414,8 +406,6 @@ public class NavigationDAO {
                 .append("WHERE r.source_id IN (").append(subquery).append(") ")
                 .append("AND rc.dataset_id = ?");
         params.add(state.getDatasetId());
-
-        appendTargetAvailabilityConstraint(sqlBuilder, params, state, "te", "rc");
 
         sqlBuilder.append(" ORDER BY rc.name, r.reason");
 
@@ -523,7 +513,7 @@ public class NavigationDAO {
         // Reference filters
         for (var entry : state.getRfilters().entrySet()) {
             int refColId = entry.getKey();
-            for (var ref_entry : state.getRfilters().get(refColId).entrySet()) {
+            for (var ref_entry : entry.getValue().entrySet()) {
                 String reason = ref_entry.getKey();
                 for (Integer refEntId : ref_entry.getValue()) {
                     sql.append(" AND EXISTS (SELECT 1 FROM reference " + r + " JOIN entities " + re + " ON " + r
@@ -542,7 +532,7 @@ public class NavigationDAO {
         // NOT Reference filters
         for (var entry : state.getNotRfilters().entrySet()) {
             int refColId = entry.getKey();
-            for (var ref_entry : state.getNotRfilters().get(refColId).entrySet()) {
+            for (var ref_entry : entry.getValue().entrySet()) {
                 String reason = ref_entry.getKey();
                 for (Integer refEntId : ref_entry.getValue()) {
                     sql.append(" AND NOT EXISTS (SELECT 1 FROM reference " + r + " JOIN entities " + re + " ON " + r
@@ -606,100 +596,6 @@ public class NavigationDAO {
         appendFilterClauses(sql, params, link.getState(), linkList, index - 1, depth + 1);
         sql.append(") ");
     }
-
-    /**
-     * For each collection that has filters defined in the state, require the
-     * target entity to satisfy those filters when it belongs to that collection.
-     * Per filtered collection X, appends:
-     *   AND (targetCollectionAlias.original_id <> X OR <filters of X applied to target>)
-     * Targets in collections without filters are unaffected.
-     */
-    private void appendTargetAvailabilityConstraint(StringBuilder sql, List<Object> params, State state,
-            String targetEntityAlias, String targetCollectionAlias) {
-        for (Integer colId : state.getFilteredCollectionIds()) {
-            var mf = state.getMfilters(colId);
-            var nmf = state.getNotMfilters(colId);
-            var rf = state.getRfilters(colId);
-            var nrf = state.getNotRfilters(colId);
-
-            if (mf.isEmpty() && nmf.isEmpty() && rf.isEmpty() && nrf.isEmpty()) {
-                continue;
-            }
-
-            sql.append(" AND (").append(targetCollectionAlias).append(".original_id <> ?");
-            params.add(colId);
-            sql.append(" OR (1=1");
-
-            for (var entry : mf.entrySet()) {
-                String attr = entry.getKey();
-                for (String val : entry.getValue()) {
-                    sql.append(" AND EXISTS (SELECT 1 FROM metadata tav_m WHERE tav_m.entity_id = ")
-                            .append(targetEntityAlias)
-                            .append(".global_id AND tav_m.key = ? AND tav_m.value = ?)");
-                    params.add(attr);
-                    params.add(val);
-                }
-            }
-
-            for (var entry : nmf.entrySet()) {
-                String attr = entry.getKey();
-                for (String val : entry.getValue()) {
-                    sql.append(" AND NOT EXISTS (SELECT 1 FROM metadata tav_nm WHERE tav_nm.entity_id = ")
-                            .append(targetEntityAlias)
-                            .append(".global_id AND tav_nm.key = ? AND tav_nm.value = ?)");
-                    params.add(attr);
-                    params.add(val);
-                }
-            }
-
-            for (var entry : rf.entrySet()) {
-                int refColId = entry.getKey();
-                for (var refEntry : entry.getValue().entrySet()) {
-                    String reason = refEntry.getKey();
-                    for (Integer refEntId : refEntry.getValue()) {
-                        sql.append(" AND EXISTS (SELECT 1 FROM reference tav_r ")
-                                .append("JOIN entities tav_re ON tav_r.target_id = tav_re.global_id ")
-                                .append("JOIN collections tav_rc ON tav_re.collection_global_id = tav_rc.global_id ")
-                                .append("WHERE tav_r.source_id = ").append(targetEntityAlias).append(".global_id ")
-                                .append("AND tav_rc.original_id = ? AND tav_rc.dataset_id = ? ")
-                                .append("AND tav_r.reason = ? AND tav_re.original_id = ?)");
-                        params.add(refColId);
-                        params.add(state.getDatasetId());
-                        params.add(reason);
-                        params.add(refEntId);
-                    }
-                }
-            }
-
-            for (var entry : nrf.entrySet()) {
-                int refColId = entry.getKey();
-                for (var refEntry : entry.getValue().entrySet()) {
-                    String reason = refEntry.getKey();
-                    for (Integer refEntId : refEntry.getValue()) {
-                        sql.append(" AND NOT EXISTS (SELECT 1 FROM reference tav_nr ")
-                                .append("JOIN entities tav_nre ON tav_nr.target_id = tav_nre.global_id ")
-                                .append("JOIN collections tav_nrc ON tav_nre.collection_global_id = tav_nrc.global_id ")
-                                .append("WHERE tav_nr.source_id = ").append(targetEntityAlias).append(".global_id ")
-                                .append("AND tav_nrc.original_id = ? AND tav_nrc.dataset_id = ? ")
-                                .append("AND tav_nr.reason = ? AND tav_nre.original_id = ?)");
-                        params.add(refColId);
-                        params.add(state.getDatasetId());
-                        params.add(reason);
-                        params.add(refEntId);
-                    }
-                }
-            }
-
-            sql.append("))");
-        }
-    }
-
-    /**
-     * Append filter clauses from a union entry (saved filter state).
-     * This method was removed or deprecated in favor of passing State objects
-     * directly.
-     */
-    // private void appendUnionEntryFilters(...) { ... }
 
     private boolean isFilterActive(State state, String key, String value) {
         Set<String> vals = state.getMfilters().get(key);

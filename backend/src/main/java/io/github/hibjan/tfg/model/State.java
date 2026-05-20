@@ -9,18 +9,17 @@ public class State implements Serializable {
     private int datasetId;
     private int currentCollectionId;
 
-    // collectionId (1=Movies) ->
-    // Filter (Genre) ->
-    // Values (Action, Drama, ...)
-    private HashMap<Integer, HashMap<String, HashSet<String>>> mfilters = new HashMap<>();
-    private HashMap<Integer, HashMap<String, HashSet<String>>> notMfilters = new HashMap<>();
+    // Filter (Genre) -> Values (Action, Drama, ...)
+    private HashMap<String, HashSet<String>> mfilters = new HashMap<>();
+    private HashMap<String, HashSet<String>> notMfilters = new HashMap<>();
 
-    // collectionId (1=Movies) ->
     // refCollectionId (2=People) ->
     // Filter (Director) ->
     // Values (108, 350, ...)
-    private HashMap<Integer, HashMap<Integer, HashMap<String, HashSet<Integer>>>> rfilters = new HashMap<>();
-    private HashMap<Integer, HashMap<Integer, HashMap<String, HashSet<Integer>>>> notRfilters = new HashMap<>();
+    private HashMap<Integer, HashMap<String, HashSet<Integer>>> rfilters = new HashMap<>();
+    private HashMap<Integer, HashMap<String, HashSet<Integer>>> notRfilters = new HashMap<>();
+
+    private List<Link> links = new ArrayList<>();
 
     public State(int datasetId, int collectionId) {
         this.datasetId = datasetId;
@@ -36,8 +35,6 @@ public class State implements Serializable {
         this.notRfilters = rfiltersDeepCopy(other.notRfilters);
         this.links = new ArrayList<>(other.links);
     }
-
-    private List<Link> links = new ArrayList<>();
 
     public List<Link> getLinks() {
         return links;
@@ -83,12 +80,22 @@ public class State implements Serializable {
 
     // --- Link Navigation ---
 
-    public void link(int targetCollectionId, String reason) {
+    // Each path owns its own filters; crossing a link starts fresh, so
+    // the filters of the previous path stay only in the Link snapshot.
+    public void link(int targetCollectionId) {
         this.currentCollectionId = targetCollectionId;
+        this.mfilters.clear();
+        this.notMfilters.clear();
+        this.rfilters.clear();
+        this.notRfilters.clear();
     }
 
-    public void goback(int targetCollectionId) {
+    public void goback(int targetCollectionId, State snapshot) {
         this.currentCollectionId = targetCollectionId;
+        this.mfilters = mfiltersDeepCopy(snapshot.mfilters);
+        this.notMfilters = mfiltersDeepCopy(snapshot.notMfilters);
+        this.rfilters = rfiltersDeepCopy(snapshot.rfilters);
+        this.notRfilters = rfiltersDeepCopy(snapshot.notRfilters);
     }
 
     public int getDatasetId() {
@@ -100,150 +107,79 @@ public class State implements Serializable {
     }
 
     public HashMap<String, HashSet<String>> getMfilters() {
-        return getMfilters(currentCollectionId);
-    }
-
-    public HashMap<String, HashSet<String>> getMfilters(int collectionId) {
-        if (!mfilters.containsKey(collectionId)) {
-            return new HashMap<>();
-        }
-        return mfilters.get(collectionId);
+        return mfilters;
     }
 
     public HashMap<String, HashSet<String>> getNotMfilters() {
-        return getNotMfilters(currentCollectionId);
-    }
-
-    public HashMap<String, HashSet<String>> getNotMfilters(int collectionId) {
-        if (!notMfilters.containsKey(collectionId)) {
-            return new HashMap<>();
-        }
-        return notMfilters.get(collectionId);
+        return notMfilters;
     }
 
     public HashMap<Integer, HashMap<String, HashSet<Integer>>> getRfilters() {
-        return getRfilters(currentCollectionId);
-    }
-
-    public HashMap<Integer, HashMap<String, HashSet<Integer>>> getRfilters(int collectionId) {
-        if (!rfilters.containsKey(collectionId)) {
-            return new HashMap<>();
-        }
-        return rfilters.get(collectionId);
+        return rfilters;
     }
 
     public HashMap<Integer, HashMap<String, HashSet<Integer>>> getNotRfilters() {
-        return getNotRfilters(currentCollectionId);
-    }
-
-    public HashMap<Integer, HashMap<String, HashSet<Integer>>> getNotRfilters(int collectionId) {
-        if (!notRfilters.containsKey(collectionId)) {
-            return new HashMap<>();
-        }
-        return notRfilters.get(collectionId);
-    }
-
-    public Set<Integer> getFilteredCollectionIds() {
-        Set<Integer> ids = new HashSet<>();
-        ids.addAll(mfilters.keySet());
-        ids.addAll(notMfilters.keySet());
-        ids.addAll(rfilters.keySet());
-        ids.addAll(notRfilters.keySet());
-        return ids;
+        return notRfilters;
     }
 
     // --- Helpers ---
 
-    private void helperAddMetadataFilter(HashMap<Integer, HashMap<String, HashSet<String>>> mfilters, String attribute,
-            String value) {
-        if (!mfilters.containsKey(currentCollectionId)) {
-            mfilters.put(currentCollectionId, new HashMap<>());
-        }
-        if (!mfilters.get(currentCollectionId).containsKey(attribute)) {
-            mfilters.get(currentCollectionId).put(attribute, new HashSet<>());
-        }
-        mfilters.get(currentCollectionId).get(attribute).add(value);
+    private void helperAddMetadataFilter(HashMap<String, HashSet<String>> target, String attribute, String value) {
+        target.computeIfAbsent(attribute, k -> new HashSet<>()).add(value);
     }
 
-    private void helperRemoveMetadataFilter(HashMap<Integer, HashMap<String, HashSet<String>>> mfilters,
-            String attribute, String value) {
-        if (mfilters.containsKey(currentCollectionId) &&
-                mfilters.get(currentCollectionId).containsKey(attribute)) {
-            mfilters.get(currentCollectionId).get(attribute).remove(value);
-            if (mfilters.get(currentCollectionId).get(attribute).isEmpty()) {
-                mfilters.get(currentCollectionId).remove(attribute);
-                if (mfilters.get(currentCollectionId).isEmpty()) {
-                    mfilters.remove(currentCollectionId);
-                }
+    private void helperRemoveMetadataFilter(HashMap<String, HashSet<String>> target, String attribute, String value) {
+        HashSet<String> values = target.get(attribute);
+        if (values == null)
+            return;
+        values.remove(value);
+        if (values.isEmpty()) {
+            target.remove(attribute);
+        }
+    }
+
+    private void helperAddReferenceFilter(HashMap<Integer, HashMap<String, HashSet<Integer>>> target,
+            Integer refCollectionId, String reason, Integer value) {
+        target.computeIfAbsent(refCollectionId, k -> new HashMap<>())
+                .computeIfAbsent(reason, k -> new HashSet<>())
+                .add(value);
+    }
+
+    private void helperRemoveReferenceFilter(HashMap<Integer, HashMap<String, HashSet<Integer>>> target,
+            Integer refCollectionId, String reason, Integer value) {
+        HashMap<String, HashSet<Integer>> byReason = target.get(refCollectionId);
+        if (byReason == null)
+            return;
+        HashSet<Integer> values = byReason.get(reason);
+        if (values == null)
+            return;
+        values.remove(value);
+        if (values.isEmpty()) {
+            byReason.remove(reason);
+            if (byReason.isEmpty()) {
+                target.remove(refCollectionId);
             }
         }
     }
 
-    private void helperAddReferenceFilter(
-            HashMap<Integer, HashMap<Integer, HashMap<String, HashSet<Integer>>>> rfilters,
-            Integer refCollectionId,
-            String reason, Integer value) {
-        if (!rfilters.containsKey(currentCollectionId)) {
-            rfilters.put(currentCollectionId, new HashMap<>());
+    private HashMap<String, HashSet<String>> mfiltersDeepCopy(HashMap<String, HashSet<String>> source) {
+        HashMap<String, HashSet<String>> copy = new HashMap<>();
+        for (var entry : source.entrySet()) {
+            copy.put(entry.getKey(), new HashSet<>(entry.getValue()));
         }
-        if (!rfilters.get(currentCollectionId).containsKey(refCollectionId)) {
-            rfilters.get(currentCollectionId).put(refCollectionId, new HashMap<>());
-        }
-        if (!rfilters.get(currentCollectionId).get(refCollectionId).containsKey(reason)) {
-            rfilters.get(currentCollectionId).get(refCollectionId).put(reason, new HashSet<>());
-        }
-        rfilters.get(currentCollectionId).get(refCollectionId).get(reason).add(value);
+        return copy;
     }
 
-    private void helperRemoveReferenceFilter(
-            HashMap<Integer, HashMap<Integer, HashMap<String, HashSet<Integer>>>> rfilters, Integer refCollectionId,
-            String reason,
-            Integer value) {
-        if (rfilters.containsKey(currentCollectionId) &&
-                rfilters.get(currentCollectionId).containsKey(refCollectionId) &&
-                rfilters.get(currentCollectionId).get(refCollectionId).containsKey(reason) &&
-                rfilters.get(currentCollectionId).get(refCollectionId).get(reason).contains(value)) {
-            rfilters.get(currentCollectionId).get(refCollectionId).get(reason).remove(value);
-            if (rfilters.get(currentCollectionId).get(refCollectionId).get(reason).isEmpty()) {
-                rfilters.get(currentCollectionId).get(refCollectionId).remove(reason);
-                if (rfilters.get(currentCollectionId).get(refCollectionId).isEmpty()) {
-                    rfilters.get(currentCollectionId).remove(refCollectionId);
-                    if (rfilters.get(currentCollectionId).isEmpty()) {
-                        rfilters.remove(currentCollectionId);
-                    }
-                }
+    private HashMap<Integer, HashMap<String, HashSet<Integer>>> rfiltersDeepCopy(
+            HashMap<Integer, HashMap<String, HashSet<Integer>>> source) {
+        HashMap<Integer, HashMap<String, HashSet<Integer>>> copy = new HashMap<>();
+        for (var refEntry : source.entrySet()) {
+            HashMap<String, HashSet<Integer>> byReason = new HashMap<>();
+            for (var reasonEntry : refEntry.getValue().entrySet()) {
+                byReason.put(reasonEntry.getKey(), new HashSet<>(reasonEntry.getValue()));
             }
+            copy.put(refEntry.getKey(), byReason);
         }
-    }
-
-    private HashMap<Integer, HashMap<String, HashSet<String>>> mfiltersDeepCopy(
-            HashMap<Integer, HashMap<String, HashSet<String>>> mfilters) {
-        HashMap<Integer, HashMap<String, HashSet<String>>> mfilters_copy = new HashMap<>();
-        for (Integer collectionId : mfilters.keySet()) {
-            mfilters_copy.put(collectionId, new HashMap<>());
-            for (String attribute : mfilters.get(collectionId).keySet()) {
-                mfilters_copy.get(collectionId).put(attribute,
-                        new HashSet<>(mfilters.get(collectionId).get(attribute)));
-            }
-        }
-
-        return mfilters_copy;
-    }
-
-    private HashMap<Integer, HashMap<Integer, HashMap<String, HashSet<Integer>>>> rfiltersDeepCopy(
-            HashMap<Integer, HashMap<Integer, HashMap<String, HashSet<Integer>>>> rfilters) {
-        HashMap<Integer, HashMap<Integer, HashMap<String, HashSet<Integer>>>> rfilters_copy = new HashMap<>();
-        for (Integer collectionId : rfilters.keySet()) {
-            rfilters_copy.put(collectionId, new HashMap<>());
-            for (Integer refCollectionId : rfilters.get(collectionId).keySet()) {
-                rfilters_copy.get(collectionId).put(refCollectionId, new HashMap<>());
-                for (String reason : rfilters.get(collectionId).get(refCollectionId).keySet()) {
-                    rfilters_copy.get(collectionId).get(refCollectionId).put(reason,
-                            new HashSet<>(rfilters.get(collectionId).get(refCollectionId).get(reason)));
-                }
-            }
-        }
-
-        return rfilters_copy;
+        return copy;
     }
 }
