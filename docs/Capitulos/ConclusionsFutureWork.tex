@@ -2,6 +2,117 @@
 \label{cap:conclusions}
 \addcontentsline{toc}{chapter}{Conclusions and Future Work}
 
-Conclusions and future lines of work. This chapter contains the translation of Chapter \ref{cap:conclusiones}.
+\chapterquote{What we call the beginning is often the end. The end is where we start from.}{T. S. Eliot}
 
+This chapter closes the memoir by gathering what the work has contributed, explicitly
+acknowledging its limits, and stating the natural continuation lines that open from it. The
+first section synthesizes the results achieved with respect to the objectives stated in the
+Introduction. The second section delimits the scope of the delivered system. The third section
+groups, in five complementary directions, the extensions left open as project continuations.
 
+\section*{Conclusions}
+
+The work has made it possible to build a digital collection exploration engine that integrates
+the three mechanisms planned from the beginning: faceted filtering over metadata, transversal
+navigation between collections through semantic references, and set operations over partial
+results. Each one has materialized into an identifiable component of the system (filters,
+\textit{links}, and the union set) and its behavior has been verified over real dumps of two
+public catalogs of very different nature, TMDB (audiovisual) and DBLP (scientific publications),
+chosen precisely for their structural differences.
+
+The two-phase methodological strategy proved particularly sound. The first phase, centered on
+the Java prototype without a graphical interface, allowed us to validate the technical viability
+of the navigation model rigorously, without contaminating design decisions with constraints
+derived from presentation. The second phase, devoted to exposing the engine through a
+\textit{RESTful API} and developing the web interface, could then concentrate on user experience
+matters on top of an already stable base. This clear separation between back-end and front-end
+also facilitated pair work, by defining explicit contracts between the two layers.
+
+The adoption of the \textbf{Scrum} framework adapted to a small team has shown its value by
+allowing us to reorient the project whenever the findings of each \textit{sprint} forced the
+reconsideration of previous decisions. In parallel, the usability evaluation conducted with
+external participants following a formal protocol has produced qualitative evidence that has
+guided the last interface iteration and constitutes, in itself, a reusable contribution for
+future developments on the same engine.
+
+\section*{Limitations}
+
+The scope of the delivered system must be understood within several well-defined limits. The
+functional validation of the engine was carried out over two distinct domains (the audiovisual
+catalog TMDB and the bibliographic database DBLP), which provides reasonable evidence that the
+model does not depend on the particularities of a single corpus, but does not exhaust the
+spectrum of collections to which the system aspires to apply. Its extension to other types of
+holdings (institutional document repositories, complete library catalogs, or open-source
+software collections) remains, therefore, a reasonable hypothesis not empirically demonstrated
+in this work. Similarly, the load tests have been limited to collections of a few tens of
+thousands of entities, without addressing large-scale scenarios that would require specific
+optimization work.
+
+The system lacks, by design decision and not by oversight, a persistent user layer: sessions
+are ephemeral, and identification, authentication, and state synchronization across devices are
+not contemplated. The web interface, in turn, has been optimized for desktop displays and,
+although it collapses reasonably on narrow screens, the mobile case has not been worked on
+specifically. Finally, the usability evaluation follows a qualitative approach with a small
+sample (between five and seven participants), suitable for detecting most observable problems
+but insufficient to sustain quantitative claims of statistical character.
+
+\section*{Future work}
+
+From the state in which the system is delivered, we identify five natural continuation lines.
+The first two (language-model-based assistance and engine distribution) have an applied
+research component and would open the door to a larger-scale project. The remaining three (user
+layer, extension to new domains, and user experience improvements) are more incremental and
+could be addressed independently, without altering the navigation model's core.
+
+\subsection*{Language-model-based assistance}
+
+The emergence of large language models opens an interesting avenue to enrich the engine without
+replacing it. Rather than delegating navigation to an opaque model, the model can be used as an
+assistance layer: translation of natural-language queries into concrete filter combinations,
+suggestion of pertinent filters depending on the exploration state, generation of synthetic
+descriptions of the filtered set, and explanation of why two entities appear related through a
+specific \textit{link}. This approach preserves user agency by keeping the engine's operations
+visible and delegates only those tasks for which a language model adds real value.
+
+\subsection*{Engine distribution across multiple nodes}
+
+The engine currently runs as a single process against a single database. For larger-scale
+collections, the system would benefit from decomposition into independent nodes: partitioning
+storage by domain or dataset, replicating facet computation to balance load, and introducing a
+cache layer for frequent intermediate results. This line would require revisiting the notion of
+session, today associated with a single process, and designing a coherent invalidation protocol
+that maintains the immediacy on which the exploration experience rests.
+
+\subsection*{User layer, persistence, and shared history}
+
+The introduction of an identity layer would allow state to be preserved between sessions,
+previous explorations to be retrieved, union sets to be bookmarked as favorites, and
+explorations to be shared through reproducible \textit{URLs}. This line is relatively
+independent from the engine and could be developed in parallel, leveraging the existing
+separation between back-end and front-end. Its greatest challenge is not technical, but rather
+one of interaction design: integrating the new functionalities without overloading the current
+interface, which has been tuned precisely to offer a light first experience focused on
+exploration.
+
+\subsection*{Extension to new domains and datasets}
+
+The system has been conceived from the start as domain-agnostic. The integration with TMDB and
+DBLP has served to demonstrate that the relational model generalizes without substantial
+modifications between an audiovisual catalog and a scientific publications database, but the
+choice of future domains remains the most direct path to reinforce that evidence. Particularly
+interesting would be complete library holdings (with various classes of objects coexisting
+under the same descriptive schema), institutional document repositories (where the richness of
+relations between versions, authors, and institutions would test the \textit{links} layer), and
+open-source software catalogs (where dependency and authorship relations draw dense graphs). In
+each case, effective incorporation requires adjusting the heuristics for facet identification
+to the particularities of the domain and, in some cases, extending the loading process to
+accommodate heterogeneous source formats.
+
+\subsection*{Incremental user experience improvements}
+
+Several incremental improvements remain open on the developed interface, prioritized by the
+usability evaluation: a version adapted to mobile devices, full internationalization beyond the
+current Spanish-English pair, accessibility reinforcement through keyboard navigation and
+\textit{ARIA} attributes, export of the navigation history and union set to reusable formats
+(\textit{CSV}, \textit{JSON}, or bibliographic references), and more refined work on the visual
+representation of the \textit{links} graph to make it useful with long paths.

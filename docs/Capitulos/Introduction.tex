@@ -2,13 +2,182 @@
 \label{cap:introduction}
 \addcontentsline{toc}{chapter}{Introduction}
 
-Introduction to the subject area. This chapter contains the translation of Chapter \ref{cap:introduccion}.
+\chapterquote{There is only one decisive victory: the last.}{Carl Von Clausewitz}
 
+This Final Degree Project addresses the design and implementation of a digital collection
+exploration engine that combines faceted filtering over metadata, transversal navigation
+between related collections, and set operations over partial results. The proposal emerges in
+response to a concrete problem in contemporary digital information consumption, motivated
+below, and aims to give the user a tool that combines the precision of direct search, the
+flexibility of tag-based filtering, and the expressive richness of hypermedia navigation.
 
+This introductory chapter is organized in four blocks: the motivation that gave rise to the
+project, the objectives pursued, the execution plan, and a description of how the rest of the
+memoir is structured.
 
+\section*{Motivation}
 
+In recent times we have witnessed a major shift in the paradigm of digital consumption. The
+quantitative accumulation of digital content has surpassed its qualitative threshold and now
+demands a different way of engaging with it. The abundance of information generates what is
+known as \textit{information overload}, in which any user requires an ever-growing amount of
+time to navigate it. This becomes especially evident on digital platforms, particularly
+multimedia streaming services (such as Netflix, Disney+, or HBO Max), where it is difficult to
+find what to consume without investing a substantial amount of time in the process.
 
+This shift in paradigm, and the consequent problem, is still being addressed with traditional
+methods: direct search (by keywords), classical filtering by genre or media type, and
+recommendation systems based on algorithms hidden from the consumer. These approaches are
+limited and serve poorly in the new context of digital consumption. Direct search is
+deterministic and allows no flexibility, especially as it assumes the user already knows
+exactly what they are looking for. Traditional filtering is often incomplete and inconsistent,
+relying on hidden and inscrutable taxonomies. Recommendation algorithms tend to serve more as
+amplifiers of the \textit{filter bubble}, as they depend directly on consumption history or on
+what the platform wishes to promote, ultimately stripping the user of their agency.
 
+This problem, moreover, is not exclusive to user experience but also constitutes a
+technological problem related to how information collections are designed and used. Relational
+navigation models and \textit{collection navigation systems} bring a different approach in
+which data is not represented as isolated elements but as entities connected through semantic
+relationships. This approach makes it possible to traverse collections interactively, with more
+expressive navigation mechanisms that let the user progressively explore a complex collection
+by combining filters, relationships, and transitions between entities.
 
+There is, therefore, a recognized need for navigation systems that accompany this paradigm
+shift. This can only be achieved by providing users with richer and more flexible interactive
+exploration tools. Such tools must combine the precision established by direct search with
+greater expressiveness than classical filtering, without depriving the user of their agency.
 
+\section*{Objectives}
 
+This Final Degree Project starts from the original proposal of the supervising professor,
+titled \textit{Application for the Processing of Digital Content Collections}, which envisioned
+the design of a tool to transform metadata and content of objects in large digital collections,
+with possibilities ranging from the recoding of descriptions to tagging assisted by large
+language models. From that initial proposal we have narrowed the scope toward \textbf{interactive
+exploration} of collections, preserving the central idea of a domain-agnostic system capable of
+operating on heterogeneous collections, but concentrating the effort on the navigation
+primitives that allow the user to traverse them expressively. This scoping decision is supported
+by the experimental nature of the navigation engine we wanted to validate and by the desire to
+deliver a functionally closed system at the end of the project; the integration of
+language-model-assisted transformations over the same engine remains as a natural continuation,
+captured later among the future work lines.
+
+\subsection*{General objective}
+
+To design and implement an interactive exploration application for digital collections that
+combines faceted filtering over metadata, transversal navigation between related collections
+through semantic references, and set operations over partial results, all under a
+domain-agnostic data model that allows the system to be applied to collections of different
+structural nature without substantial modifications.
+
+\subsection*{Specific objectives}
+
+From the general objective, we identify six specific objectives, formulated so that each can be
+verified independently in the Testing and Validation chapter.
+
+\begin{itemize}
+\item \textbf{O1. Domain-agnostic data model.} Define a relational model that represents
+collections, entities, descriptive metadata, and relationships among entities, without coupling
+to the particularities of any specific domain.
+
+\item \textbf{O2. Navigation engine with three primitives.} Design and implement the
+exploration logic through a state machine that combines faceted filtering with include and
+exclude modes, transversal navigation through \textit{links}, and set operations (specifically,
+union) over partial results, maintaining history and coherent invariants between transitions.
+
+\item \textbf{O3. Functional validation over distinct domains.} Empirically verify that the
+model and the engine generalize to collections of structurally different nature, through the
+integration of at least two public catalogs from distinct domains.
+
+\item \textbf{O4. Exposure of the engine through a \textit{RESTful API}.} Design and develop
+an HTTP services layer that exposes the engine's capabilities in a structured manner consumable
+by external interfaces, with session management and error handling.
+
+\item \textbf{O5. Interactive web interface.} Develop a client application that materializes
+the engine's primitives in interface components understandable by users without prior
+experience in faceted search, with special attention to readability, response immediacy, and
+consistency of the exploration metaphor.
+
+\item \textbf{O6. Empirical evaluation of usability.} Design and conduct a formal usability
+study with external users following a standard protocol (\textit{think-aloud} accompanied by
+SUS and SEQ questionnaires and direct observation), from which actionable evidence about the
+quality of interaction and a prioritized catalog of incremental improvements are derived.
+\end{itemize}
+
+Deliberately out of scope, and reserved as continuation lines collected in the Conclusions
+chapter, are: automatic metadata transformations assisted by language models, user persistence
+and authentication, and distributed-scale deployment of the engine. These scope boundaries are
+deliberate and allow the system to be closed coherently within the project's time horizon,
+without compromising the central primitives that constitute the main contribution.
+
+\section*{Work plan}
+
+We adopted an agile methodology, based for the most part on the \textbf{Scrum} framework,
+adapted to a paired project. The choice of this method stems from the exploratory and
+innovative nature of the project, since the requirements and the navigation engine required
+iterative refinement and optimization.
+
+Development was organized through \textit{sprints} (work cycles of two to three weeks),
+defining an initial \textit{Product Backlog} with the fundamental system requirements. Periodic
+follow-up meetings (\textit{Sprint Reviews}) allowed us to evaluate each software increment and
+adapt planning according to the problems and obstacles encountered, jointly with supervision
+from the professor.
+
+Regarding the macro-planning, the project was structured into two sequential development
+phases. The first phase, devoted to investigation and the Java prototype (September 2025 --
+January 2026), aimed at validating the technical viability of the navigation engine and the
+algorithms involved by deliberately postponing the implementation of a graphical interface and
+centralizing the effort on the technical efficacy, efficiency, and robustness of the system's
+components. The second phase, dedicated to web development and integration (January 2026 --
+March 2026), shifted the effort toward exposing the engine's functionality through a
+client-server architecture and developing the user interface, including the design of the
+\textit{RESTful} controller layer using Java Servlets, the implementation of the web frontend,
+and the integration testing with the full datasets. The detailed activity breakdown, the
+chronogram, and the Gantt diagram are reproduced in the Spanish version of this chapter and
+are not duplicated here.
+
+\section*{Organization of the memoir}
+
+The remainder of the memoir is structured into five numbered chapters, a section on
+\textit{Personal Contributions}, and three appendices, organized following the classical
+progression of framing, design, implementation, validation, and closing.
+
+The \textbf{State of the Art} chapter situates the work within the theoretical framework of
+tag-based navigation and structured hypermedia models, and reviews the related works the
+system most directly engages with, particularly the Clavy platform and recent proposals based
+on large language models. It identifies which project decisions are inherited from prior
+contributions and which deliberately take a different path.
+
+The \textbf{Architecture and Methodology} chapter presents the organization of the software
+engineering process followed, with the Scrum adaptation for a small team, and the global
+system architecture in terms of layers, modules, and contracts between them. It closes with a
+description of the persistence layer and the data access strategy over PostgreSQL.
+
+The \textbf{Development and Implementation} chapter dives into the concrete components that
+materialize the engine's primitives. It goes through, in this order, the relational data
+model, the representation of the exploration context (the state machine), classical and
+relational filtering, transversal navigation through \textit{links}, set operations over
+partial results, the web client development, and the obstacles encountered together with the
+solutions applied.
+
+The \textbf{Testing and Validation} chapter gathers the system validation from two
+complementary perspectives. The first one, functional, over the two selected test domains
+(TMDB and DBLP). The second one, which constitutes the bulk of the chapter, is a formal
+usability evaluation with external users following a \textit{think-aloud} protocol accompanied
+by SUS and SEQ questionnaires. Quantitative results, qualitative findings, derived interface
+iterations, and validated use cases are reported, and the chapter closes with an explicit
+enumeration of the study's limitations.
+
+The \textbf{Conclusions and Future Work} chapter synthesizes the degree of fulfilment of the
+objectives stated in this chapter, acknowledges the limits of the delivered system, and
+enumerates the five natural continuation lines identified from the state of the work. The
+\textit{Personal Contributions} section that follows documents the distribution of work between
+the two authors.
+
+Three appendices complete the memoir. The first reproduces the complete usability evaluation
+script, so the study can be replicated unchanged by third parties. The second describes the
+integration and ingestion of the external data sources (TMDB and DBLP), with detailed coverage
+of the capture and transformation \textit{scripts}. The third documents the system deployment
+over containers and gathers the operational decisions that allow the execution environment to
+be reproduced.
