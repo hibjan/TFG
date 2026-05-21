@@ -62,7 +62,7 @@ public class StateManager implements Serializable {
 
     public void link(int targetCollectionId, String reason) {
         Link newLink = new Link(true, this.cur.getCurrentCollectionId(), reason, new State(this.cur));
-        this.cur.link(targetCollectionId, reason);
+        this.cur.link(targetCollectionId);
         this.cur.getLinks().add(newLink);
         this.linkStack.push(newLink);
     }
@@ -70,7 +70,7 @@ public class StateManager implements Serializable {
     public void goback() {
         Link last = this.linkStack.pop();
         Link backLink = new Link(false, this.cur.getCurrentCollectionId(), last.getReason(), new State(this.cur));
-        this.cur.goback(last.getCollectionId());
+        this.cur.goback(last.getCollectionId(), last.getState());
         this.cur.getLinks().add(backLink);
     }
 

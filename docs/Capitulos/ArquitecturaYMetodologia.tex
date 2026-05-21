@@ -65,75 +65,111 @@ fiel de ese modelo: el código del backend (\texttt{State}, \texttt{StateManager
 \subsection{Modelo formal de navegación}
 \label{subsec:modeloFormal}
 
+\emergencystretch=3em
+
 \subsubsection*{Conjuntos base}
 
-El motor opera sobre un universo de datos estructurado en datasets, colecciones y entidades. Fijamos los
+Una sesión de usuario explora siempre un único \emph{dataset}, entendido como el conjunto de colecciones que
+se han cargado conjuntamente desde una misma fuente. Esta convención permite que el motor opere bajo un
+horizonte de datos cerrado y, sobre todo, que el dataset no necesite aparecer como variable formal: las
+signaturas que siguen quedan referidas implícitamente al dataset activo. Fijamos en consecuencia los
 siguientes conjuntos:
 
 \begin{itemize}
-  \item $\mathcal{D}$: conjunto de \emph{datasets}. Cada dataset agrupa colecciones cargadas desde una misma fuente.
-  \item $\mathcal{C}$: conjunto de \emph{colecciones}.
+  \item $\mathcal{C}$: conjunto de \emph{colecciones} del dataset.
   \item $\mathcal{E}$: conjunto de \emph{entidades}.
   \item $\mathcal{K}$: conjunto de \emph{claves de metadato}.
   \item $\mathcal{V}$: conjunto de \emph{valores de metadato}.
   \item $\mathcal{R}$: conjunto de \emph{razones}; cada razón etiqueta un tipo de relación dirigida entre entidades.
 \end{itemize}
 
+Una colección agrupa entidades de un mismo tipo conceptual, con una taxonomía común que las hace
+comparables entre sí: las claves de metadato y las razones que sus entidades pueden exhibir forman un
+repertorio compartido, no fijado a priori pero estable durante la sesión. Una colección de películas, una
+de personas o una de estudios cinematográficos son algunos de los ejemplos canónicos a los que nos referiremos recurrentemente. 
 Las funciones que estructuran la pertenencia entre conjuntos son:
 \begin{align*}
-  \mathrm{ds} &: \mathcal{C} \to \mathcal{D} & &\text{(dataset al que pertenece una colección)}\\
   \mathrm{coll} &: \mathcal{E} \to \mathcal{C} & &\text{(colección a la que pertenece una entidad)}\\
   \mathrm{meta} &: \mathcal{E} \to \mathcal{P}(\mathcal{K} \times \mathcal{V}) & &\text{(pares atributo-valor de una entidad)}\\
   \mathrm{Ref} &\subseteq \mathcal{E} \times \mathcal{E} \times \mathcal{R} & &\text{(tripletas de referencias tipadas activas)}
 \end{align*}
 
-La sesión de un usuario explora un único dataset; fijamos por tanto un dataset $d_{0} \in \mathcal{D}$ y
-denotamos $\mathcal{C}_{d_{0}} = \{c \in \mathcal{C} \mid \mathrm{ds}(c) = d_{0}\}$.
+Con estos conjuntos basta para describir qué hay en el universo de exploración; lo siguiente es decir qué
+recuerda de éste el motor durante una sesión.
 
 \subsubsection*{Estado de exploración}
 
-Un \emph{estado} es una tupla
+El estado recoge en una única estructura lo que el motor sabe en un instante dado de la trayectoria del
+usuario: sobre qué colección está mirando, qué filtros tiene aplicados en ese tramo y por qué saltos
+relacionales ha llegado hasta allí. Formalmente, un \emph{estado} es una tupla
 \[
   s \;=\; \langle\, c,\; F^{+},\; F^{-},\; R^{+},\; R^{-},\; L \,\rangle
 \]
 donde:
 \begin{itemize}
-  \item $c \in \mathcal{C}_{d_{0}}$ es la \emph{colección activa}.
-  \item $F^{+}, F^{-} : \mathcal{C}_{d_{0}} \times \mathcal{K} \to \mathcal{P}(\mathcal{V})$ son los
-    \emph{filtros de metadatos}, positivos y negativos, indexados por colección y clave.
-  \item $R^{+}, R^{-} : \mathcal{C}_{d_{0}} \times \mathcal{C}_{d_{0}} \times \mathcal{R} \to \mathcal{P}(\mathcal{E})$
-    son los \emph{filtros de referencia}, positivos y negativos, indexados por colección activa, colección
-    referenciada y razón.
+  \item $c \in \mathcal{C}$ es la \emph{colección activa}.
+  \item $F^{+}, F^{-} : \mathcal{K} \to \mathcal{P}(\mathcal{V})$ son los \emph{filtros de metadatos},
+    positivos y negativos, del tramo actual. Asocian cada clave de metadato con el conjunto de valores
+    exigidos o prohibidos sobre las entidades de $c$.
+  \item $R^{+}, R^{-} : \mathcal{C} \times \mathcal{R} \to \mathcal{P}(\mathcal{E})$ son los
+    \emph{filtros de referencia}, positivos y negativos, del tramo actual. Cada par
+    (colección referenciada, razón) selecciona un subconjunto de entidades de esa colección que deben (o no
+    deben) aparecer como destino de la relación desde una entidad de $c$.
   \item $L = [\ell_{1}, \ldots, \ell_{n}]$ es una secuencia ordenada de \emph{links} (definidos a continuación).
 \end{itemize}
 
-Denotamos por $\mathcal{S}$ el conjunto de estados posibles. Esta tupla se corresponde literalmente con la clase
-\texttt{State} del backend: el campo $c$ es \texttt{currentCollectionId}; los mapas $F^{+}, F^{-}, R^{+}, R^{-}$
-son \texttt{mfilters}, \texttt{notMfilters}, \texttt{rfilters} y \texttt{notRfilters}; y $L$ es la lista
-\texttt{links}. El dataset $d_{0}$ se almacena además en el campo \texttt{datasetId}.
+Denotamos por $\mathcal{S}$ el conjunto de estados posibles. Conviene subrayar una característica que
+quedará crucial más adelante: los filtros $F^{+}, F^{-}, R^{+}, R^{-}$ pertenecen al \emph{tramo en curso},
+no acumulan información de tramos previos. Esta decisión es la pieza que separa a este modelo del primer
+prototipo, y queda recogida también en la implementación del motor: cada estado lleva los filtros del tramo
+activo, mientras que los de tramos anteriores residen únicamente en los snapshots asociados a sus links,
+lo cual se detalla más adelante.
+
+A esta tupla se le asocia una función semántica $\llbracket s \rrbracket \subseteq \mathcal{E}$ que designa el
+\emph{conjunto de entidades visibles} en el estado $s$, esto es, las entidades de $c$ que satisfacen sus
+filtros y que admiten un anclaje compatible con cada uno de los links acumulados en $L$. Esta función se
+formaliza más abajo, bajo el epígrafe \emph{Semántica}, pero algunas precondiciones la invocan de forma
+anticipada y conviene tenerla nombrada desde ya.
+
+Esta tupla se corresponde directamente con la clase \texttt{State} del backend. El campo $c$ es
+\texttt{currentCollectionId}. Los mapas $F^{+}$ y $F^{-}$ son \texttt{mfilters} y \texttt{notMfilters},
+que asocian cada clave de metadato (cadena) con un conjunto de valores (cadenas). Los mapas $R^{+}$ y $R^{-}$
+son \texttt{rfilters} y \texttt{notRfilters}, con una clave externa entera, que codifica la colección
+referenciada; una clave interna textual, que codifica la razón; y un conjunto de identificadores enteros de
+entidades como valor. La componente $L$ se materializa en la lista \texttt{links}. El dataset asociado se
+guarda además en el campo \texttt{datasetId}, que actúa como referencia hacia la fuente cargada pero no
+participa en las signaturas formales.
 
 \subsubsection*{Link}
 
-Un \emph{link} representa una transición entre colecciones registrada como parte del historial de navegación
-del estado. Es una tupla
+La componente $L$ del estado merece una mirada propia, porque es la que da continuidad a una sesión cuando
+el usuario salta entre colecciones. Cada elemento de $L$ es un \emph{link}: la traza dejada por una
+transición ya realizada. Un link no solo dice de dónde viene la navegación y por qué razón, sino que
+guarda además un retrato completo del estado anterior al salto, de modo que ni la composición de filtros
+acumulados ni el camino para volver atrás se pierden. Es una tupla
 \[
   \ell \;=\; \langle\, d,\; c_{\text{from}},\; r,\; s' \,\rangle
 \]
 donde:
 \begin{itemize}
   \item $d \in \{\mathsf{fwd}, \mathsf{bwd}\}$ es la dirección del enlace.
-  \item $c_{\text{from}} \in \mathcal{C}_{d_{0}}$ es la \emph{colección origen} de la transición, es decir, la
+  \item $c_{\text{from}} \in \mathcal{C}$ es la \emph{colección origen} de la transición, es decir, la
     colección activa antes de aplicar el cambio.
   \item $r \in \mathcal{R}$ es la razón seguida.
-  \item $s' \in \mathcal{S}$ es un \emph{snapshot} (copia inmutable) del estado anterior a la transición.
+  \item $s' \in \mathcal{S}$ es un \emph{snapshot} (copia inmutable) del estado anterior a la transición,
+    incluidos sus filtros y su propia lista de links.
 \end{itemize}
 
-Esta tupla corresponde con la clase \texttt{Link}: el campo $d$ se materializa en el booleano \texttt{forward},
-y $s'$ es la copia profunda del estado capturada en el momento de crear el enlace.
+Esta tupla corresponde con la clase \texttt{Link}: el campo $d$ se materializa en el booleano
+\texttt{forward}, $c_{\text{from}}$ en \texttt{collectionId}, $r$ en \texttt{reason} y $s'$ en el campo
+\texttt{state}, una copia profunda del estado capturada al crear el enlace.
 
 \subsubsection*{Contexto de exploración}
 
-El contexto de una sesión es una tupla
+El estado activo cubre un solo punto de la trayectoria; la sesión completa necesita además recordar qué
+estados se han marcado para volver, qué se está acumulando para una unión futura y qué enlaces \emph{forward}
+están pendientes de retroceder. Todo eso vive en el \emph{contexto de exploración}, la estructura que envuelve
+al estado activo durante la sesión. Es una tupla
 \[
   \Sigma \;=\; \langle\, s_{\text{cur}},\; H,\; U,\; T \,\rangle
 \]
@@ -143,107 +179,175 @@ donde:
   \item $H$ es una pila LIFO de estados (\texttt{historyStack}), utilizada por \texttt{save} y \texttt{restore}.
   \item $U = [s_{1}, \ldots, s_{k}]$ es la lista de estados marcados para unión (\texttt{unionSet}).
   \item $T$ es una pila auxiliar de links \emph{forward} ya aplicados (\texttt{linkStack}), que permite a
-    \texttt{goback} recuperar la colección origen del último enlace.
+    \texttt{goback} recuperar la colección origen y el snapshot del último enlace.
 \end{itemize}
+
+Con el universo, el estado, el link y el contexto ya nombrados, queda describir cómo se transforman entre
+sí ante cada acción del usuario. Las operaciones primitivas son precisamente ese repertorio de
+transformaciones.
 
 \subsubsection*{Operaciones primitivas}
 
-Para cada operación se indica su signatura, su precondición y su postcondición. Las operaciones marcadas con
-$\rightsquigarrow$ actúan sobre el estado activo $s_{\text{cur}}$ del contexto; las marcadas con $\Rightarrow$
-modifican el contexto completo. Por brevedad, cuando se modifica una función como $F^{+}$, escribimos
-$F^{+}[(c,k) \mapsto V]$ para denotar la función igual a $F^{+}$ salvo en $(c,k)$, donde toma el valor $V$.
+Para cada operación se indica su signatura, su precondición y su postcondición. Una operación marcada con
+$\rightsquigarrow$ actúa exclusivamente sobre el estado activo $s_{\text{cur}}$ del contexto; las marcadas
+con $\Rightarrow$ modifican el contexto.
+
+Cuando se modifica una función de filtros se utiliza una notación de actualización abreviada. Para los
+filtros de metadatos, $F^{+}[\,k \mapsto V\,]$ designa la función igual a $F^{+}$ salvo en la clave $k$, donde
+toma el valor $V$. Para los filtros de referencia, $R^{+}[\,(c', r) \mapsto E\,]$ designa la función igual a
+$R^{+}$ salvo en el par $(c', r)$, donde toma el valor $E$.
 
 \begin{enumerate}
   \item $\textsc{addMfilter}(s, k, v) \rightsquigarrow s'$
     \begin{itemize}
       \item Signatura: $\mathcal{S} \times \mathcal{K} \times \mathcal{V} \to \mathcal{S}$.
       \item Precondición: $k \in \mathcal{K}$, $v \in \mathcal{V}$.
-      \item Postcondición: $s'$ es idéntico a $s$ salvo que
-      $F^{+}{}' \;=\; F^{+}[\,(c,k) \mapsto F^{+}(c,k) \cup \{v\}\,]$,
-      donde $c$ es la colección activa de $s$.
+      \item Postcondición: sean $F^{+}$ y $F^{+}{}'$ los filtros de metadatos positivos de $s$ y de $s'$,
+        respectivamente (ambos de tipo $\mathcal{K} \to \mathcal{P}(\mathcal{V})$). Entonces $s'$ es idéntico
+        a $s$ salvo que
+        \[
+          F^{+}{}' \;=\; F^{+}\bigl[\,k \mapsto F^{+}(k) \cup \{v\}\,\bigr].
+        \]
     \end{itemize}
 
   \item $\textsc{addNotMfilter}(s, k, v) \rightsquigarrow s'$
     \begin{itemize}
       \item Signatura: $\mathcal{S} \times \mathcal{K} \times \mathcal{V} \to \mathcal{S}$.
-      \item Postcondición: análoga a la anterior actualizando $F^{-}$ en lugar de $F^{+}$.
+      \item Precondición: $k \in \mathcal{K}$, $v \in \mathcal{V}$.
+      \item Postcondición: análoga a la de $\textsc{addMfilter}$, sustituyendo los filtros positivos por los
+        negativos. Sean $F^{-}$ y $F^{-}{}'$ los filtros de metadatos negativos de $s$ y de $s'$
+        (ambos de tipo $\mathcal{K} \to \mathcal{P}(\mathcal{V})$). Entonces $s'$ es idéntico a $s$ salvo que
+        \[
+          F^{-}{}' \;=\; F^{-}\bigl[\,k \mapsto F^{-}(k) \cup \{v\}\,\bigr].
+        \]
     \end{itemize}
 
   \item $\textsc{addRfilter}(s, c', r, e) \rightsquigarrow s'$
     \begin{itemize}
-      \item Signatura: $\mathcal{S} \times \mathcal{C}_{d_{0}} \times \mathcal{R} \times \mathcal{E} \to \mathcal{S}$.
+      \item Signatura: $\mathcal{S} \times \mathcal{C} \times \mathcal{R} \times \mathcal{E} \to \mathcal{S}$.
       \item Precondición: $\mathrm{coll}(e) = c'$.
-      \item Postcondición: $R^{+}{}'(c, c', r) = R^{+}(c, c', r) \cup \{e\}$; el resto de $R^{+}$ no cambia. La
-        operación $\textsc{addNotRfilter}$ es análoga actualizando $R^{-}$.
+      \item Postcondición: sean $R^{+}$ y $R^{+}{}'$ los filtros de referencia positivos de $s$ y de $s'$
+        (ambos de tipo $\mathcal{C} \times \mathcal{R} \to \mathcal{P}(\mathcal{E})$). Entonces $s'$ es
+        idéntico a $s$ salvo que
+        \[
+          R^{+}{}' \;=\; R^{+}\bigl[\,(c', r) \mapsto R^{+}(c', r) \cup \{e\}\,\bigr].
+        \]
     \end{itemize}
 
-  \item $\textsc{link}(s, c', r) \rightsquigarrow s'$
+  \item $\textsc{addNotRfilter}(s, c', r, e) \rightsquigarrow s'$
     \begin{itemize}
-      \item Signatura: $\mathcal{S} \times \mathcal{C}_{d_{0}} \times \mathcal{R} \to \mathcal{S}$.
-      \item Precondición: existe al menos una entidad $e \in \llbracket s \rrbracket$ y una entidad
-        $e' \in \mathcal{E}$ con $\mathrm{coll}(e') = c'$ tales que $(e, e', r) \in \mathrm{Ref}$.
-      \item Postcondición: $s'$ tiene la misma información de filtros que $s$ y además
+      \item Signatura: $\mathcal{S} \times \mathcal{C} \times \mathcal{R} \times \mathcal{E} \to \mathcal{S}$.
+      \item Precondición: $\mathrm{coll}(e) = c'$.
+      \item Postcondición: análoga a la de $\textsc{addRfilter}$, sustituyendo los filtros positivos por los
+        negativos. Sean $R^{-}$ y $R^{-}{}'$ los filtros de referencia negativos de $s$ y de $s'$ (ambos de
+        tipo $\mathcal{C} \times \mathcal{R} \to \mathcal{P}(\mathcal{E})$). Entonces $s'$ es idéntico a $s$
+        salvo que
         \[
-          c' \text{ pasa a ser la colección activa,} \qquad
-          L' \;=\; L \,\mathbin{::}\, \langle \mathsf{fwd},\, c,\, r,\, s \rangle.
+          R^{-}{}' \;=\; R^{-}\bigl[\,(c', r) \mapsto R^{-}(c', r) \cup \{e\}\,\bigr].
         \]
-        El contexto registra adicionalmente el nuevo link en la pila $T$.
+    \end{itemize}
+
+  \item $\textsc{link}(\Sigma, c', r) \Rightarrow \Sigma'$
+    \begin{itemize}
+      \item Signatura: contexto $\times\, \mathcal{C} \times \mathcal{R} \to$ contexto.
+      \item Precondición: existe al menos una entidad $e \in \llbracket s_{\text{cur}} \rrbracket$ y una
+        entidad $e' \in \mathcal{E}$ con $\mathrm{coll}(e') = c'$ tales que $(e, e', r) \in \mathrm{Ref}$.
+      \item Postcondición: sea $c$ la colección activa de $s_{\text{cur}}$ y sea
+        $\ell_{\text{new}} = \langle \mathsf{fwd},\, c,\, r,\, s_{\text{cur}} \rangle$. El estado activo
+        $s_{\text{cur}}'$ se obtiene de $s_{\text{cur}}$ cambiando la colección activa a $c'$, dejando los
+        cuatro mapas de filtros vacíos y añadiendo $\ell_{\text{new}}$ al final de $L$. El contexto registra
+        además ese mismo link en la cima de $T$. Esto es, el snapshot $\ell_{\text{new}}.s'$ conserva los
+        filtros del tramo anterior (porque captura $s_{\text{cur}}$ tal cual estaba antes del salto),
+        mientras que el nuevo tramo activo arranca sin filtros sobre la colección destino $c'$.
     \end{itemize}
 
   \item $\textsc{goback}(\Sigma) \Rightarrow \Sigma'$
     \begin{itemize}
       \item Signatura: contexto $\to$ contexto.
-      \item Precondición: $T$ no está vacía; sea $\ell = \langle \mathsf{fwd}, c_{\text{prev}}, r_{\text{prev}}, s_{\text{snap}}\rangle$
+      \item Precondición: $T$ no está vacía; sea
+        $\ell = \langle \mathsf{fwd},\, c_{\text{prev}},\, r_{\text{prev}},\, s_{\text{snap}} \rangle$
         el elemento en la cima de $T$.
-      \item Postcondición: $T' = \mathrm{pop}(T)$; el estado activo $s_{\text{cur}}'$ se obtiene de $s_{\text{cur}}$
-        cambiando la colección activa a $c_{\text{prev}}$ y añadiendo a $L$ un link
-        $\langle \mathsf{bwd}, c, r_{\text{prev}}, s_{\text{cur}} \rangle$, donde $c$ es la colección activa de $s_{\text{cur}}$.
+      \item Postcondición: $T' = \mathrm{pop}(T)$. Sea $c$ la colección activa de $s_{\text{cur}}$. El estado
+        activo $s_{\text{cur}}'$ se obtiene de $s_{\text{cur}}$ asignando $c_{\text{prev}}$ como nueva
+        colección activa, copiando desde el snapshot los cuatro mapas de filtros
+        $F^{+}{}' \,{=}\, s_{\text{snap}}.F^{+}$, $F^{-}{}' \,{=}\, s_{\text{snap}}.F^{-}$,
+        $R^{+}{}' \,{=}\, s_{\text{snap}}.R^{+}$, $R^{-}{}' \,{=}\, s_{\text{snap}}.R^{-}$, y añadiendo a $L$
+        un link $\langle \mathsf{bwd},\, c,\, r_{\text{prev}},\, s_{\text{cur}} \rangle$.
+
+        En particular, $L$ crece monótonamente: el retroceso registra un nuevo link en lugar de eliminar el
+        anterior. Esta acumulación es la que más tarde permite traducir el historial completo a la consulta
+        SQL recursiva que materializa la navegación.
     \end{itemize}
 
   \item $\textsc{save}(\Sigma) \Rightarrow \Sigma'$ y $\textsc{restore}(\Sigma) \Rightarrow \Sigma'$
     \begin{itemize}
       \item $\textsc{save}$ apila una copia inmutable de $s_{\text{cur}}$ en $H$.
-      \item $\textsc{restore}$ desapila el último estado guardado y lo restaura como $s_{\text{cur}}$, siempre que
-        $|H| > 1$.
+      \item $\textsc{restore}$ desapila el último estado guardado y lo restaura como $s_{\text{cur}}$, siempre
+        que $|H| > 1$.
     \end{itemize}
 
   \item $\textsc{union}(\Sigma, c') \Rightarrow \Sigma'$
     \begin{itemize}
-      \item Signatura: contexto $\times\, \mathcal{C}_{d_{0}} \to$ contexto.
-      \item Postcondición: $U' = U \mathbin{::} s_{\text{cur}}$; $H' = \emptyset$; $s_{\text{cur}}'$ se reinicializa
-        como estado limpio con colección activa $c'$ (es decir, sin filtros y con $L = []$).
+      \item Signatura: contexto $\times\, \mathcal{C} \to$ contexto.
+      \item Precondición: $c' \in \mathcal{C}$.
+      \item Postcondición: $U' = U \mathbin{::} s_{\text{cur}}$; $H' = \emptyset$; $s_{\text{cur}}'$ se
+        reinicializa como estado limpio con colección activa $c'$ (es decir, sin filtros y con $L = []$).
     \end{itemize}
 \end{enumerate}
 
+Los efectos descritos identifican cómo cambia el contexto, pero todavía no dicen \emph{qué resultados ve} el
+usuario tras cada acción. Esa lectura corresponde a la función semántica que se anticipó al introducir el
+estado y que ahora corresponde formalizar.
+
 \subsubsection*{Semántica: resultados de un estado}
 
-Lo más importante del modelo es decidir \emph{qué conjunto de entidades representa un estado}. Definimos una
-función semántica
+Lo más importante del modelo es decidir \emph{qué conjunto de entidades representa un estado}. La función
+semántica
 \[
   \llbracket \cdot \rrbracket \;:\; \mathcal{S} \longrightarrow \mathcal{P}(\mathcal{E})
 \]
-de manera recursiva sobre la lista de links. Empezamos por los predicados de filtrado, que actúan sobre una
-entidad $e$ con colección $c = \mathrm{coll}(e)$:
+formaliza esa lectura: a cada estado $s$ le asocia el subconjunto de $\mathcal{E}$ que, partiendo de la
+colección activa $c$ de $s$, satisface los filtros del tramo en curso y admite, para cada link de su
+historial $L$, una entidad compatible en el snapshot correspondiente. La función se define por casos sobre
+$L$ y, dado que en el caso con links se invoca a su vez sobre el snapshot $s'$ de cada uno, recorre de manera
+natural toda la cadena de tramos anteriores.
+
+Los predicados de filtrado actúan sobre una entidad $e$ con colección $c = \mathrm{coll}(e)$ que coincida con
+la colección activa del estado. Se separan en cuatro: dos para metadatos y dos para referencias, con la
+variante positiva y negativa en cada caso. Sea $\mathrm{dom}(F^{+}) = \{ k \in \mathcal{K} \mid F^{+}(k) \neq
+\emptyset\}$ el dominio efectivo de $F^{+}$, y análogamente para $F^{-}$, $R^{+}$, $R^{-}$. Entonces:
 
 \begin{align*}
-  \Phi^{+}(s, e) &\;\equiv\; \forall (k, V) \in F^{+}(c, \cdot) \;\; \exists v \in V :\; (k, v) \in \mathrm{meta}(e),\\
-  \Phi^{-}(s, e) &\;\equiv\; \forall (k, V) \in F^{-}(c, \cdot) \;\; \forall v \in V :\; (k, v) \notin \mathrm{meta}(e),\\
-  \Psi^{+}(s, e) &\;\equiv\; \forall (c', r, E) \in R^{+}(c, \cdot, \cdot) \;\; \forall e' \in E :\; (e, e', r) \in \mathrm{Ref},\\
-  \Psi^{-}(s, e) &\;\equiv\; \forall (c', r, E) \in R^{-}(c, \cdot, \cdot) \;\; \forall e' \in E :\; (e, e', r) \notin \mathrm{Ref}.
+  \Phi^{+}(s, e) &\;\equiv\; \forall k \in \mathrm{dom}(F^{+}) \;\; \exists v \in F^{+}(k) :\; (k, v) \in \mathrm{meta}(e),\\
+  \Phi^{-}(s, e) &\;\equiv\; \forall k \in \mathrm{dom}(F^{-}) \;\; \forall v \in F^{-}(k) :\; (k, v) \notin \mathrm{meta}(e),\\
+  \Psi^{+}(s, e) &\;\equiv\; \forall (c', r) \in \mathrm{dom}(R^{+}) \;\; \forall e' \in R^{+}(c', r) :\; (e, e', r) \in \mathrm{Ref},\\
+  \Psi^{-}(s, e) &\;\equiv\; \forall (c', r) \in \mathrm{dom}(R^{-}) \;\; \forall e' \in R^{-}(c', r) :\; (e, e', r) \notin \mathrm{Ref}.
 \end{align*}
 
-(La notación $F^{+}(c, \cdot)$ designa el conjunto de pares $(k, V)$ con $V = F^{+}(c, k) \neq \emptyset$; análogamente
-$R^{+}(c, \cdot, \cdot)$ designa las tripletas $(c', r, E)$ con $E = R^{+}(c, c', r) \neq \emptyset$.)
+Léase $\Phi^{+}$ como ``para cada clave inclusiva filtrada, $e$ tiene al menos uno de los valores
+exigidos''; $\Phi^{-}$, en simétrico, exige que ningún valor para una clave exclusiva aparezca en $e$.
+Los predicados de referencia $\Psi^{\pm}$ pivotan sobre los pares (colección referenciada, razón) presentes
+en los filtros, y exigen que las relaciones señaladas estén presentes (positivos) o ausentes (negativos) en
+$\mathrm{Ref}$.
 
-\paragraph{Caso base.} Si $L = []$,
+Para no repetir esos cuatro predicados en cada caso de la definición, agrupamos las condiciones del tramo en
+curso en una función auxiliar
 \[
-  \llbracket s \rrbracket \;=\; \bigl\{\, e \in \mathcal{E} \;\bigm|\; \mathrm{coll}(e) = c \,\land\, \Phi^{+}(s,e) \,\land\, \Phi^{-}(s,e) \,\land\, \Psi^{+}(s,e) \,\land\, \Psi^{-}(s,e) \,\bigr\}.
+  \mathrm{Filt}(s, e) \;\equiv\; \mathrm{coll}(e) = c \,\land\, \Phi^{+}(s,e) \,\land\, \Phi^{-}(s,e) \,\land\, \Psi^{+}(s,e) \,\land\, \Psi^{-}(s,e),
+\]
+donde $c$ es la colección activa de $s$. La función $\mathrm{Filt}$ expresa que $e$ habita en $c$ y supera
+todos los filtros del tramo actual, sin atender todavía al historial $L$.
+
+\paragraph{Caso base.} Si $L = []$, la lectura del estado se reduce a aplicar los filtros del tramo:
+\[
+  \llbracket s \rrbracket \;=\; \bigl\{\, e \in \mathcal{E} \;\bigm|\; \mathrm{Filt}(s, e) \,\bigr\}.
 \]
 
-\paragraph{Caso recursivo.} Si $L = L' \mathbin{::} \ell$ con $\ell = \langle d, c_{\text{from}}, r, s' \rangle$,
-sea $s_{L'}$ el estado obtenido de $s$ reemplazando $L$ por $L'$. Entonces
+\paragraph{Caso recursivo.} Si $L \neq []$, sea $\ell = \langle d, c_{\text{from}}, r, s' \rangle$ el
+\emph{último} link de $L$. A las condiciones del tramo se suma la exigencia de que exista un anclaje
+compatible en $\llbracket s' \rrbracket$:
 \[
-  \llbracket s \rrbracket \;=\; \bigl\{\, e \in \llbracket s_{L'} \rrbracket \;\bigm|\; \exists e'' \in \llbracket s' \rrbracket \;:\; \Theta_{d}(e, e'', r) \,\bigr\},
+  \llbracket s \rrbracket \;=\; \bigl\{\, e \in \mathcal{E} \;\bigm|\; \mathrm{Filt}(s, e) \,\land\, \exists e'' \in \llbracket s' \rrbracket \;:\; \Theta_{d}(e, e'', r) \,\bigr\},
 \]
 donde
 \[
@@ -251,27 +355,141 @@ donde
   \Theta_{\mathsf{bwd}}(e, e'', r) \;\equiv\; (e, e'', r) \in \mathrm{Ref}.
 \]
 
-Esta definición recursiva es exactamente la que se materializa en la sobrecarga recursiva
-\texttt{appendFilterClauses} de \texttt{NavigationDAO}: la rama no recursiva delega en
-\texttt{appendStateFilters} ($\Phi^{\pm}$ y $\Psi^{\pm}$ se traducen en cláusulas
-\texttt{EXISTS} y \texttt{NOT EXISTS} sobre las tablas \texttt{metadata} y \texttt{reference}); la rama recursiva
-añade, por cada link $\ell$, una subconsulta sobre \texttt{reference} que liga las entidades del nivel actual con
-las del estado anterior, eligiendo \texttt{target\_id} o \texttt{source\_id} según $\ell$ sea \textit{forward} o
-\textit{backward}. Las secciones~\ref{sec:filtrado} y~\ref{sec:navegacion_transversal} del capítulo de desarrollo
-describen esa traducción a SQL con el código a la vista, y la sección~\ref{sec:operaciones_conjuntos} hace lo
-propio para la unión.
+La definición actúa una sola vez en el nivel actual y delega los links restantes en la recursión: la
+pertenencia $e'' \in \llbracket s' \rrbracket$ es una invocación a la propia función semántica sobre el
+snapshot del último link, no una comprobación sintáctica. El snapshot $s'$ es un estado completo, con sus
+propios filtros y, si su historial $L'$ no está vacío, con sus propios links; al evaluar $\llbracket s'
+\rrbracket$ esos filtros se aplican mediante $\mathrm{Filt}(s', \cdot)$ y, si quedan links, se descompone de
+nuevo por el último de $L'$. La cadena de restricciones se reconstruye así descendiendo por los snapshots,
+nivel a nivel, hasta llegar al caso base.
+
+Conviene fijar el orden de los papeles en cada paso. En el nivel actual $e$ es una entidad de la colección
+activa $c$ de $s$; el anclaje exigido es una entidad $e''$ del snapshot $s'$, cuya colección es
+$c_{\text{from}}$. La condición $\Theta_d$ las conecta a través de la razón $r$: si el link es
+\textit{forward}, $e''$ es el origen y $e$ el destino; si es \textit{backward}, los papeles se invierten.
+En el nivel inmediatamente inferior, lo que aquí era $e''$ pasa a desempeñar el papel del nuevo $e$, y el
+snapshot de su propio último link aporta el siguiente anclaje.
+
+Esta lectura es exactamente la que se materializa en la sobrecarga recursiva de \texttt{appendFilterClauses}
+(la que recibe la lista de links y un índice de profundidad) en \texttt{NavigationDAO}: cuando no quedan
+links, delega en \texttt{appendStateFilters}, donde $\Phi^{\pm}$ y $\Psi^{\pm}$ se traducen en cláusulas
+\texttt{EXISTS} y \texttt{NOT EXISTS} sobre las tablas \texttt{metadata} y \texttt{reference}; cuando los
+hay, añade, por cada link $\ell$, una subconsulta sobre \texttt{reference} que liga las entidades del nivel
+actual con las del snapshot, eligiendo \texttt{target\_id} o \texttt{source\_id} según $\ell$ sea
+\textit{forward} o \textit{backward}, e invoca de nuevo \texttt{appendStateFilters} y la recursión sobre el
+snapshot, de manera que sus filtros y, si los tuviera, sus propios links se inyectan en el nivel
+correspondiente de la consulta. Las secciones~\ref{sec:filtrado} y~\ref{sec:navegacion_transversal} del
+capítulo de desarrollo describen esa traducción a SQL con el código a la vista.
 
 \subsubsection*{Semántica de la unión}
 
-El operador de unión combina el estado activo con todos los estados guardados en $U$. Su semántica es la unión
-conjuntista de los resultados individuales:
+La semántica anterior describe el resultado de un único estado. Cuando interviene la operación
+$\textsc{union}$, el contexto pasa a alojar una colección simultánea de estados, los acumulados en $U$, y la
+lectura agregada se vuelve la más simple posible: la unión conjuntista de los resultados de cada uno de
+ellos, incluido el activo. Formalmente,
 \[
   \llbracket \Sigma \rrbracket_{\cup} \;=\; \llbracket s_{\text{cur}} \rrbracket \;\cup\; \bigcup_{s \in U} \llbracket s \rrbracket.
 \]
 
-En el código, esta semántica se realiza en \texttt{NavigationDAO.getUnionEntities}, que emite una única consulta
-SQL en la que cada estado de $U \cup \{s_{\text{cur}}\}$ contribuye con un bloque de condiciones unidas mediante
-\texttt{OR}, exactamente la traducción de la unión definida arriba (sección~\ref{sec:operaciones_conjuntos}).
+En el código, esta semántica se realiza en \texttt{NavigationDAO.getUnionEntities}, que emite una única
+consulta SQL en la que cada estado de $U \cup \{s_{\text{cur}}\}$ contribuye con un bloque de condiciones
+unidas mediante \texttt{OR}, exactamente la traducción de la unión definida arriba
+(sección~\ref{sec:operaciones_conjuntos}).
+
+\subsubsection*{Ejemplo de evolución del estado}
+
+Para fijar las ideas anteriores conviene seguir una secuencia de acciones y observar cómo cambian el estado
+activo y el contexto en cada paso. Trabajaremos sobre tres
+colecciones genéricas $A$, $B$ y $C$ del mismo dataset, con entidades representativas $a_{i} \in A$,
+$b_{i} \in B$ y $c_{i} \in C$, una clave de metadato $k$ que admite los valores $v_{1}$ y $v_{2}$, y dos
+razones $r_{1}, r_{2} \in \mathcal{R}$ que conectan respectivamente pares de $A$ con $B$ y de $B$ con $A$.
+
+Partimos de un contexto inicial $\Sigma_{0}$ con
+$s_{\text{cur}} = \langle A,\, \emptyset,\, \emptyset,\, \emptyset,\, \emptyset,\, [\,] \rangle$ y
+$H = U = T = \emptyset$.
+
+\begingroup
+\emergencystretch=3em
+\begin{enumerate}
+  \item \textbf{$\textsc{addMfilter}(k, v_{1})$.}
+    El estado activo pasa a tener $F^{+} = \{\, k \mapsto \{v_{1}\} \,\}$; el resto de componentes no
+    cambia. Pensemos en $\llbracket s_{\text{cur}} \rrbracket$ como el subconjunto
+    $\{a_{1}, a_{3}, a_{7}\} \subseteq A$ de entidades cuya clave $k$ contiene el valor $v_{1}$.
+
+  \item \textbf{$\textsc{link}(B, r_{1})$.}
+    El contexto crea
+    \[
+      \ell_{1} \;=\; \langle\, \mathsf{fwd},\; A,\; r_{1},\; s_{\text{snap},1} \,\rangle,
+    \]
+    donde $s_{\text{snap},1}$ es una copia del estado anterior al salto, con $F^{+} = \{k \mapsto \{v_{1}\}\}$
+    y $L = [\,]$. El nuevo estado activo cambia su colección a $B$, vacía sus cuatro mapas de filtros y
+    conserva el link recién creado en $L$. Además, $\ell_{1}$ se apila en $T$. Ahora
+    $\llbracket s_{\text{cur}} \rrbracket$ recoge las entidades de $B$ relacionadas mediante $r_{1}$ con
+    alguna de $\{a_{1}, a_{3}, a_{7}\}$; supondremos que son $\{b_{2}, b_{5}, b_{6}\}$.
+
+  \item \textbf{$\textsc{save}$.}
+    El contexto apila una copia inmutable de $s_{\text{cur}}$ en $H$. Ni el estado activo, ni $L$, ni $T$,
+    ni $U$ cambian; lo único que sucede es que $H$ guarda un marcador del tramo actual al que podremos
+    regresar en bloque más adelante.
+
+  \item \textbf{$\textsc{addNotMfilter}(k, v_{2})$.}
+    El estado activo añade $F^{-} = \{\, k \mapsto \{v_{2}\} \,\}$ al nuevo estado. La intención es
+    excluir del tramo actual aquellas entidades de $B$ cuya clave $k$ contiene $v_{2}$. Si $b_{5}$ lo
+    contuviera, dejaría de aparecer y $\llbracket s_{\text{cur}} \rrbracket$ quedaría como
+    $\{b_{2}, b_{6}\}$. La copia guardada en $H$ no se ve afectada: sigue representando el estado tal y
+    como estaba al hacer el $\textsc{save}$.
+
+  \item \textbf{$\textsc{link}(A, r_{2})$.}
+    Se crea
+    \[
+      \ell_{2} \;=\; \langle\, \mathsf{fwd},\; B,\; r_{2},\; s_{\text{snap},2} \,\rangle,
+    \]
+    con $s_{\text{snap},2}$ copia del tramo anterior, incluidos el $F^{-}$ recién aplicado y la lista de
+    links $[\ell_{1}]$. El nuevo estado activo entra en $A$ con los cuatro mapas de filtros vacíos y con
+    $L = [\ell_{1}, \ell_{2}]$. El link $\ell_{2}$ se apila también en $T$. Las entidades visibles en $A$ 
+    son ahora aquellas relacionadas mediante $r_{2}$ con alguna de $\{b_{2}, b_{6}\}$, supongamos $\{a_{2}, a_{4}\}$.
+
+  \item \textbf{$\textsc{goback}$.}
+    Se desapila $\ell_{2}$ desde $T$. La nueva colección activa pasa a ser $B$ y los cuatro mapas de
+    filtros se copian del snapshot $s_{\text{snap},2}$: vuelve a estar $F^{-} = \{k \mapsto \{v_{2}\}\}$ y
+    los demás vacíos. A $L$ se le añade un nuevo link
+    \[
+      \ell_{\text{bwd}} \;=\; \langle\, \mathsf{bwd},\; A,\; r_{2},\; s_{\text{cur},\,\text{prev}} \,\rangle,
+    \]
+    donde $s_{\text{cur},\,\text{prev}}$ es el snapshot del tramo de $A$ que acabamos de abandonar. La lista
+    $L$ pasa a ser $[\ell_{1}, \ell_{2}, \ell_{\text{bwd}}]$ y la pila $T$ queda solo con $\ell_{1}$. El
+    conjunto visible vuelve a estar formado por entidades de $B$ del estilo de $\{b_{2}, b_{6}\}$, pero
+    ahora la semántica añade la exigencia de que cada una mantenga conexión $r_{2}$ con alguna entidad del
+    snapshot del tramo retrocedido.
+
+  \item \textbf{$\textsc{restore}$.}
+    El contexto recupera el estado guardado en $H$ y lo instala como $s_{\text{cur}}$, descartando en bloque
+    los cambios del tramo introducidos desde el $\textsc{save}$. La colección vuelve a ser $B$, $F^{-}$ se
+    vacía, $L$ recupera $[\ell_{1}]$ y desaparece toda la información añadida en los pasos~4--6 al estado
+    activo. En cambio, las pilas auxiliares $T$ y $U$ no participan del mecanismo: $T$ sigue con $\ell_{1}$
+    en la cima y $U$ permanece vacío. Las entidades visibles vuelven a ser $\{b_{2}, b_{5}, b_{6}\}$.
+
+  \item \textbf{$\textsc{union}(C)$.}
+    El estado activo, restaurado en el paso anterior, se anexa a $U$. El historial $H$ se vacía y se crea
+    un estado nuevo y limpio con colección activa $C$, sin filtros y con $L = [\,]$. A partir de ahora,
+    cualquier evaluación semántica de la sesión usa $\llbracket \Sigma \rrbracket_{\cup}$, esto es, la
+    unión del conjunto de entidades de $C$ sin restricciones con $\{b_{2}, b_{5}, b_{6}\}$. La operación,
+    en suma, expande el alcance de la sesión: lo acumulado en un tramo queda guardado en $U$ y la
+    exploración puede tomar un nuevo punto de partida sin perderlo.
+\end{enumerate}
+\endgroup
+
+El recorrido ilustra cuatro mecanismos en los que conviene reparar. El primero, la asimetría entre $L$ y los
+filtros: aquella crece de forma estrictamente monótona conforme se navega, mientras que estos viven solo en
+el tramo actual y migran al snapshot cuando se cruza un link. El segundo, la composición que opera la
+recursión semántica: cada nivel aplica las restricciones que le son propias, y el resultado global emerge de
+encadenarlas a través de la relación $\mathrm{Ref}$ marcada por la dirección de cada link. El tercero, la
+diferencia entre $\textsc{goback}$ y $\textsc{restore}$: el primero opera sobre $T$ y deja huella en $L$,
+manteniendo la cadena de links como historial que la semántica seguirá usando; el segundo opera sobre $H$ y
+reemplaza $s_{\text{cur}}$ en bloque, sin marca en $L$ ni en $T$. Y el cuarto, la naturaleza de
+$\textsc{union}$ como puente entre exploraciones independientes: anexa el estado actual completo a $U$ y
+abre un tramo limpio en otra colección, dejando a la semántica de la unión la responsabilidad de combinar
+los resultados.
 
 \section{Metodología de Ingeniería del Software}
 
@@ -591,8 +809,8 @@ de datos la responsabilidad de ejecutar las operaciones de filtrado y recuperaci
 razonable.
 
 El estado de navegación, en cambio, es ligero, momentáneo y específico de cada usuario: recoge los
-filtros acumulados, el historial de transiciones entre colecciones y los conjuntos de resultados
-en construcción. Hemos decidido mantenerlo en memoria dentro de la sesión HTTP por su naturalidad, 
+filtros del tramo activo, el historial de transiciones entre colecciones con sus snapshots y los
+conjuntos de resultados en construcción. Hemos decidido mantenerlo en memoria dentro de la sesión HTTP por su naturalidad, 
 dado su ciclo de vida acotado y su reducido tamaño, además de evitar serializar y deserializar el contexto de 
 navegación en cada petición.
 

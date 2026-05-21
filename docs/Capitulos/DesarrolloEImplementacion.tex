@@ -312,10 +312,10 @@ entre colecciones.
     \node[umlbody, text width=5.5cm, below=-0.4pt of StateN.south, anchor=north] (StateA) {%
       - datasetId : int \\
       - currentCollectionId : int \\
-      - mfilters : Map\string<Int, Map\string<Str, Set\string<Str\string>{}\string>{}\string> \\
-      - notMfilters : Map\string<Int, Map\string<Str, Set\string<Str\string>{}\string>{}\string> \\
-      - rfilters : Map\string<Int, Map\string<Int, Map\string<Str, Set\string<Int\string>{}\string>{}\string>{}\string> \\
-      - notRfilters : Map\string<Int, Map\string<Int, Map\string<Str, Set\string<Int\string>{}\string>{}\string>{}\string> \\
+      - mfilters : Map\string<Str, Set\string<Str\string>{}\string> \\
+      - notMfilters : Map\string<Str, Set\string<Str\string>{}\string> \\
+      - rfilters : Map\string<Int, Map\string<Str, Set\string<Int\string>{}\string>{}\string> \\
+      - notRfilters : Map\string<Int, Map\string<Str, Set\string<Int\string>{}\string>{}\string> \\
       - links : List\string<Link\string>
     };
     \node[umlbody, text width=5.5cm, below=-0.4pt of StateA.south, anchor=north] (StateM) {%
@@ -323,8 +323,8 @@ entre colecciones.
       + removeMetadataFilter(String, String) : void \\
       + addReferenceFilter(int, String, int) : void \\
       + removeReferenceFilter(int, String, int) : void \\
-      + link(int, String) : void \\
-      + goback(int) : void
+      + link(int) : void \\
+      + goback(int, State) : void
     };
 
 
@@ -373,22 +373,23 @@ entre colecciones.
   \label{fig:umlClases}
 \end{figure}
 
-    \subsection{La clase \texttt{State}: filtros y contexto acumulado}
+    \subsection{La clase \texttt{State}: filtros del tramo e historial de transiciones}
 
 La clase \texttt{State} representa el contexto de exploración de un usuario en un momento dado.
 Encapsula, por un lado, los filtros activos sobre la colección actual y, por otro, el historial
 de transiciones realizadas entre colecciones durante la sesión actual.
 
-Los filtros se organizan en cuatro estructuras \texttt{HashMap} anidadas. Los filtros de metadatos
-(\texttt{mfilters}) mapean cada atributo a un conjunto de valores seleccionados, expresando que las
-entidades resultantes deben satisfacer al menos uno de dichos valores por atributo. Su contraparte
-negativa (\texttt{notMfilters}) excluye las entidades que coincidan con los valores indicados.
-Los filtros de referencia (\texttt{rfilters}) operan sobre relaciones entre colecciones: para
-cada colección referenciada y tipo de relación, almacenan el conjunto de identificadores de
-entidades con los que debe existir vínculo. De igual modo, \texttt{notRfilters} excluye las
-entidades que presenten dichos vínculos. Todos estos mapas están indexados por el identificador
-de la colección activa, de forma que el mismo objeto \texttt{State} puede acumular filtros
-correspondientes a distintas colecciones visitadas a lo largo de la navegación.
+Los filtros del tramo en curso se organizan en cuatro estructuras \texttt{HashMap}. Los filtros de
+metadatos (\texttt{mfilters}) asocian cada atributo a un conjunto de valores seleccionados,
+expresando que las entidades resultantes deben satisfacer al menos uno de dichos valores por
+atributo. Su contraparte negativa (\texttt{notMfilters}) excluye las entidades que coincidan con los
+valores indicados. Los filtros de referencia (\texttt{rfilters}) operan sobre relaciones entre
+colecciones: para cada pareja de colección referenciada y tipo de relación, almacenan el conjunto de
+identificadores de entidades con los que debe existir vínculo. De igual modo, \texttt{notRfilters}
+excluye las entidades que presenten dichos vínculos. Estos cuatro mapas describen únicamente el
+tramo en curso: cuando el usuario salta a otra colección mediante un \texttt{link}, los filtros del
+tramo previo se preservan en el snapshot capturado dentro del enlace, y el estado activo arranca
+limpio sobre la nueva colección.
 
 Junto a los filtros, \texttt{State} mantiene una lista de objetos \texttt{Link}. Cada
 \texttt{Link} registra una transición entre colecciones: almacena la dirección de la transición
@@ -406,10 +407,9 @@ cómo se ve un \texttt{State} tras una secuencia típica de operaciones:
 el usuario parte de la colección \textit{Movies} en el dataset TMDB,
 añade un filtro de metadatos \textit{Genres = Action} y a continuación
 navega hacia \textit{People} siguiendo la relación \textit{Director}.
-La colección activa ha pasado a \textit{People}, pero el estado
-conserva tanto los filtros aplicados previamente sobre \textit{Movies},
-como una entrada en \texttt{links} que registra la transición y guarda
-una instantánea del estado en el instante del salto.
+La colección activa ha pasado a \textit{People} y los cuatro mapas de filtros del estado activo
+quedan vacíos, mientras que la entrada añadida a \texttt{links} registra la transición y guarda como
+snapshot el estado previo al salto, donde sobreviven los filtros aplicados sobre \textit{Movies}.
 
 \begin{figure}[H]
   \centering
@@ -431,11 +431,7 @@ una instantánea del estado en el instante del salto.
       \end{tabular}
       \\[-4pt]
       \tikz[baseline]{\node[field, text width=11cm]{%
-        \textbf{mfilters}: \{\ 1 (Movies) $\to$ \{\ ``Genres'' $\to$
-        \{``Action''\}\ \}\ \}%
-      };} \\[3pt]
-      \tikz[baseline]{\node[field, text width=11cm]{%
-        \textbf{notMfilters} / \textbf{rfilters} / \textbf{notRfilters}: \{\ \} (vacíos)%
+        \textbf{mfilters} / \textbf{notMfilters} / \textbf{rfilters} / \textbf{notRfilters}: \{\ \} (vacíos)%
       };} \\[3pt]
       \tikz[baseline]{\node[field, text width=11cm]{%
         \textbf{links}: \\[2pt]
@@ -443,7 +439,7 @@ una instantánea del estado en el instante del salto.
         \quad\phantom{[0] }reason = ``Director'', \\
         \quad\phantom{[0] }state = \tikz[baseline]{\node[snap]{%
           \textit{snapshot}: currentCollectionId = 1, \\
-          \phantom{snapshot:\ }mfilters = \{ Movies $\to$ Genres $\to$ Action \}, \\
+          \phantom{snapshot:\ }mfilters = \{ ``Genres'' $\to$ \{``Action''\} \}, \\
           \phantom{snapshot:\ }links = [\ ]%
         };})%
       };}%
@@ -451,10 +447,10 @@ una instantánea del estado en el instante del salto.
   \end{tikzpicture}
   \caption[Ejemplo de objeto \texttt{State}]{Instantánea de un
   \texttt{State} tras filtrar películas por \textit{Genres = Action}
-  y navegar a \textit{People} por la relación \textit{Director}. La
-  colección activa es ya \textit{People}, pero los filtros aplicados
-  sobre \textit{Movies} y la transición que cruzó al usuario quedan
-  registrados en \texttt{mfilters} y \texttt{links}, respectivamente.}
+  y navegar a \textit{People} por la relación \textit{Director}. El estado
+  activo ya describe \textit{People} con los cuatro mapas de filtros vacíos;
+  los filtros aplicados sobre \textit{Movies} y la transición que cruzó al
+  usuario quedan registrados en el snapshot capturado dentro de \texttt{links}.}
   \label{fig:stateExample}
 \end{figure}
 
@@ -744,8 +740,8 @@ Hasta ahora, hemos descrito los mecanismos de filtrado que operan dentro de una 
 dadas las entidades de \textit{Movies}, se restringe el conjunto según atributos propios
 o según vínculos con entidades concretas de otras colecciones. Entretanto, el sistema
 permite también \textit{trasladarse} de una colección a otra siguiendo una relación,
-manteniendo y llevando el contexto de filtrado acumulado. Este mecanismo es lo que se 
-denomina \textit{navegación transversal}.
+preservando en el historial los filtros del tramo previo de modo que la consulta resultante
+los integre por composición. Este mecanismo es lo que se denomina \textit{navegación transversal}.
 
 Damos un ejemplo concreto en TMDB: el usuario está explorando películas con el filtro de género
 \textit{Action} activo. Desde ese contexto, decide navegar hacia la colección
@@ -765,7 +761,7 @@ en \texttt{StateManager}, reproducida en el Código~\ref{lst:link}, tiene cuatro
 public void link(int targetCollectionId, String reason) {
     Link newLink = new Link(true, this.cur.getCurrentCollectionId(),
                             reason, new State(this.cur));
-    this.cur.link(targetCollectionId, reason);
+    this.cur.link(targetCollectionId);
     this.cur.getLinks().add(newLink);
     this.linkStack.push(newLink);
 }
@@ -773,13 +769,15 @@ public void link(int targetCollectionId, String reason) {
 
 Primero, se construye un nuevo objeto \texttt{Link} marcado como transición hacia delante
 (\texttt{forward = true}). Este objeto almacena la colección de origen, el tipo de
-relación seguida y una copia profunda del estado activo en el momento de la transición,
-preservando así los filtros que estaban activos antes del salto. Segundo, se actualiza la
-colección activa en \texttt{cur} a la colección destino. Tercero, el nuevo \texttt{Link}
-se añade a la lista de transiciones del propio \texttt{State} (\texttt{cur.getLinks()}),
-que es la que el \texttt{NavigationDAO} consume al construir las queries. Cuarto, ese
-mismo \texttt{Link} se apila en \texttt{linkStack}, la pila auxiliar que mantiene
-\texttt{StateManager} para conocer cuál es la última transición revertible en una
+relación seguida y una copia profunda del estado activo en el momento de la transición; los
+filtros del tramo previo viven a partir de ese instante únicamente en el snapshot del enlace,
+sin contaminar el tramo siguiente. Segundo, se invoca \texttt{cur.link(targetCollectionId)}, que
+desplaza la colección activa en \texttt{cur} a la colección destino y vacía los cuatro mapas de
+filtros del estado activo, de modo que el nuevo tramo arranca limpio. Tercero, el nuevo
+\texttt{Link} se añade a la lista de transiciones del propio \texttt{State}
+(\texttt{cur.getLinks()}), que es la que el \texttt{NavigationDAO} consume al construir las
+queries. Cuarto, ese mismo \texttt{Link} se apila en \texttt{linkStack}, la pila auxiliar que
+mantiene \texttt{StateManager} para conocer cuál es la última transición revertible en una
 eventual operación de \texttt{goback}.
 
 La Figura~\ref{fig:seqLink} resume la secuencia de mensajes entre el
@@ -787,8 +785,9 @@ cliente, el \texttt{NavigationServlet} y el modelo en memoria al
 ejecutar una operación de \textit{link}. Se observa que el servlet
 invoca primero \texttt{save()} (volcando una copia del estado actual a
 \texttt{historyStack}) y a continuación \texttt{link()}, dentro de
-la cual \texttt{StateManager} actualiza tanto la colección activa de
-\texttt{cur} como sus listas internas \texttt{links} y \texttt{linkStack}.
+la cual \texttt{StateManager} construye el snapshot, desplaza la
+colección activa de \texttt{cur} vaciando sus filtros y registra el
+enlace tanto en \texttt{cur.getLinks()} como en \texttt{linkStack}.
 
 \begin{figure}[H]
   \centering
@@ -807,7 +806,7 @@ la cual \texttt{StateManager} actualiza tanto la colección activa de
       \begin{call}{nav}{link(collectionId, reason)}{sm}{}
         \begin{call}{sm}{new Link(true, curColl, reason, new State(cur))}{sm}{}
         \end{call}
-        \begin{call}{sm}{link(collectionId, reason)}{state}{}
+        \begin{call}{sm}{link(collectionId)}{state}{}
         \end{call}
         \begin{call}{sm}{getLinks().add(newLink)}{state}{}
         \end{call}
@@ -820,8 +819,9 @@ la cual \texttt{StateManager} actualiza tanto la colección activa de
   mensajes durante la operación \texttt{link}. \texttt{save()} guarda
   una copia profunda del estado en \texttt{historyStack}; a
   continuación \texttt{link()} crea el nuevo \texttt{Link} con
-  instantánea del estado previo, actualiza \texttt{cur} y lo apila
-  tanto en \texttt{cur.getLinks()} como en \texttt{linkStack}.}
+  instantánea del estado previo, cambia la colección activa de
+  \texttt{cur} vaciando sus filtros, y apila el enlace tanto en
+  \texttt{cur.getLinks()} como en \texttt{linkStack}.}
   \label{fig:seqLink}
 \end{figure}
 
@@ -829,16 +829,17 @@ La operación \texttt{goback} revierte la última transición hacia delante real
 la sesión. Su implementación se apoya en \texttt{linkStack}: extrae de la pila el último
 \texttt{Link} apilado por \texttt{link()}, construye un nuevo \texttt{Link} con dirección
 hacia atrás (\texttt{forward = false}) que registra esa reversión en la lista de
-transiciones de \texttt{cur}, y restaura como colección activa la colección de origen
-almacenada en el \texttt{Link} extraído. El Código~\ref{lst:goback} reproduce el método
-completo.
+transiciones de \texttt{cur}, y restaura sobre \texttt{cur} tanto la colección de origen
+como los cuatro mapas de filtros guardados en el snapshot del \texttt{Link} extraído, de
+modo que el tramo recuperado vuelve a ser exactamente el que el usuario había abandonado.
+El Código~\ref{lst:goback} reproduce el método completo.
 
 \begin{lstlisting}[style=javaStyle, caption=Operación \texttt{goback}, label=lst:goback]
 public void goback() {
     Link last = this.linkStack.pop();
     Link backLink = new Link(false, this.cur.getCurrentCollectionId(),
                              last.getReason(), new State(this.cur));
-    this.cur.goback(last.getCollectionId());
+    this.cur.goback(last.getCollectionId(), last.getState());
     this.cur.getLinks().add(backLink);
 }
 \end{lstlisting}
@@ -876,7 +877,7 @@ historial monótonamente creciente.
         \end{call}
         \begin{call}{sm}{new Link(false, curColl, last.reason, new State(cur))}{sm}{}
         \end{call}
-        \begin{call}{sm}{goback(last.collectionId)}{state}{}
+        \begin{call}{sm}{goback(last.collectionId, last.state)}{state}{}
         \end{call}
         \begin{call}{sm}{getLinks().add(backLink)}{state}{}
         \end{call}
@@ -1606,9 +1607,9 @@ historial de navegación (Figura~\ref{fig:flujo1_state}).
   \centering
   \fbox{\begin{minipage}{0.92\linewidth}\small
   \texttt{cur.currentCollectionId} = Movies (1) \\
-  \texttt{mfilters}    = \{ 1 $\to$ \{ Genres $\to$ \{Action\} \} \} \\
-  \texttt{notMfilters} = \{ 1 $\to$ \{ Genres $\to$ \{Drama\} \} \} \\
-  \texttt{rfilters}    = \{ 1 $\to$ \{ 3 $\to$ \{ Production $\to$ \{420\} \} \} \}\quad \texttt{notRfilters} = \{\,\} \\
+  \texttt{mfilters}    = \{ Genres $\to$ \{Action\} \} \\
+  \texttt{notMfilters} = \{ Genres $\to$ \{Drama\} \} \\
+  \texttt{rfilters}    = \{ 3 $\to$ \{ Production $\to$ \{420\} \} \}\quad \texttt{notRfilters} = \{\,\} \\
   \texttt{linkList}    = [\,]\quad \texttt{unionSet} = [\,]
   \end{minipage}}
   \caption[Estado final del Flujo~1]{Estado final del Flujo~1, con un filtro inclusivo, uno de
@@ -1697,9 +1698,11 @@ de alguna película y, además, nacieron en Los Angeles? El conjunto se
 restringe a $\{$\textit{Leonardo DiCaprio}$\}$, único actor del
 dataset con esa ciudad como lugar de nacimiento
 (Figura~\ref{fig:flujo2_paso2}). Conviene observar que el filtro se
-almacena en el \texttt{State} de \textit{People}, no en el de
-\textit{Movies}, pero queda registrado dentro del \texttt{linkList} y
-volverá a tener efecto en el paso siguiente.
+almacena en el estado activo mientras \textit{People} es la colección actual; en
+el paso siguiente, \texttt{goback} vaciará los filtros del estado al regresar a
+\textit{Movies}, pero su huella sobrevivirá dentro del snapshot que ese mismo
+\texttt{goback} registre como link de retroceso, y volverá a tener efecto en la
+SQL del paso final.
 
 \begin{figure}[h]
   \centering
@@ -1723,9 +1726,9 @@ ahora interrogamos qué películas tienen en su reparto a alguna de
 esas personas filtradas, es decir, a algún actor nacido en Los
 Angeles. La generación de SQL recorre la cadena
 \textit{Movies} $\to$ \textit{People} $\to$ \textit{Movies}
-arrastrando el filtro \textit{Birthplace} guardado en el \texttt{Link}
-intermedio, y devuelve las películas cuyo reparto incluye a alguna
-de esas personas. El resultado es una única película,
+aplicando, en el tramo intermedio, el filtro \textit{Birthplace} preservado en
+el snapshot del \texttt{Link} de retroceso, y devuelve las películas cuyo
+reparto incluye a alguna de esas personas. El resultado es una única película,
 $\{$\textit{Inception}$\}$, en la que actúa \textit{DiCaprio}
 (Figura~\ref{fig:flujo2_paso3}). Sin el filtro intermedio sobre
 \textit{People}, el viaje de ida y vuelta habría devuelto las cuatro
