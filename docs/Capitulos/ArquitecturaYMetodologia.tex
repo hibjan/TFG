@@ -809,8 +809,8 @@ de datos la responsabilidad de ejecutar las operaciones de filtrado y recuperaci
 razonable.
 
 El estado de navegación, en cambio, es ligero, momentáneo y específico de cada usuario: recoge los
-filtros acumulados, el historial de transiciones entre colecciones y los conjuntos de resultados
-en construcción. Hemos decidido mantenerlo en memoria dentro de la sesión HTTP por su naturalidad, 
+filtros del tramo activo, el historial de transiciones entre colecciones con sus snapshots y los
+conjuntos de resultados en construcción. Hemos decidido mantenerlo en memoria dentro de la sesión HTTP por su naturalidad, 
 dado su ciclo de vida acotado y su reducido tamaño, además de evitar serializar y deserializar el contexto de 
 navegación en cada petición.
 

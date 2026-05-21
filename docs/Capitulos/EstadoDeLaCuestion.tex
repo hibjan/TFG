@@ -285,8 +285,8 @@ cadenas), cada una con su propio espacio de atributos, y vinculadas entre sí po
 tipadas. Esa estructura introduce dos primitivas que no tienen análogo directo en Clavy. Por un lado, los
 filtros de referencia, que permiten restringir los objetos visibles de una colección por su vinculación con
 entidades concretas de otra. Por otro lado, la navegación transversal, que permite trasladarse de una
-colección a otra siguiendo una relación y arrastrando el contexto de filtrado acumulado, con un historial
-de transiciones que se materializa en subconsultas SQL anidadas. A estas dos primitivas se añade la
+colección a otra siguiendo una relación, preservando los filtros del tramo previo en el snapshot del enlace
+para que la cadena completa de tramos se materialice en subconsultas SQL anidadas. A estas dos primitivas se añade la
 operación de unión, que permite al usuario construir varios contextos de exploración de manera
 independiente y combinarlos a posteriori para obtener el conjunto de entidades que satisfacen al menos
 uno de ellos. Esta operación cubre casos de uso, como la búsqueda de personas que han participado
