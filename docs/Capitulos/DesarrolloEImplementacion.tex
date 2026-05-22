@@ -216,7 +216,7 @@ datos y se utiliza de manera uniforme como clave foránea desde el resto
 del esquema. El segundo, \texttt{original\_id}, preserva el
 identificador heredado de la fuente externa y mantiene la trazabilidad
 con esa fuente, lo que permite reconciliar la información ante
-reimportaciones del mismo dataset sin romper las referencias internas.
+reimportaciones del mismo \textit{dataset} sin romper las referencias internas.
 Las restricciones de unicidad
 (\texttt{UQ(dataset\_id, original\_id)} en \texttt{collections} y
 \texttt{UQ(collection\_global\_id, original\_id)} en \texttt{entities})
@@ -255,7 +255,7 @@ relaciones entre colecciones.
 \label{sec:representacionContexto}
 
 Para comprender las decisiones de diseño del modelo de representación interno, es útil partir de un ejemplo
-concreto: la estructura del dataset de The Movie Database (TMDB), que fue la primera y principal fuente de datos
+concreto: la estructura del \textit{dataset} de The Movie Database (TMDB), que fue la primera y principal fuente de datos
 utilizada durante el desarrollo. TMDB organiza su información en torno a cinco tipos
 de entidades: películas, series de televisión, personas, productoras y cadenas de televisión.
 Cada tipo de entidad posee atributos propios --- como el género o la fecha de estreno en el caso
@@ -266,7 +266,7 @@ personas, una serie puede estar asociada a una cadena de televisión concreta, e
 base de datos suficientemente compleja, con atributos específicos al dominio de cada entidad, y posibles relaciones de 
 navegación, con aristas que conectan entidades de igual o distinta naturaleza.
 
-Estas relaciones son bidireccionales en el dataset procesado: si una película referencia a una
+Estas relaciones son bidireccionales en el \textit{dataset} procesado: si una película referencia a una
 persona como \textit{Director}, esa persona referencia a su vez a la película bajo la razón
 \textit{Director}. Esto permite recorrer el grafo de relaciones en ambas direcciones desde
 cualquier punto de partida.
@@ -388,7 +388,7 @@ colecciones: para cada pareja de colección referenciada y tipo de relación, al
 identificadores de entidades con los que debe existir vínculo. De igual modo, \texttt{notRfilters}
 excluye las entidades que presenten dichos vínculos. Estos cuatro mapas describen únicamente el
 tramo en curso: cuando el usuario salta a otra colección mediante un \texttt{link}, los filtros del
-tramo previo se preservan en el snapshot capturado dentro del enlace, y el estado activo arranca
+tramo previo se preservan en el \textit{snapshot} capturado dentro del enlace, y el estado activo arranca
 limpio sobre la nueva colección.
 
 Junto a los filtros, \texttt{State} mantiene una lista de objetos \texttt{Link}. Cada
@@ -404,12 +404,12 @@ del estado en distintos puntos de la sesión.
 
 A modo de ejemplo concreto, la Figura~\ref{fig:stateExample} muestra
 cómo se ve un \texttt{State} tras una secuencia típica de operaciones:
-el usuario parte de la colección \textit{Movies} en el dataset TMDB,
+el usuario parte de la colección \textit{Movies} en el \textit{dataset} TMDB,
 añade un filtro de metadatos \textit{Genres = Action} y a continuación
 navega hacia \textit{People} siguiendo la relación \textit{Director}.
 La colección activa ha pasado a \textit{People} y los cuatro mapas de filtros del estado activo
 quedan vacíos, mientras que la entrada añadida a \texttt{links} registra la transición y guarda como
-snapshot el estado previo al salto, donde sobreviven los filtros aplicados sobre \textit{Movies}.
+\textit{snapshot} el estado previo al salto, donde sobreviven los filtros aplicados sobre \textit{Movies}.
 
 \begin{figure}[H]
   \centering
@@ -450,7 +450,7 @@ snapshot el estado previo al salto, donde sobreviven los filtros aplicados sobre
   y navegar a \textit{People} por la relación \textit{Director}. El estado
   activo ya describe \textit{People} con los cuatro mapas de filtros vacíos;
   los filtros aplicados sobre \textit{Movies} y la transición que cruzó al
-  usuario quedan registrados en el snapshot capturado dentro de \texttt{links}.}
+  usuario quedan registrados en el \textit{snapshot} capturado dentro de \texttt{links}.}
   \label{fig:stateExample}
 \end{figure}
 
@@ -458,7 +458,7 @@ snapshot el estado previo al salto, donde sobreviven los filtros aplicados sobre
 
 \texttt{StateManager} es el punto de entrada a través del cual los controladores interactúan
 con el estado de navegación. Se instancia al inicio de la sesión, cuando el usuario selecciona
-un dataset y una colección de partida, y se almacena como atributo de la sesión HTTP bajo la
+un \textit{dataset} y una colección de partida, y se almacena como atributo de la sesión HTTP bajo la
 clave \texttt{navState}.
 
 Internamente, \texttt{StateManager} coordina tres estructuras con ciclos de vida distintos.
@@ -485,12 +485,12 @@ Por ejemplo, al ejecutar \texttt{link()} o \texttt{union()}, es
 antes de cambiarlo, garantizando que los estados almacenados en el historial y en el
 \texttt{unionSet} no se vean afectados por operaciones posteriores. La API pública
 de \texttt{StateManager} refleja el vocabulario de acciones disponibles desde el
-frontend --- \texttt{addMetadataFilter}, \texttt{removeReferenceFilter}, \texttt{link},
+\textit{frontend} --- \texttt{addMetadataFilter}, \texttt{removeReferenceFilter}, \texttt{link},
 \texttt{goback}, \texttt{save}, \texttt{restore} y \texttt{union} --- delegando en
 \texttt{State} las operaciones sobre filtros, y aplicando directamente la lógica de
 coordinación cuando la operación afecta a más de una de sus estructuras internas.
 
-    \subsection{API REST: endpoints expuestos al cliente}
+    \subsection{API REST: \textit{endpoints} expuestos al cliente}
     \label{subsec:endpoints}
 
 El modelo de exploración descrito hasta aquí permanecería inerte sin
@@ -510,7 +510,7 @@ de referencia, navegar por un enlace, deshacer una transición,
 restaurar el estado previo a una unión, abrir un nuevo bloque de
 unión o cambiar de colección. De este modo, el vocabulario público
 de \texttt{StateManager} se proyecta directamente sobre la capa
-HTTP del backend, sin necesidad de multiplicar \textit{endpoints} por
+HTTP del \textit{backend}, sin necesidad de multiplicar \textit{endpoints} por
 cada operación. Las consultas, por el contrario, sí justifican
 \textit{endpoints} independientes, ya que cada una devuelve una
 representación distinta del estado actual: las entidades visibles,
@@ -527,7 +527,7 @@ peticiones que requieren contexto de exploración recuperan el
 existe un estado activo, lo que garantiza que ningún \textit{endpoint}
 opere sobre un cliente que aún no se ha inicializado.
 
-El conjunto completo de \textit{endpoints} expuestos por el backend,
+El conjunto completo de \textit{endpoints} expuestos por el \textit{backend},
 junto con sus parámetros principales y la acción que desencadenan, se
 resume en la Tabla~\ref{tab:endpoints}.
 
@@ -565,20 +565,20 @@ resume en la Tabla~\ref{tab:endpoints}.
     GET  & \texttt{/api/resource/*}  & ruta como \texttt{pathInfo} & Sirve archivos del directorio de \textit{uploads} (imágenes y recursos asociados a entidades) \\
     \hline
   \end{tabular}
-  \caption{Endpoints REST expuestos por el backend.}
+  \caption{Endpoints REST expuestos por el \textit{backend}.}
   \label{tab:endpoints}
 \end{table}
 
 \section{Filtrado clásico y relacional}
 \label{sec:filtrado}
 
-En TMDB, la exploración de un dataset raramente se agota filtrando por atributos propios de
-una colección, por cuenta del tamaño y complejidad de la colección. Un caso de uso habitual es, por ejemplo, 
-encontrar películas de un género concreto dirigidas por una persona específica, o excluir series producidas por una 
+En TMDB, la exploración de un \textit{dataset} raramente se agota filtrando por atributos propios de
+una colección, debido al tamaño y complejidad de la colección. Un caso de uso habitual es, por ejemplo,
+encontrar películas de un género concreto dirigidas por una persona específica, o excluir series producidas por una
 determinada compañía. El primer tipo de condición opera sobre los metadatos de la entidad; el segundo,
 sobre sus relaciones con entidades de otra colección. Esta distinción entre \textit{filtrado
 clásico} --- sobre atributos --- y \textit{filtrado relacional} --- sobre vínculos --- motivó el
-diseño de dos mecanismos de filtrado independientes y de naturaleza distinta pero que se aplican de forma 
+diseño de dos mecanismos de filtrado independientes y de naturaleza distinta, pero que se aplican de forma
 conjunta en cada consulta.
 
 Ambos mecanismos admiten además una variante por la negativa: es posible no solo incluir entidades
@@ -586,15 +586,15 @@ que cumplan alguna condición, sino también excluir explícitamente las que la 
 inclusiones y exclusiones, tanto sobre metadatos como sobre referencias, define el espacio de
 resultados que el usuario está explorando en cada momento.
 
-    \subsection{Construcción dinámica de queries SQL}
+    \subsection{Construcción dinámica de \textit{queries} SQL}
 
-El núcleo de la capa de acceso a datos es la traducción del estado de navegación a una query
+El núcleo de la capa de acceso a datos es la traducción del estado de navegación a una \textit{query}
 SQL ejecutable. Esta traducción se ensambla de manera incremental: en cada petición, el
-\texttt{NavigationDAO} construye la query de forma incremental añadiendo cláusulas
+\texttt{NavigationDAO} construye la \textit{query} de forma incremental añadiendo cláusulas
 \texttt{AND} sobre una consulta base que selecciona entidades de la colección activa.
 
 El \texttt{appendFilterClauses} es el método central de este proceso, que recibe el  
-\texttt{StringBuilder} de la query en construcción, la lista de parámetros y el estado
+\texttt{StringBuilder} de la \textit{query} en construcción, la lista de parámetros y el estado
 actual, y le añade todas las condiciones derivadas de los filtros acumulados. Para el caso
 más simple --- sin historial de navegación entre colecciones --- delega directamente en
 \texttt{appendStateFilters}, que itera sobre los cuatro mapas de filtros del estado
@@ -605,7 +605,7 @@ actúa de forma recursiva, generando subconsultas anidadas que incorporan el con
 cada transición previa; este mecanismo se describe en detalle en la
 sección~\ref{sec:navegacion_transversal}.
 
-Todas las queries se construyen con parámetros posicionales (\texttt{?}), nunca
+Todas las \textit{queries} se construyen con parámetros posicionales (\texttt{?}), nunca
 interpolando valores directamente en el SQL. Los valores se acumulan en una lista
 \texttt{params} y se asignan posteriormente mediante \texttt{stmt.setObject()}, lo que
 delega en el \texttt{PreparedStatement} de JDBC la responsabilidad de escapar los valores
@@ -692,7 +692,7 @@ Este cómputo es siempre dinámico: se recalcula en cada petición a partir del 
 de entidades que satisfacen el estado actual.
 
 El sistema distingue dos tipos de facetas, ambas servidas por \texttt{FacetsServlet}
-a través del endpoint \texttt{GET /api/facets}:
+a través del \textit{endpoint} \texttt{GET /api/facets}:
 
 Las \textbf{facetas de metadatos} se obtienen mediante \texttt{getFacets()}, que construye
 una subconsulta con los identificadores de las entidades actualmente visibles
@@ -709,15 +709,15 @@ String sql =
     + "ORDER BY m.key, cnt DESC";
 \end{lstlisting}
 
-El resultado de la query se recorre fila a fila y se agrupa en un \texttt{LinkedHashMap}
+El resultado de la \textit{query} se recorre fila a fila y se agrupa en un \texttt{LinkedHashMap}
 indexado por atributo (\texttt{key}). Por cada fila, se construye un mapa con tres
 campos: el valor del atributo (\texttt{value}), su frecuencia entre las entidades
 visibles (\texttt{count}), y un booleano \texttt{active} que indica si ese valor ya
 está seleccionado como filtro en el estado actual, que lo consulta mediante
 \texttt{isFilterActive()}. El uso de \texttt{LinkedHashMap} preserva el orden de
-inserción, que viene determinado por el \texttt{ORDER BY m.key, cnt DESC} de la query:
+inserción, que viene determinado por el \texttt{ORDER BY m.key, cnt DESC} de la \textit{query}:
 los atributos aparecen en orden alfabético y, dentro de cada atributo, los valores se
-listan de mayor a menor frecuencia. Este orden es el que el frontend recibe y renderiza
+listan de mayor a menor frecuencia. Este orden es el que el \textit{frontend} recibe y renderiza
 directamente, sin necesidad de reordenar en el cliente.
 
 Las \textbf{facetas de referencia} se obtienen mediante \texttt{getReferenceFacets()},
@@ -727,10 +727,10 @@ vinculadas a los resultados actuales, agrupadas por colección y tipo de relaci�
 El resultado expone, por ejemplo, qué personas concretas aparecen como \textit{Director}
 entre las películas visibles, junto con el número de películas en las que aparecen.
 
-Junto a las facetas, el mismo endpoint devuelve los \textit{links} disponibles
+Junto a las facetas, el mismo \textit{endpoint} devuelve los \textit{links} disponibles
 --- obtenidos mediante \texttt{getAvailableLinks()} --- que indican a qué otras
 colecciones es posible navegar desde el conjunto actual, y los filtros activos en ese
-momento (\texttt{activeFilters}), permitiendo al frontend reflejar el estado de
+momento (\texttt{activeFilters}), permitiendo al \textit{frontend} reflejar el estado de
 selección sin necesidad de mantener dicha información en el cliente.
 
 \section{Navegación transversal}
@@ -738,10 +738,10 @@ selección sin necesidad de mantener dicha información en el cliente.
 
 Hasta ahora, hemos descrito los mecanismos de filtrado que operan dentro de una única colección:
 dadas las entidades de \textit{Movies}, se restringe el conjunto según atributos propios
-o según vínculos con entidades concretas de otras colecciones. Entretanto, el sistema
+o según vínculos con entidades concretas de otras colecciones. Sin embargo, el sistema
 permite también \textit{trasladarse} de una colección a otra siguiendo una relación,
 preservando en el historial los filtros del tramo previo de modo que la consulta resultante
-los integre por composición. Este mecanismo es lo que se denomina \textit{navegación transversal}.
+los integre por composición. Este mecanismo es lo que denominamos \textit{navegación transversal}.
 
 Damos un ejemplo concreto en TMDB: el usuario está explorando películas con el filtro de género
 \textit{Action} activo. Desde ese contexto, decide navegar hacia la colección
@@ -770,13 +770,13 @@ public void link(int targetCollectionId, String reason) {
 Primero, se construye un nuevo objeto \texttt{Link} marcado como transición hacia delante
 (\texttt{forward = true}). Este objeto almacena la colección de origen, el tipo de
 relación seguida y una copia profunda del estado activo en el momento de la transición; los
-filtros del tramo previo viven a partir de ese instante únicamente en el snapshot del enlace,
+filtros del tramo previo viven a partir de ese instante únicamente en el \textit{snapshot} del enlace,
 sin contaminar el tramo siguiente. Segundo, se invoca \texttt{cur.link(targetCollectionId)}, que
 desplaza la colección activa en \texttt{cur} a la colección destino y vacía los cuatro mapas de
 filtros del estado activo, de modo que el nuevo tramo arranca limpio. Tercero, el nuevo
 \texttt{Link} se añade a la lista de transiciones del propio \texttt{State}
 (\texttt{cur.getLinks()}), que es la que el \texttt{NavigationDAO} consume al construir las
-queries. Cuarto, ese mismo \texttt{Link} se apila en \texttt{linkStack}, la pila auxiliar que
+\textit{queries}. Cuarto, ese mismo \texttt{Link} se apila en \texttt{linkStack}, la pila auxiliar que
 mantiene \texttt{StateManager} para conocer cuál es la última transición revertible en una
 eventual operación de \texttt{goback}.
 
@@ -785,7 +785,7 @@ cliente, el \texttt{NavigationServlet} y el modelo en memoria al
 ejecutar una operación de \textit{link}. Se observa que el servlet
 invoca primero \texttt{save()} (volcando una copia del estado actual a
 \texttt{historyStack}) y a continuación \texttt{link()}, dentro de
-la cual \texttt{StateManager} construye el snapshot, desplaza la
+la cual \texttt{StateManager} construye el \textit{snapshot}, desplaza la
 colección activa de \texttt{cur} vaciando sus filtros y registra el
 enlace tanto en \texttt{cur.getLinks()} como en \texttt{linkStack}.
 
@@ -830,7 +830,7 @@ la sesión. Su implementación se apoya en \texttt{linkStack}: extrae de la pila
 \texttt{Link} apilado por \texttt{link()}, construye un nuevo \texttt{Link} con dirección
 hacia atrás (\texttt{forward = false}) que registra esa reversión en la lista de
 transiciones de \texttt{cur}, y restaura sobre \texttt{cur} tanto la colección de origen
-como los cuatro mapas de filtros guardados en el snapshot del \texttt{Link} extraído, de
+como los cuatro mapas de filtros guardados en el \textit{snapshot} del \texttt{Link} extraído, de
 modo que el tramo recuperado vuelve a ser exactamente el que el usuario había abandonado.
 El Código~\ref{lst:goback} reproduce el método completo.
 
@@ -846,7 +846,7 @@ public void goback() {
 
 El hecho de que \texttt{goback} registre un nuevo \texttt{Link} en
 \texttt{cur.getLinks()} en lugar de eliminar el último tiene una consecuencia relevante:
-ese historial es siempre creciente y nunca se borra. Esto significa que la query SQL
+ese historial es siempre creciente y nunca se borra. Esto significa que la \textit{query} SQL
 resultante debe recorrer toda la cadena de transiciones acumuladas, incluidos los
 retrocesos, para reconstruir fielmente el contexto de exploración. La pila
 \texttt{linkStack}, en cambio, sí pierde la entrada con cada \texttt{goback}, pero su rol
@@ -902,7 +902,7 @@ sobrecarga recursiva que recorre la lista de transiciones del estado
 (\texttt{state.getLinks()}) desde el último \texttt{Link} hacia el primero, generando en
 cada nivel una subconsulta anidada.
 
-La estructura de la recursión tiene la siguite definición: para cada nivel de profundidad, se aplican
+La estructura de la recursión tiene la siguiente definición: para cada nivel de profundidad, se aplican
 primero los filtros del estado en ese nivel mediante \texttt{appendStateFilters}, y a
 continuación se genera una cláusula \texttt{AND ... IN (SELECT ...)} que restringe las
 entidades del nivel actual a aquellas que, a través de la relación registrada en el
@@ -941,10 +941,10 @@ anidados que refleja correctamente la cadena de transiciones del usuario. Los id
 dinámicamente a partir del parámetro \texttt{depth} para evitar colisiones entre niveles.
 
 Retomando el ejemplo anterior --- películas de acción, navegación hacia \textit{People}
-por la relación \textit{Actor} --- la query resultante para obtener los actores visibles
+por la relación \textit{Actor} --- la \textit{query} resultante para obtener los actores visibles
 adopta la forma mostrada en el Código~\ref{lst:queryResultante}.
 
-\begin{lstlisting}[style=sqlStyle, caption={[Query SQL de la navegación transversal]Query SQL resultante de la navegación transversal}, label=lst:queryResultante]
+\begin{lstlisting}[style=sqlStyle, caption={[\textit{Query} SQL de la navegación transversal]\textit{Query} SQL resultante de la navegación transversal}, label=lst:queryResultante]
 SELECT DISTINCT e.original_id, e.name
 FROM entities e
 JOIN collections c ON e.collection_global_id = c.global_id
@@ -1058,15 +1058,15 @@ añade tal cual a \texttt{unionSet} (sin copia profunda, dado que
 
     \subsection{Resolución de la unión en base de datos}
 
-La consulta del \texttt{unionSet} se realiza a través del endpoint
+La consulta del \texttt{unionSet} se realiza a través del \textit{endpoint}
 \texttt{GET /api/union}, servido por \texttt{UnionServlet}, que delega en los métodos
 \texttt{getUnionEntities()} y \texttt{countUnionEntities()} del \texttt{NavigationDAO}.
 
-Ambos métodos construyen una única query que itera sobre todas las entradas del
+Ambos métodos construyen una única \textit{query} que itera sobre todas las entradas del
 \texttt{unionSet} y concatena un bloque de condiciones por entrada, separados por
 \texttt{OR}, como ilustra el Código~\ref{lst:queryUnion}.
 
-\begin{lstlisting}[style=javaStyle, caption=Query de unión, label=lst:queryUnion]
+\begin{lstlisting}[style=javaStyle, caption=\textit{Query} de unión, label=lst:queryUnion]
 for (int i = 0; i < unionSet.size(); i++) {
     State state = unionSet.get(i);
     if (i > 0) sql.append(" OR ");
@@ -1078,7 +1078,7 @@ for (int i = 0; i < unionSet.size(); i++) {
 }
 \end{lstlisting}
 
-Cada bloque es estructuralmente idéntico a la query que se generaría para ese estado en
+Cada bloque es estructuralmente idéntico a la \textit{query} que se generaría para ese estado en
 una consulta normal, aplicando \texttt{appendFilterClauses} sobre el estado correspondiente,
 lo que incluye sus filtros de metadatos, sus filtros de referencia y, si procede, las
 subconsultas anidadas derivadas de su historial de transiciones. La unión entre bloques
@@ -1092,14 +1092,14 @@ colecciones distintas. En el ejemplo anterior, el primer bloque opera sobre
 segundo también sobre \textit{People} pero filtrado por series de ciencia ficción con
 relación \textit{Actor}. Que ambas entradas compartan colección activa no es un requisito
 del sistema: el campo \texttt{collection\_id} devuelto por \texttt{getUnionEntities()}
-indica a qué colección pertenece cada entidad del resultado, permitiendo al frontend
+indica a qué colección pertenece cada entidad del resultado, permitiendo al \textit{frontend}
 distinguirlas cuando fuera necesario.
 
-\section{Desarrollo del frontend}
+\section{Desarrollo del \textit{frontend}}
 \label{sec:frontend}
 
-Concluida la descripción del backend, queda por presentar la capa
-que el usuario percibe directamente. El frontend se concibió como una
+Concluida la descripción del \textit{backend}, queda por presentar la capa
+que el usuario percibe directamente. El \textit{frontend} se concibió como una
 capa de presentación deliberadamente delgada, cuya única
 responsabilidad consiste en renderizar el estado actual del servidor
 y en traducir las acciones del usuario en peticiones HTTP contra los
@@ -1166,7 +1166,7 @@ cliente se organiza de forma plana y predecible:
     (\texttt{base.css}, \texttt{layout.css} y \texttt{main.css}).
 \end{itemize}
 
-    \subsection*{Comunicación con el backend}
+    \subsection*{Comunicación con el \textit{backend}}
 
 A todas estas piezas y a la orquestación de \texttt{main.js} les da
 soporte una capa transversal: el cliente HTTP centralizado en
@@ -1177,7 +1177,7 @@ cabecera \texttt{Content-Type: application/\-json}, serializa
 automáticamente el cuerpo de las peticiones \texttt{POST} y lanza una
 excepción si la respuesta no es satisfactoria. El uso de
 \texttt{credentials: \string'include\string'} es lo que garantiza que la cookie
-\texttt{JSESSIONID} viaje en cada petición, permitiendo al backend
+\texttt{JSESSIONID} viaje en cada petición, permitiendo al \textit{backend}
 recuperar el \texttt{StateManager} asociado a la sesión.
 
 Coherente con la decisión arquitectónica que sitúa el estado en el
@@ -1200,8 +1200,8 @@ Las secciones anteriores han presentado por separado las piezas que
 componen el motor de navegación: el \texttt{State} acumulado, las
 transformaciones que aplica \texttt{StateManager}, la traducción a SQL
 realizada por \texttt{NavigationDAO} y el flujo HTTP que conecta el
-frontend con todo lo anterior. La presente sección integra esas piezas
-en un ejemplo ilustrativo, ejecutado sobre un dataset deliberadamente
+\textit{frontend} con todo lo anterior. La presente sección integra esas piezas
+en un ejemplo ilustrativo, ejecutado sobre un \textit{dataset} deliberadamente
 reducido. El objetivo es mostrar cómo cada acción primitiva del API
 (\texttt{add\_mfilter}, \texttt{add\_not\_mfilter},
 \texttt{add\_rfilter}, \texttt{link}, \texttt{goback} y \texttt{union})
@@ -1211,7 +1211,7 @@ interno del sistema y de la consulta SQL que esa acción provoca.
 
 Para que cada operación quede plenamente apreciada, el ejemplo se
 organiza en tres flujos independientes. Cada flujo arranca desde el
-estado inicial sobre el dataset y demuestra una categoría distinta de
+estado inicial sobre el \textit{dataset} y demuestra una categoría distinta de
 operaciones: el primero acota progresivamente un conjunto dentro de una
 sola colección, el segundo viaja entre colecciones aplicando filtros en
 destino que repercuten en el conjunto de origen, y el tercero combina
@@ -1221,18 +1221,18 @@ y el conjunto que resulta, mientras que el \texttt{State} completo, la
 consulta SQL y la captura de la interfaz se presentan al final como
 síntesis del recorrido.
 
-El dataset que sustenta el ejemplo se distribuye junto al código fuente,
+El \textit{dataset} que sustenta el ejemplo se distribuye junto al código fuente,
 en el archivo \path{scripts/test/example_dataset.json}, siguiendo el
 mismo formato (un objeto JSON con los campos \texttt{collections} y
 \texttt{objects}) que el resto de \textit{datasets} de prueba presentes
 en \path{scripts/test/}. Las capturas que acompañan a cada flujo se
-obtuvieron ejecutando el sistema sobre ese dataset y reproduciendo
+obtuvieron ejecutando el sistema sobre ese \textit{dataset} y reproduciendo
 manualmente la secuencia de acciones correspondiente.
 
-\subsection{Mini-dataset reproducible}
+\subsection{Mini-\textit{dataset} reproducible}
 \label{subsec:ejemplo_dataset}
 
-El dataset agrupa tres colecciones cuyos tamaños se han elegido
+El \textit{dataset} agrupa tres colecciones cuyos tamaños se han elegido
 deliberadamente asimétricos: cuatro entidades en \textit{Movies}, cuatro
 en \textit{People} y dos en \textit{Studios}. La asimetría persigue que
 los filtros y las navegaciones produzcan resultados informativos, ni
@@ -1249,7 +1249,7 @@ componen, tal y como aparecen físicamente en la base de datos.
     \textbf{id} & \textbf{name} & \textbf{created\_at} \\ \hline
     1 & tmdb-toy & 2025-01-01 \\ \hline
   \end{tabular}
-  \caption{Tabla \texttt{datasets} del mini-dataset.}
+  \caption{Tabla \texttt{datasets} del mini-\textit{dataset}.}
   \label{tab:ejemplo_datasets}
 \end{table}
 
@@ -1262,7 +1262,7 @@ componen, tal y como aparecen físicamente en la base de datos.
     2 & 1 & 2 & People  \\ \hline
     3 & 1 & 3 & Studios \\ \hline
   \end{tabular}
-  \caption[Tabla \texttt{collections} del mini-dataset]{Tabla \texttt{collections}: tres colecciones bajo el \textit{dataset} \texttt{tmdb-toy}.}
+  \caption[Tabla \texttt{collections} del mini-\textit{dataset}]{Tabla \texttt{collections}: tres colecciones bajo el \textit{dataset} \texttt{tmdb-toy}.}
   \label{tab:ejemplo_collections}
 \end{table}
 
@@ -1348,13 +1348,13 @@ darán soporte a los filtros \texttt{add\_mfilter} y
     16 & 30 & Founded    & 1923          \\ \hline
     17 & 31 & Founded    & 1993          \\ \hline
   \end{tabular}
-  \caption[Tabla \texttt{metadata} del mini-dataset]{Tabla \texttt{metadata}: pares clave/valor por entidad.}
+  \caption[Tabla \texttt{metadata} del mini-\textit{dataset}]{Tabla \texttt{metadata}: pares clave/valor por entidad.}
   \label{tab:ejemplo_metadata}
 \end{table}
 
 \FloatBarrier
 
-Cierra el dataset la Tabla~\ref{tab:ejemplo_reference}, que enumera las
+Cierra el \textit{dataset} la Tabla~\ref{tab:ejemplo_reference}, que enumera las
 aristas almacenadas en la tabla \texttt{reference} mediante las columnas
 \textit{source\_id}, \textit{target\_id} y \textit{reason}. Estas filas
 son las que sostienen tanto a \texttt{add\_rfilter} como a \texttt{link}.
@@ -1393,17 +1393,17 @@ navegación.
     19 & 30 & 13 & Production & Warner $\leftarrow$ TDKR          \\ \hline
     20 & 31 & 12 & Production & Marvel $\leftarrow$ Avengers      \\ \hline
   \end{tabular}
-  \caption[Tabla \texttt{reference} del mini-dataset]{Tabla \texttt{reference}: aristas dirigidas entre entidades. La
+  \caption[Tabla \texttt{reference} del mini-\textit{dataset}]{Tabla \texttt{reference}: aristas dirigidas entre entidades. La
   columna \textit{sentido} es meramente explicativa.}
   \label{tab:ejemplo_reference}
 \end{table}
 
 \FloatBarrier
 
-\subsection{Vista esquemática del dataset}
+\subsection{Vista esquemática del \textit{dataset}}
 \label{subsec:ejemplo_esquema}
 
-Las tablas anteriores son indispensables para reproducir el dataset,
+Las tablas anteriores son indispensables para reproducir el \textit{dataset},
 pero su forma tabular oculta la estructura relacional que subyace al
 ejemplo. Para complementarlas, la Figura~\ref{fig:ejemplo_fichas} ofrece
 una vista alternativa en la que cada entidad recibe una ficha propia con
@@ -1494,7 +1494,7 @@ conexiones que las escenas van explotando una tras otra.
   $\bullet$ Founded: 1993\\
   $\leftarrow$ Production: The Avengers
   \end{minipage}}
-  \caption[Fichas por entidad del mini-dataset]{Fichas por entidad del mini-dataset, agrupadas por colección
+  \caption[Fichas por entidad del mini-\textit{dataset}]{Fichas por entidad del mini-\textit{dataset}, agrupadas por colección
   y coloreadas en consecuencia: \textit{Movies} en azul, \textit{People}
   en verde y \textit{Studios} en naranja. Los puntos resumen los
   metadatos; las flechas $\to$ marcan referencias salientes y
@@ -1508,8 +1508,8 @@ conexiones que las escenas van explotando una tras otra.
 \label{subsec:ejemplo_estado_inicial}
 
 Cada uno de los tres flujos que siguen arranca desde el estado inicial
-del sistema: el frontend acaba de abrir la colección \textit{Movies}
-sobre el dataset descrito, no hay ningún filtro activo y la cuadrícula
+del sistema: el \textit{frontend} acaba de abrir la colección \textit{Movies}
+sobre el \textit{dataset} descrito, no hay ningún filtro activo y la cuadrícula
 central enumera las cuatro películas
 (Figura~\ref{fig:ejemplo_estado_inicial}). Internamente, el
 \texttt{StateManager} mantiene un único \texttt{State} sin
@@ -1522,7 +1522,7 @@ diferente de operaciones.
   \centering
   % TODO: incluir captura definitiva
   \includegraphics[width=0.9\textwidth]{Imagenes/Bitmap/ejemplo/flujo0_inicial.png}
-  \caption[Estado inicial del frontend]{Estado inicial del frontend, antes de aplicar ninguna acción:
+  \caption[Estado inicial del \textit{frontend}]{Estado inicial del \textit{frontend}, antes de aplicar ninguna acción:
   colección \textit{Movies} abierta y las cuatro entidades visibles.}
   \label{fig:ejemplo_estado_inicial}
 \end{figure}
@@ -1671,7 +1671,7 @@ alguna película del catálogo? El motor recorre las aristas
 de las cuatro películas iniciales a las tres personas que aparecen
 como actores: $\{$\textit{Leonardo DiCaprio}, \textit{Robert Downey
 Jr.}, \textit{Christian Bale}$\}$. \textit{Christopher Nolan}, que
-sólo figura en el dataset como director, queda lógicamente fuera
+sólo figura en el \textit{dataset} como director, queda lógicamente fuera
 (Figura~\ref{fig:flujo2_paso1}). Internamente, el
 \texttt{StateManager} apila un \texttt{Link} con \texttt{forward =
 true}, conserva una copia del \texttt{State} previo sobre
@@ -1696,11 +1696,11 @@ clave \texttt{"Birthplace"} y valor \texttt{"Los Angeles"}. La
 pregunta del paso anterior queda refinada: ¿qué personas son actoras
 de alguna película y, además, nacieron en Los Angeles? El conjunto se
 restringe a $\{$\textit{Leonardo DiCaprio}$\}$, único actor del
-dataset con esa ciudad como lugar de nacimiento
+\textit{dataset} con esa ciudad como lugar de nacimiento
 (Figura~\ref{fig:flujo2_paso2}). Conviene observar que el filtro se
 almacena en el estado activo mientras \textit{People} es la colección actual; en
 el paso siguiente, \texttt{goback} vaciará los filtros del estado al regresar a
-\textit{Movies}, pero su huella sobrevivirá dentro del snapshot que ese mismo
+\textit{Movies}, pero su huella sobrevivirá dentro del \textit{snapshot} que ese mismo
 \texttt{goback} registre como link de retroceso, y volverá a tener efecto en la
 SQL del paso final.
 
@@ -1727,13 +1727,13 @@ esas personas filtradas, es decir, a algún actor nacido en Los
 Angeles. La generación de SQL recorre la cadena
 \textit{Movies} $\to$ \textit{People} $\to$ \textit{Movies}
 aplicando, en el tramo intermedio, el filtro \textit{Birthplace} preservado en
-el snapshot del \texttt{Link} de retroceso, y devuelve las películas cuyo
+el \textit{snapshot} del \texttt{Link} de retroceso, y devuelve las películas cuyo
 reparto incluye a alguna de esas personas. El resultado es una única película,
 $\{$\textit{Inception}$\}$, en la que actúa \textit{DiCaprio}
 (Figura~\ref{fig:flujo2_paso3}). Sin el filtro intermedio sobre
 \textit{People}, el viaje de ida y vuelta habría devuelto las cuatro
 películas originales, esto es, todas las que cuentan con algún actor
-en el dataset.
+en el \textit{dataset}.
 
 \begin{figure}[h]
   \centering
@@ -1842,7 +1842,7 @@ para guardar el contexto recién construido y abrir uno nuevo sobre
 \textit{People}. La operación traslada el \texttt{cur} actual al
 \texttt{unionSet} y lo sustituye por un \texttt{State} en blanco sobre
 \textit{People}. La cuadrícula pasa a mostrar las cuatro personas del
-dataset, ya que el nuevo contexto no tiene aún filtros activos, mientras
+\textit{dataset}, ya que el nuevo contexto no tiene aún filtros activos, mientras
 que el panel de unión refleja por primera vez el contexto guardado
 (Figura~\ref{fig:flujo3_paso2}).
 
@@ -1901,7 +1901,7 @@ otro sobre \textit{People} con el filtro \textit{Birthplace = Haverfordwest}
 
 \textbf{State.} La Figura~\ref{fig:flujo3_state} muestra el contenido
 del \texttt{unionSet} al final del flujo. El nuevo \texttt{cur},
-limpio sobre \textit{Movies}, no influye en la respuesta del endpoint
+limpio sobre \textit{Movies}, no influye en la respuesta del \textit{endpoint}
 \texttt{/api/union}, que opera exclusivamente sobre las entradas del
 \texttt{unionSet}.
 
@@ -1930,7 +1930,7 @@ invocar \texttt{appendFilterClauses} con su propio \texttt{State}, de
 modo que las dos colecciones del \texttt{unionSet} dan lugar a dos
 ramas independientes en la condición (Código~\ref{lst:flujo3}). La
 proyección añade \texttt{c.original\_id AS collection\_id} para que el
-frontend pueda distinguir el origen de cada entidad en la respuesta
+\textit{frontend} pueda distinguir el origen de cada entidad en la respuesta
 combinada.
 
 \begin{lstlisting}[style=sqlStyle, label=lst:flujo3, caption={[SQL del Flujo~3]SQL emitida por \texttt{getUnionEntities} con dos contextos de colecciones distintas en el \texttt{unionSet}.}]
@@ -1991,9 +1991,9 @@ capítulo.
     \subsection*{Tamaño de las colecciones y trabajo con subconjuntos}
 
 TMDB expone colecciones de tamaño considerable: solo en películas y series, el catálogo
-completo supera con holgura las decenas de miles de entidades. Trabajar con el dataset
+completo supera con holgura las decenas de miles de entidades. Trabajar con el \textit{dataset}
 completo durante el desarrollo habría introducido tiempos de carga, poblado de base de
-datos y ejecución de queries que habrían dificultado la iteración rápida.
+datos y ejecución de \textit{queries} que habrían dificultado la iteración rápida.
 
 La solución adoptada fue incorporar un mecanismo de filtrado por popularidad directamente
 en el script de procesamiento, controlado por las variables \texttt{FILTER\_TOP\_K\_POPULAR}
@@ -2007,9 +2007,9 @@ TOP_K_COUNT = 5000
 
 Con este mecanismo activo, el script ordena las películas y series por su campo
 \texttt{popularity} de la API de TMDB y retiene únicamente las \texttt{TOP\_K\_COUNT}
-más populares antes de generar el dataset de salida. Esto permitió trabajar durante el
+más populares antes de generar el \textit{dataset} de salida. Esto permitió trabajar durante el
 desarrollo con un subconjunto representativo y manejable, manteniendo la opción de
-escalar al dataset completo simplemente desactivando el filtro o aumentando el límite.
+escalar al \textit{dataset} completo simplemente desactivando el filtro o aumentando el límite.
 La motivación de operar con un subconjunto y los detalles del script
 de procesado se desarrollan en el
 Apéndice~\ref{Appendix:integracion}.
@@ -2038,18 +2038,18 @@ Para fechas, se aplica una lógica análoga con granularidad configurable por a�
 día, definida en \texttt{format.json} por colección. De este modo, el valor almacenado en
 \texttt{metadata} no es \texttt{157} sino \texttt{150-179}, lo que permite al sistema de
 filtrado operar con igualdad de cadenas sobre rangos semánticamente útiles, sin necesidad
-de soportar operadores de comparación numérica en las queries. La alternativa de soportar
+de soportar operadores de comparación numérica en las \textit{queries}. La alternativa de soportar
 expresiones regulares en los filtros de metadatos fue considerada y descartada: la
-complejidad añadida en la construcción de queries y la dificultad de exponerlo de forma
+complejidad añadida en la construcción de \textit{queries} y la dificultad de exponerlo de forma
 intuitiva al usuario no compensaban el beneficio, siendo los rangos una solución más
 simple y suficientemente expresiva para los casos de uso identificados. Para los casos en
 que un usuario necesita combinar varios rangos, la operación de unión cubre esa necesidad
 de forma más predecible.
 
-    \subsection*{CORS y la comunicación entre frontend y backend}
+    \subsection*{CORS y la comunicación entre \textit{frontend} y \textit{backend}}
 
-El sistema está organizado como dos procesos independientes: el frontend se sirve
-estáticamente y realiza peticiones al backend desplegado en Tomcat. Esta separación
+El sistema está organizado como dos procesos independientes: el \textit{frontend} se sirve
+estáticamente y realiza peticiones al \textit{backend} desplegado en Tomcat. Esta separación
 implica que las peticiones HTTP se originan desde un origen distinto al del servidor de la
 API, lo que activa la política de mismo origen (\textit{same-origin policy}) del navegador
 y bloquea las respuestas por defecto.
@@ -2058,7 +2058,7 @@ El obstáculo no fue solo técnico sino también de comprensión: el mecanismo C
 (\textit{Cross-Origin Resource Sharing}) no es transparente, y sus manifestaciones
 ---peticiones bloqueadas sin mensaje de error claro, o peticiones \texttt{OPTIONS}
 inesperadas--- no resultan inmediatamente evidentes si no se ha trabajado previamente
-con arquitecturas de frontend y backend separados. Fue necesario investigar el protocolo
+con arquitecturas de \textit{frontend} y \textit{backend} separados. Fue necesario investigar el protocolo
 para entender que el navegador envía primero una petición de preflight con método
 \texttt{OPTIONS} antes de la petición real, y que el servidor debe responder con las
 cabeceras adecuadas para que el navegador autorice la comunicación.
@@ -2090,7 +2090,7 @@ configurar el \texttt{CookieProcessor} en \texttt{context.xml} con
 \texttt{sameSiteCookies="None"} para que la cookie de sesión se enviara correctamente
 en peticiones cross-origin. La configuración exacta del contenedor de
 servlets en los modos de desarrollo y de producción, junto con el
-empaquetado del backend tras un mismo origen mediante Nginx en
+empaquetado del \textit{backend} tras un mismo origen mediante Nginx en
 producción, se describe en el Apéndice~\ref{Appendix:despliegue}.
 
 El flujo completo de una petición HTTP, desde el \textit{preflight}
@@ -2196,6 +2196,6 @@ implementación final coincide con la mostrada en el Código~\ref{lst:goback}.
 
 La consecuencia de este diseño, descrita en la sección~\ref{sec:navegacion_transversal},
 es que \texttt{appendFilterClauses} debe recorrer toda la cadena acumulada, incluidos los
-retrocesos, para construir correctamente las subconsultas anidadas. El coste es una query
+retrocesos, para construir correctamente las subconsultas anidadas. El coste es una \textit{query}
 potencialmente más larga conforme el usuario navega y retrocede, pero garantiza que el
 contexto de exploración se reconstruye de forma exacta en cada petición.

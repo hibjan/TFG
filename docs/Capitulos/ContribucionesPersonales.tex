@@ -31,13 +31,13 @@ dominios sobre los que se ha validado el motor. Para TMDB, los \textit{scripts} 
 \texttt{format.json} y producen el volcado intermedio en JSON Lines que sirve de fuente única
 de verdad para la carga posterior. Para DBLP, el procesador escrito en Go
 (\texttt{scripts/DBLP/main.go}) aplica las heurísticas de filtrado por institución sobre el
-volcado público completo y produce el dataset reducido que se carga finalmente en la base de
+volcado público completo y produce el \textit{dataset} reducido que se carga finalmente en la base de
 datos. He desarrollado además el \textit{script} unificado de poblado
 (\texttt{scripts/populate\_db.py} y su variante \texttt{populate\_db\_jsonl.py}), que lee los
 volcados intermedios y los inserta en el esquema relacional definido en
 \texttt{database/01\_schema.sql}.
 
-En el back-end Java, mi parte ha sido la \textbf{capa de persistencia y los controladores
+En el \textit{backend} Java, mi parte ha sido la \textbf{capa de persistencia y los controladores
 infraestructurales}. Concretamente, he sido responsable de \texttt{DatabaseService} y de la
 lógica de conexión a PostgreSQL, del controlador de sesión \texttt{SessionServlet}, del
 controlador central de transiciones \texttt{NavigationServlet} (que orquesta todas las acciones
@@ -53,15 +53,15 @@ transiciones, el historial y los invariantes en sesiones de trabajo compartidas,
 después las implementaciones concretas y revisándolas entre ambos. Estimo que el reparto de
 líneas escritas en esa parte está aproximadamente al cincuenta por ciento.
 
-En el frontend, mi aportación ha sido menor y se ha limitado a colaborar en la primera versión
+En el \textit{frontend}, mi aportación ha sido menor y se ha limitado a colaborar en la primera versión
 de la capa de comunicación con la API (\texttt{src/api.js}) y en la integración con los servlets
-durante la depuración de los problemas de CORS y de manejo de sesión. El resto del frontend
+durante la depuración de los problemas de CORS y de manejo de sesión. El resto del \textit{frontend}
 (componentes, diseño visual, evaluación con usuarios) ha sido responsabilidad de mi compañero.
 
-Para el despliegue, he sido responsable de los \texttt{Dockerfile} del frontend y del backend,
+Para el despliegue, he sido responsable de los \texttt{Dockerfile} del \textit{frontend} y del \textit{backend},
 del \texttt{docker-compose.dev.yml} y \texttt{docker-compose.prod.yml}, de la configuración de
 variables de entorno (\texttt{.env.db}, \texttt{.env.thirdparty}) y del \texttt{nginx.conf} del
-frontend en producción.
+\textit{frontend} en producción.
 
 En la redacción de la memoria, he liderado el \textbf{capítulo de Arquitectura y Metodología},
 la sección de \textbf{Modelo de datos} dentro del capítulo de Desarrollo, los dos
@@ -73,12 +73,12 @@ conjuntas, en particular en la selección de citas y la organización de la bibl
 \section*{Leonardo Prado de Souza}
 
 Mi aportación al proyecto se ha concentrado en torno a tres ejes complementarios: el
-\textbf{desarrollo completo del frontend}, el \textbf{diseño de la experiencia de usuario} y
+\textbf{desarrollo completo del \textit{frontend}}, el \textbf{diseño de la experiencia de usuario} y
 la \textbf{evaluación empírica con usuarios externos}. La distribución del trabajo con mi
 compañero ha sido equilibrada en proporción global pero diferenciada en especialización, lo que
 ha permitido avanzar en paralelo durante la mayor parte del proyecto.
 
-El \textbf{frontend} ha sido íntegramente mi responsabilidad. He diseñado e implementado la
+El \textbf{\textit{frontend}} ha sido íntegramente mi responsabilidad. He diseñado e implementado la
 totalidad del cliente web en JavaScript modular, sin dependencias de \textit{framework}, sobre
 una arquitectura orientada a componentes. La organización en componentes
 (\texttt{src/components/Combobox.js}, \texttt{Modal.js}, \texttt{PaginationHandler.js},
@@ -94,7 +94,7 @@ componentes que he diseñado e implementado de manera independiente.
 
 El \textbf{diseño visual} (paleta de colores, tipografía, jerarquía de paneles, sistema de
 \textit{breadcrumb}, diferenciación entre acciones recuperables y destructivas en la barra
-superior, estados de \textit{hover}/\textit{focus} y feedback visual de las interacciones) es
+superior, estados de \textit{hover}/\textit{focus} y \textit{feedback} visual de las interacciones) es
 también obra mía. La paleta y la organización final son resultado de varias iteraciones
 documentadas, parte de ellas guiadas por los hallazgos del estudio de usabilidad descrito más
 adelante.
@@ -108,7 +108,7 @@ tarea) y derivado el catálogo de problemas detectados con la escala de gravedad
 iteraciones de interfaz que se derivaron de la evaluación las hemos implementado conjuntamente,
 pero el diseño y la conducción del estudio han sido mi responsabilidad exclusiva.
 
-En el back-end Java, durante la fase del prototipo, mi parte ha sido la lógica de
+En el \textit{backend} Java, durante la fase del prototipo, mi parte ha sido la lógica de
 \textbf{filtros facetados y operaciones de conjunto}. He sido responsable de los servlets
 \texttt{MetadataFacetsServlet}, \texttt{ReferenceFacetsServlet}, \texttt{LinkFacetsServlet} y
 \texttt{UnionServlet}, así como de la parte de \texttt{NavigationDAO} correspondiente a la
@@ -122,7 +122,7 @@ escritas en esa parte está aproximadamente al cincuenta por ciento.
 
 En la redacción de la memoria, he liderado el \textbf{capítulo de Pruebas y Validación}, el
 \textbf{apéndice del guion de evaluación de usabilidad}, las secciones de \textbf{Desarrollo
-del frontend} y \textbf{Operaciones de conjuntos} dentro del capítulo de Desarrollo, y he
+del \textit{frontend}} y \textbf{Operaciones de conjuntos} dentro del capítulo de Desarrollo, y he
 participado en la redacción del capítulo de Introducción y en las líneas de trabajo futuro.
 He coordinado además las revisiones tipográficas y de estilo del documento global, así como la
 generación de las figuras vectoriales con PGFplots para los resultados cuantitativos.

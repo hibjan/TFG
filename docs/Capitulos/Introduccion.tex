@@ -18,36 +18,36 @@ los objetivos perseguidos y el plan de ejecución del proyecto.
 En los últimos tiempos hemos pasado por un gran cambio en el paradigma de consumo digital.
 El acúmulo cuantitativo de contenidos digitales ha sobrepasado su umbral cualitativo y hoy supone una 
 manera distinta de relacionarse con ello.
-La abundancia de información genera una "sobrecarga de información" (o \textit{information overload}), 
-en la cual el usuario necesita de una cantidad cada vez mayor de tiempo para navegar.
-Eso se hace especialmente evidente en las plataformas digitales, en particular las de streaming multimedia 
-(como Netflix, Disney+ y HBO Max), en las que difícilmente encontramos qué consumir sin invertir un tiempo sustancial 
+La abundancia de información genera una «sobrecarga de información» (o \textit{information overload}),
+en la cual el usuario necesita una cantidad cada vez mayor de tiempo para navegar.
+Esto se hace especialmente evidente en las plataformas digitales, en particular las de \textit{streaming} multimedia
+(como Netflix, Disney+ y HBO Max), en las que difícilmente encontramos qué consumir sin invertir un tiempo sustancial
 en ello.
 
-Ese cambio de paradigma, y el subsecuente problema, sigue siendo abordado con métodos tradicionales como: la
+Este cambio de paradigma, y el subsecuente problema, sigue siendo abordado con métodos tradicionales como la
 búsqueda directa (por palabras clave), el filtrado clásico por género o medio y los sistemas de recomendación
 basados en algoritmos ocultos al consumidor.
-Estos abordajes son limitados y sirven poco al nuevo contexto de consumo digital.
-La búsqueda directa es determinista y no permite ninguna flexibilidad, especialmente al suponer que el usuario
+Estos enfoques son limitados y sirven poco al nuevo contexto de consumo digital.
+La búsqueda directa es determinista y no permite flexibilidad alguna, ya que presupone que el usuario
 sabe exactamente lo que está buscando de antemano.
-El filtrado tradicional suele ser incompleto e inconsistente, usando taxonomías ocultas e inescrutables.
-Los algoritmos de recomendación suelen servir más como un propagador de la burbuja de filtros
-(o \textit{filter bubble}), al depender directamente del historial de consumo, o de lo que la plataforma
-desee promover, quitando la agencia del usuario en última instancia.
+El filtrado tradicional suele ser incompleto e inconsistente, al apoyarse en taxonomías ocultas e inescrutables.
+Los algoritmos de recomendación suelen actuar más como propagadores de la burbuja de filtros
+(o \textit{filter bubble}), al depender directamente del historial de consumo o de lo que la plataforma
+desee promover, restando agencia al usuario en última instancia.
 
-Este problema, entretanto, no es exclusivo de experiencia de usuario, sino también supone un problema tecnológico 
-relacionado con la forma en la que se diseñan y utilizan las colecciones de información. 
-Los modelos relacionales de navegación y los sistemas de navegación sobre colecciones 
-\textit{(collection navigation systems)}, traen un enfoque distinto en el que los datos no se 
+Este problema, sin embargo, no es exclusivo de la experiencia de usuario, sino que también supone un problema tecnológico
+relacionado con la forma en la que se diseñan y utilizan las colecciones de información.
+Los modelos relacionales de navegación y los sistemas de navegación sobre colecciones
+(\textit{collection navigation systems}) plantean un enfoque distinto, en el que los datos no se
 representan como elementos aislados, sino como entidades conectadas mediante relaciones semánticas.
-Ese abordaje permite recoger colecciones de manera interactiva, con mecanismos de navegación más expresivos 
-en los que el usuario puede explorar progresivamente una colección compleja combinando filtros, relaciones y 
+Este enfoque permite recorrer colecciones de manera interactiva, con mecanismos de navegación más expresivos
+en los que el usuario puede explorar progresivamente una colección compleja combinando filtros, relaciones y
 transiciones entre entidades.
 
-Existe, por lo tanto, una necesidad declarada de que los sistemas de navegación acompañen ese cambio de paradigma.
-Eso solo se puede cumplir permitiendo a los usuarios herramientas de exploración interactiva más ricas y flexibles.
-Dichas herramientas deben combinar la precisión establecida por la búsqueda directa, pero con una mayor expresividad
-que el filtrado clásico sin quitar la agencia del usuario.
+Existe, por lo tanto, una necesidad declarada de que los sistemas de navegación acompañen este cambio de paradigma.
+Esto solo se puede satisfacer ofreciendo a los usuarios herramientas de exploración interactiva más ricas y flexibles.
+Dichas herramientas deben combinar la precisión propia de la búsqueda directa con una expresividad mayor
+que la del filtrado clásico, sin restar agencia al usuario.
 
 \section{Objetivos}
 \label{sec:objetivos}
@@ -121,58 +121,58 @@ Hemos optado por una metodología ágil, basada en su mayor parte en el marco de
 proyecto en pareja. La adopción de ese método viene dada por la naturaleza exploratoria e innovadora del proyecto,
 ya que los requisitos y el motor de navegación necesitaban un refinamiento y optimización iterativos.
 
-El desarrollo fue organizado mediante \textit{sprints} (ciclos de trabajo entre 2 y 3 semanas), definiendo un
-backlog inicial (\textit{Product Backlog}) con los requisitos fundamentales del sistema. Además, se realizarían reuniones
-periódicas de seguimiento (\textit{Sprint Reviews}), que permiten evaluar cada incremento del software, adaptar la
+Organizamos el desarrollo mediante \textit{sprints} (ciclos de trabajo de entre 2 y 3 semanas), definiendo un
+\textit{backlog} inicial (\textit{Product Backlog}) con los requisitos fundamentales del sistema. Además, planificamos reuniones
+periódicas de seguimiento (\textit{Sprint Reviews}), que nos permiten evaluar cada incremento del software y adaptar la
 planificación de acuerdo con los problemas y obstáculos encontrados, en conjunto con la tutoría del profesor.
 
-Con respecto a la macroplanificación, el proyecto se estructuró en dos grandes fases secuenciales de desarrollo, 
-las cuales se describen a continuación en sendas subsecciones.
+Con respecto a la macroplanificación, estructuramos el proyecto en dos grandes fases secuenciales de desarrollo,
+que describimos a continuación en sendas subsecciones.
 
 \subsection{Fase 1: Investigación y Prototipo en Java (Septiembre 2025 - Enero 2026)}
-Con el objetivo de validar completa y rigurosamente la viabilidad del motor de navegación y los algoritmos involucrados,
-se optó por desarrollar un prototipo en Java. Deliberadamente abandonando la implementación inicial de una interfaz gráfica,
-hemos centralizado los esfuerzos en la eficacia, eficiencia y robustez técnica de los componentes del sistema.
-Este enfoque permitió analizar en profundidad el comportamiento del algoritmo planteado y la correcta integración
+Con el objetivo de validar de forma completa y rigurosa la viabilidad del motor de navegación y los algoritmos involucrados,
+optamos por desarrollar un prototipo en Java. Renunciando deliberadamente a la implementación inicial de una interfaz gráfica,
+centralizamos los esfuerzos en la eficacia, eficiencia y robustez técnica de los componentes del sistema.
+Este enfoque nos permitió analizar en profundidad el comportamiento del algoritmo planteado y la correcta integración
 con la base de datos TMDB.
 
 \begin{itemize}
 \item \textbf{Estudio precedente y proceso de diseño arquitectónico:}
-Es ese momento hemos definido el estado de la cuestión basándonos en artículos de investigación previos, 
-seleccionamos los datasets pertinentes y de dominio público y diseñamos el modelo básico de datos relacional.
+En ese momento definimos el estado de la cuestión basándonos en artículos de investigación previos,
+seleccionamos los \textit{datasets} pertinentes y de dominio público y diseñamos el modelo básico de datos relacional.
 
-\item \textbf{Desarrollo del motor de navegación (núcleo backend):}
-Siguiendo con la implementación de la lógica en Java, desarrollamos una máquina de estados 
-(\texttt{State}, \texttt{StateManager}) con capacidad para:
+\item \textbf{Desarrollo del motor de navegación (núcleo \textit{backend}):}
+Continuando con la implementación de la lógica en Java, desarrollamos una máquina de estados
+(\texttt{State}, \texttt{StateManager}) con capacidad para
 gestionar el historial, los filtros de metadatos, los filtros relacionales y los saltos transversales \texttt{Link}.
 
-\item \textbf{Integración de TMBD:}
+\item \textbf{Integración de TMDB:}
 
-Para empezar la validación del motor de navegación, hemos optado por integrar la base de datos pública 
-TMBD (\textit{The Movie Database}), que permite obterner información sobre películas, series y personas.
-Además de consumir la API, se diseñó un proceso de transformación y almacenamiento de los datos en nuestro modelo relacional,
-permitiendo adaptar la estructura de TMDB a las necesidades de navegación del motor.
+Para iniciar la validación del motor de navegación, optamos por integrar la base de datos pública
+TMDB (\textit{The Movie Database}), que permite obtener información sobre películas, series y personas.
+Además de consumir la API, diseñamos un proceso de transformación y almacenamiento de los datos en nuestro modelo relacional,
+adaptando la estructura de TMDB a las necesidades de navegación del motor.
 \end{itemize}
 
 \subsection{Fase 2: Desarrollo Web e Integración (Enero 2026 - Marzo 2026)}
-Con el núcleo del modelo de navegación funcional, hemos transladado el esfuerzo en exponer sus funcionalidades 
-a través de una arquictectura cliente-servidor, además de añadir una interfaz de usuario.
+Con el núcleo del modelo de navegación funcional, trasladamos el esfuerzo a exponer sus funcionalidades
+a través de una arquitectura cliente-servidor, además de añadir una interfaz de usuario.
 \begin{itemize}
 
-\item \textbf{Exposición de API RESTful:}
-Hemos desarrollado una capa de controladores usando Servlets de Java (\textit{API RESTful}) para exponer, 
-con seguridad y de manera estructurada, las capacidades del motor (\texttt{FacetsServlet}, 
-\texttt{NavigationServlet}, \texttt{UnionServlet}, etc.) que gestiona el contexto mediante sesiones de usuario.
+\item \textbf{Exposición de \textit{API RESTful}:}
+Desarrollamos una capa de controladores usando \textit{Servlets} de Java (\textit{API RESTful}) para exponer,
+con seguridad y de manera estructurada, las capacidades del motor (\texttt{FacetsServlet},
+\texttt{NavigationServlet}, \texttt{UnionServlet}, etc.) y gestionar el contexto mediante sesiones de usuario.
 
-\item \textbf{Desarrollo del Frontend:}
+\item \textbf{Desarrollo del \textit{frontend}:}
 
-Tras definir la API, se desarrolló una interfaz web para la interacción con el motor de navegación.
-Entre sus principales componentes están: el área de resultados, sistema de filtrado dinámico de metadatos,
-controles de navegación de estados, conjunto de controles de filtros y exploración de relaciones. 
-Todo desde el paradigma de API RESTful con actualizacion dinámica.
+Tras definir la API, desarrollamos una interfaz web para la interacción con el motor de navegación.
+Entre sus principales componentes están: el área de resultados, el sistema de filtrado dinámico de metadatos,
+los controles de navegación de estados, el conjunto de controles de filtros y la exploración de relaciones.
+Todo ello desde el paradigma de \textit{API RESTful} con actualización dinámica.
 
 \item \textbf{Pruebas de Integración y Refinamiento:}
-Unimos todos los componentes, hicimos pruebas de carga con los \textit{datasets} completos y evaluamos la experiencia
+Unimos todos los componentes, realizamos pruebas de carga con los \textit{datasets} completos y evaluamos la experiencia
 de usuario (\textit{UX}).
 
 \end{itemize}
@@ -184,7 +184,7 @@ Este cronograma evoluciona como sigue:
 
 \begin{itemize}
 \item \textbf{Septiembre 2025: }
-Definición del proyecto, revisión de la literatura (estado del arte) y selección de datasets.
+Definición del proyecto, revisión de la literatura (estado del arte) y selección de \textit{datasets}.
 
 \item \textbf{Octubre 2025: }
 Diseño del modelo de datos y desarrollo inicial del motor de navegación (Fase 1).
@@ -193,16 +193,16 @@ Diseño del modelo de datos y desarrollo inicial del motor de navegación (Fase 
 Implementación completa de la máquina de estados e historial de navegación.
 
 \item \textbf{Diciembre 2025: }
-Prototipado de la integración del dataset TMDB y cierre de la Fase 1.
+Prototipado de la integración del \textit{dataset} TMDB y cierre de la Fase 1.
 
 \item \textbf{Enero 2026: }
-Diseño e implementación de la API RESTful (controladores y enrutamiento) (Fase 2).
+Diseño e implementación de la \textit{API RESTful} (controladores y enrutamiento) (Fase 2).
 
 \item \textbf{Febrero 2026: }
-Desarrollo del cliente web (Frontend) e integración con el backend.
+Desarrollo del cliente web (\textit{frontend}) e integración con el \textit{backend}.
 
 \item \textbf{Marzo 2026: }
-Pruebas de integración, resolución de bugs (obstáculos técnicos) y validación de casos de uso.
+Pruebas de integración, resolución de \textit{bugs} (obstáculos técnicos) y validación de casos de uso.
 
 \item \textbf{Abril 2026: }
 Redacción intensiva de la memoria del Trabajo de Fin de Grado.

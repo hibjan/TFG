@@ -19,26 +19,26 @@ cierra el capítulo reconociendo de manera explícita los límites del estudio.
 \section{Validación funcional sobre TMDB y DBLP}
 \label{sec:validacionFuncional}
 
-La validación funcional del motor se ha realizado de manera incremental durante el desarrollo,
+Hemos realizado la validación funcional del motor de manera incremental durante el desarrollo,
 sobre dos volcados de catálogos públicos de naturaleza estructural muy distinta: TMDB
 (\textit{The Movie Database}), que reúne películas, series y personas con metadatos descriptivos
 y relaciones de participación, y DBLP, una base bibliográfica que reúne publicaciones
 científicas, autores y lugares de publicación. La elección deliberada de dos dominios separados
-ha permitido comprobar empíricamente que las primitivas del motor (filtrado facetado, navegación
+nos ha permitido comprobar empíricamente que las primitivas del motor (filtrado facetado, navegación
 transversal mediante \textit{links} y operaciones de conjunto) generalizan sin necesidad de
 modificaciones sustanciales del modelo relacional, y constituye uno de los argumentos centrales
 del trabajo. Las decisiones de diseño y los obstáculos encontrados durante esta integración se
-detallan en el capítulo~\ref{cap:desarrolloImplementacion}; en lo que sigue se aporta evidencia
+detallan en el capítulo~\ref{cap:desarrolloImplementacion}; en lo que sigue aportamos evidencia
 visual de la equivalencia operativa de ambos dominios.
 
 La equivalencia entre ambos dominios se manifiesta ya en las pantallas previas a la navegación.
 La figura~\ref{fig:seleccionDataset} muestra la primera pantalla del sistema, donde se ofrecen
-los dos datasets disponibles. La lista se construye dinámicamente a partir de la tabla
-\texttt{datasets} de PostgreSQL, de manera que añadir un nuevo dominio sólo requiere extender
+los dos \textit{datasets} disponibles. La lista se construye dinámicamente a partir de la tabla
+\texttt{datasets} de PostgreSQL, de manera que añadir un nuevo dominio solo requiere extender
 los datos, no la interfaz. Una vez elegido uno, la pantalla siguiente expone las colecciones
-publicadas por ese dataset (figura~\ref{fig:seleccionColecciones}): la disposición, tipografía
-y controles son idénticos en ambos casos, lo que cambia es únicamente el conjunto de colecciones
-ofrecidas, que proviene de la tabla \texttt{collections} poblada por los pipelines de ingesta
+publicadas por ese \textit{dataset} (figura~\ref{fig:seleccionColecciones}): la disposición, tipografía
+y controles son idénticos en ambos casos; lo único que cambia es el conjunto de colecciones
+ofrecidas, que proviene de la tabla \texttt{collections} poblada por los \textit{pipelines} de ingesta
 descritos en el Apéndice~\ref{Appendix:integracion}.
 
 \begin{figure}[H]
@@ -90,7 +90,7 @@ recoge el modal de detalle abierto sobre una entidad de cada dominio: una pelíc
 publicación de DBLP. La estructura del modal y la manera de presentar los metadatos son
 idénticas; los campos mostrados se obtienen de la tabla \texttt{metadata} para la entidad
 concreta, sin que el \textit{frontend} conozca el dominio, lo que permite que el mismo
-componente sirva para cualquier dataset sin código específico.
+componente sirva para cualquier \textit{dataset} sin código específico.
 
 \begin{figure}[H]
 \centering
@@ -118,7 +118,7 @@ sobre el que se navegue.
 
 \subsection{Objetivos del estudio}
 
-La evaluación se diseñó con cinco objetivos explícitos que guían tanto el diseño del estudio
+Diseñamos la evaluación con cinco objetivos explícitos que guían tanto el diseño del estudio
 como la lectura posterior de los resultados:
 
 \begin{itemize}
@@ -156,15 +156,15 @@ texto literal a leer, hojas de consentimiento, plantillas de observación y nota
 metodológicas, se reproduce íntegro en el Apéndice~\ref{Appendix:Guion}.
 
 Cada sesión tuvo una duración aproximada de entre 32 y 37 minutos, con media en torno a
-34~minutos, en línea con la estimación previa de 35-45~minutos. Las sesiones se realizaron
+34~minutos, en línea con la estimación previa de 35--45~minutos. Realizamos las sesiones
 de manera presencial entre el 7 y el 14 de mayo de 2026, sobre la misma versión del sistema
 y la misma colección inicial para asegurar comparabilidad. Cuatro de las cinco sesiones
-fueron grabadas con permiso explícito del participante, y las grabaciones se eliminaron
+fueron grabadas con permiso explícito del participante, y eliminamos las grabaciones
 una vez codificadas las observaciones.
 
 \subsection{Perfil de los participantes}
 
-Se reclutaron cinco participantes con perfiles diversificados, siguiendo la recomendación de
+Reclutamos cinco participantes con perfiles diversificados, siguiendo la recomendación de
 Nielsen según la cual cinco evaluadores descubren aproximadamente el 85\% de los problemas
 de usabilidad observables en un sistema. La diversidad demográfica y disciplinar buscada
 quedó representada como muestra el cuadro~\ref{tab:perfilParticipantes}: tres rangos de
@@ -403,7 +403,7 @@ por gravedad estimada según la escala de Nielsen y por frecuencia de aparición
 \hline
 \textbf{Problema}                                                  & \textbf{Gravedad} & \textbf{Frecuencia} & \textbf{Tareas} \\
 \hline
-Toggle \textit{Include}/\textit{Exclude} poco descubrible          & 3 (mayor)   & 5/5 & T4 \\
+\textit{Toggle} \textit{Include}/\textit{Exclude} poco descubrible          & 3 (mayor)   & 5/5 & T4 \\
 Arrastre de paneles sin \textit{auto-scroll} cuando hay desbordamiento & 2 (menor) & 3/5 & T12 \\
 Distinción \textit{Restore} vs \textit{Go Back}                    & 2 (menor)   & 2/5 & T9, T13 \\
 Visibilidad de los paneles inferiores (\textit{links}, entidades)  & 2 (menor)   & 2/5 & T7, T10 \\
@@ -416,7 +416,7 @@ la escala clásica de Nielsen (0 = sin problema, 1 = cosmético, 2 = menor, 3 = 
 \label{tab:incidenciasNielsen}
 \end{table}
 
-El \textbf{toggle de inclusión y exclusión} es el problema más nítido del estudio. Los cinco
+El \textbf{\textit{toggle} de inclusión y exclusión} es el problema más nítido del estudio. Los cinco
 participantes intentaron, en algún momento de T4, cambiar el sentido del filtro pulsando
 directamente sobre la etiqueta verde con «+», esperando que mutase a la versión roja
 con «$-$». El control real (un botón segmentado en la cabecera del panel de Filtros)
@@ -427,7 +427,7 @@ intuitivo poder dar click al "+" de tal manera que se convierta en un "-"». Adi
 la previsualización por \textit{hover} introducida para anticipar la acción del clic generó
 confusión: al pasar el ratón el texto cambiaba pero, al hacer clic, el ratón seguía sobre
 el botón y el cambio aparente de estado se confundía con la previsualización en curso. La
-combinación de un toggle separado del filtro y una previsualización ambigua acumula dos
+combinación de un \textit{toggle} separado del filtro y una previsualización ambigua acumula dos
 fuentes de fricción sobre la misma acción.
 
 El \textbf{arrastre de paneles} (T12) funcionó correctamente cuando el panel de origen y
@@ -474,9 +474,9 @@ recogen como líneas de trabajo futuro en el capítulo~\ref{cap:conclusiones}.
 Cinco direcciones concretas de modificación se desprenden del catálogo anterior. La primera,
 de mayor prioridad, consiste en \textbf{rediseñar la interacción de inclusión y exclusión}.
 La hipótesis a explorar, sugerida por varios participantes, es que la propia etiqueta del
-filtro activo se comporte como un toggle: pulsar sobre el «+» verde lo convertiría en
+filtro activo se comporte como un \textit{toggle}: pulsar sobre el «+» verde lo convertiría en
 «$-$» rojo y viceversa, de manera que el control segmentado actual quede como un valor
-por defecto al añadir filtros nuevos pero no como el único punto de cambio. La previsualización
+por defecto al añadir filtros nuevos, pero no como el único punto de cambio. La previsualización
 por \textit{hover} debería desactivarse o convertirse en un \textit{tooltip} explícito para
 evitar la confusión observada.
 
@@ -487,7 +487,7 @@ en la lógica de \textit{drag-and-drop} pero recupera la metáfora de manipulaci
 los participantes esperan.
 
 La tercera consiste en \textbf{reforzar la diferenciación entre \textit{Restore} y \textit{Go Back}},
-ya sea mediante etiquetas más explícitas (por ejemplo, «Deshacer último link» y
+ya sea mediante etiquetas más explícitas (por ejemplo, «Deshacer último \textit{link}» y
 «Restaurar estado guardado»), un \textit{tooltip} la primera vez que el usuario pasa
 sobre cada botón, o ambos. La diferenciación visual actual ayuda en eficiencia pero no
 construye el modelo conceptual.

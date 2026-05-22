@@ -4,7 +4,7 @@
 \chapterquote{En primer lugar, nada nace de la nada; pues, si así fuera, cualquier cosa nacería de cualquier otra, sin necesidad de semilla alguna.}{Epicuro}
 
 El motor de exploración descrito en este trabajo se apoya en una tradición de
-décadas de investigación, las cuales indagan en cómo permitir que un usuario explore colecciones digitales de tamaño
+décadas de investigación que indaga cómo permitir que un usuario explore colecciones digitales de tamaño
 considerable sin conocer de antemano lo que busca, y se inscribe igualmente en la línea de los modelos
 de hipermedia que articularon, mucho antes de la web tal y como la conocemos, las primitivas básicas
 para representar información interconectada. Este capítulo recorre ese marco con dos objetivos
@@ -226,7 +226,7 @@ de repositorios de objetos de aprendizaje basadas en esquemas fijos como LOM \ci
 o IMS CP \citep{ims_cp_2004}, es
 permitir que cada repositorio defina su propio esquema de metadatos, que ese esquema se construya
 de forma inductiva a medida que se cataloga la colección, y que sea reconfigurable en cualquier momento
-por los usuarios. Esta filosofía bottom-up acerca a Clavy a las folksonomías y, más en general, a los
+por los usuarios. Esta filosofía \textit{bottom-up} acerca a Clavy a las folksonomías y, más en general, a los
 sistemas en los que la organización de la información emerge del uso colaborativo y no se impone de
 antemano \citep{gayoso2016wise}.
 
@@ -279,13 +279,13 @@ de un motor que opera sobre un modelo abstracto desacoplado de la fuente de dato
 diferencias, sin embargo, marcan el espacio que nuestra propuesta ocupa. Clavy se centra en colecciones
 homogéneas, donde todos los objetos pertenecen al mismo dominio y comparten un único esquema,
 con una organización plana que permite reconfigurar la jerarquía de presentación sin afectar a la
-estructura subyacente. Nuestro motor, en cambio, asume desde el principio una colección estratificada
-en varias subcolecciones de naturaleza distinta (por ejemplo, películas, series, personas, productoras,
-cadenas), cada una con su propio espacio de atributos, y vinculadas entre sí por relaciones explícitamente
+estructura subyacente. Nuestro motor, en cambio, asume desde el principio un \textit{dataset} estratificado
+en varias colecciones de naturaleza distinta (por ejemplo, películas, series, personas, productoras,
+cadenas), cada una con su propio espacio de atributos y vinculadas entre sí por relaciones explícitamente
 tipadas. Esa estructura introduce dos primitivas que no tienen análogo directo en Clavy. Por un lado, los
 filtros de referencia, que permiten restringir los objetos visibles de una colección por su vinculación con
 entidades concretas de otra. Por otro lado, la navegación transversal, que permite trasladarse de una
-colección a otra siguiendo una relación, preservando los filtros del tramo previo en el snapshot del enlace
+colección a otra siguiendo una relación, preservando los filtros del tramo previo en el \textit{snapshot} del enlace
 para que la cadena completa de tramos se materialice en subconsultas SQL anidadas. A estas dos primitivas se añade la
 operación de unión, que permite al usuario construir varios contextos de exploración de manera
 independiente y combinarlos a posteriori para obtener el conjunto de entidades que satisfacen al menos
@@ -344,7 +344,7 @@ mismo problema de fondo, la exploración de colecciones extensas, mediante técn
 grandes modelos del lenguaje. Knowledge Navigator, descrito por \citet{katz2024knowledgenav}, es
 representativo de esta corriente. Dada una consulta amplia sobre un dominio científico, el sistema
 recupera centenares de documentos relevantes, los embebe en un espacio vectorial, los agrupa
-mediante clustering probabilístico (modelos de mezcla gaussiana sobre embeddings reducidos con UMAP),
+mediante \textit{clustering} probabilístico (modelos de mezcla gaussiana sobre \textit{embeddings} reducidos con UMAP),
 y delega en un modelo de lenguaje las tareas de etiquetar cada \textit{cluster} con un nombre y una
 descripción, filtrar aquellos que resultan poco relevantes para la consulta original y organizar los
 resultantes en una jerarquía temática de dos niveles que el usuario puede recorrer
@@ -383,7 +383,7 @@ elección entre ambos enfoques no es de mayor o menor sofisticación, sino de ad
 para una colección no estructurada, donde no existe un modelo relacional latente que un sistema
 determinista pueda explotar, la aproximación basada en modelos del lenguaje es probablemente la única
 viable. Para colecciones donde sí existe ese modelo, como las que motivan nuestro trabajo, prescindir
-de él para reducir el problema a uno de \textit{clustering} sobre embeddings supondría desperdiciar
+de él para reducir el problema a uno de \textit{clustering} sobre \textit{embeddings} supondría desperdiciar
 información estructural valiosa y aceptar la opacidad del modelo del lenguaje a cambio de poco.
 
 Esa distinción permite también identificar de manera explícita el hueco en el estado del arte que

@@ -2,8 +2,8 @@
 \label{Appendix:despliegue}
 
 El sistema está pensado para operar como un conjunto de servicios
-independientes: una base de datos PostgreSQL, un backend Java sobre
-Apache Tomcat y un frontend estático servido a través de Nginx. Cuando
+independientes: una base de datos PostgreSQL, un \textit{backend} Java sobre
+Apache Tomcat y un \textit{frontend} estático servido a través de Nginx. Cuando
 se quiere compartir una instancia con terceros (por ejemplo, para la
 defensa del proyecto o para demostraciones puntuales) se añade un
 cuarto componente, un túnel \texttt{cloudflared}, que expone la
@@ -18,33 +18,33 @@ al que se remite para la secuencia operativa concreta.
 
 Durante el desarrollo se priorizan dos cosas: el aislamiento entre
 componentes y la velocidad de iteración. Por eso solo PostgreSQL se
-ejecuta como contenedor, mientras que backend y frontend se levantan
+ejecuta como contenedor, mientras que \textit{backend} y \textit{frontend} se levantan
 directamente en la máquina del desarrollador. El contenedor de
 PostgreSQL se arranca con \texttt{docker-compose.dev.yml}, que monta el
 directorio \texttt{database/} sobre el punto de inicialización de la
 imagen oficial, lo que provoca que el esquema (descrito más adelante)
 se cree automáticamente en el primer arranque sin pasos manuales.
 
-El backend se compila con Maven y se despliega en una instalación
+El \textit{backend} se compila con Maven y se despliega en una instalación
 local de Apache Tomcat 10.1 a través de Eclipse, lo que aporta
 recompilación incremental y depuración paso a paso. Las credenciales
 de la base de datos se inyectan al servidor como variables de entorno,
 leyendo los nombres definidos en \texttt{.env.db}
 (\texttt{DB\_HOST}, \texttt{DB\_NAME}, \texttt{DB\_USER},
 \texttt{DB\_PASS} y \texttt{DB\_PORT}), sin que valor alguno quede
-embebido en el código ni en el WAR. El frontend, por su parte, se sirve
+embebido en el código ni en el WAR. El \textit{frontend}, por su parte, se sirve
 con el servidor de desarrollo de Vite, que ofrece recarga en caliente
-sobre los cambios y permite apuntar a un backend remoto modificando
+sobre los cambios y permite apuntar a un \textit{backend} remoto modificando
 únicamente \texttt{VITE\_API\_BASE\_URL} en
 \texttt{.env.development.local}.
 
 Esta separación introduce una particularidad: durante el desarrollo,
-frontend y backend se sirven en orígenes distintos (puertos diferentes
+\textit{frontend} y \textit{backend} se sirven en orígenes distintos (puertos diferentes
 del mismo \texttt{localhost}), lo que obliga a configurar
 explícitamente CORS y a marcar las cookies de sesión como
 \texttt{SameSite=None}. La razón está discutida en el cuerpo del
 capítulo de desarrollo; el descriptor \texttt{web.xml} y el
-\texttt{context.xml} del backend incorporan esta configuración para
+\texttt{context.xml} del \textit{backend} incorporan esta configuración para
 que el navegador acepte la cookie de sesión en peticiones
 \emph{cross-site}. En el modo compartido, como se verá a continuación,
 el problema desaparece porque ambos servicios quedan tras un mismo
@@ -56,21 +56,21 @@ Para compartir una instancia funcional con un público externo sin
 exigirle instalar nada, el stack completo se levanta con un único
 comando de \texttt{docker compose} sobre \texttt{docker-compose.prod.yml},
 que construye y orquesta los cuatro servicios y los conecta en una red
-interna privada. La elección de empaquetar también el backend y el
-frontend, y no solo la base de datos, responde a dos motivos. Por un
+interna privada. La elección de empaquetar también el \textit{backend} y el
+\textit{frontend}, y no solo la base de datos, responde a dos motivos. Por un
 lado, evita depender del entorno del anfitrión (versiones de Java, de
 Node, de Tomcat) y hace el despliegue reproducible. Por otro, permite
-unificar el frontend estático y la API tras un mismo origen mediante un
+unificar el \textit{frontend} estático y la API tras un mismo origen mediante un
 reverse proxy de Nginx, lo que elimina por completo las complicaciones
 de CORS y cookies que sí están presentes durante el desarrollo.
 
-El servicio de frontend utiliza una imagen multi-etapa que primero
+El servicio de \textit{frontend} utiliza una imagen multi-etapa que primero
 ejecuta \texttt{npm run build} y a continuación copia los artefactos a
 una imagen \texttt{nginx:alpine} con una configuración personalizada.
 Esa configuración sirve los archivos estáticos en la raíz y hace de
-proxy hacia el contenedor del backend para las rutas bajo
+proxy hacia el contenedor del \textit{backend} para las rutas bajo
 \texttt{/backend/}, de modo que el navegador percibe siempre un único
-dominio. El servicio de backend sigue un esquema análogo: una primera
+dominio. El servicio de \textit{backend} sigue un esquema análogo: una primera
 etapa compila el WAR con Maven y una segunda etapa lo despliega sobre
 \texttt{tomcat:10.1-jdk17}, aplicando además el ajuste de
 \texttt{CookieProcessor} necesario para sesiones \emph{cross-site}.
@@ -133,18 +133,18 @@ tablas (\texttt{datasets}, \texttt{collections}, \texttt{entities},
 inicialización de la imagen oficial de PostgreSQL, lo que provoca que se
 ejecute automáticamente la primera vez que el contenedor arranca con un
 volumen vacío. La convención de prefijos numéricos en los nombres de
-los scripts SQL permite añadir migraciones futuras sin alterar el
+los \textit{scripts} SQL permite añadir migraciones futuras sin alterar el
 mecanismo: PostgreSQL los ejecutará en orden lexicográfico durante el
 mismo arranque inicial.
 
-Una vez creado el esquema, la carga de un dataset concreto se realiza
+Una vez creado el esquema, la carga de un \textit{dataset} concreto se realiza
 invocando \texttt{populate\_db\_jsonl.py} desde la máquina anfitriona,
-según se detalla en el Apéndice~\ref{Appendix:integracion}. El script
+según se detalla en el Apéndice~\ref{Appendix:integracion}. El \textit{script}
 publica los datos a través del puerto expuesto por el contenedor de
 PostgreSQL, leyendo las credenciales de \texttt{.env.db}. La separación
 entre creación del esquema (automática en el primer arranque) y carga
-de datasets (manual, posterior) hace el sistema flexible: la base de
-datos puede convivir con varios datasets independientes, cargados en
+de \textit{datasets} (manual, posterior) hace el sistema flexible: la base de
+datos puede convivir con varios \textit{datasets} independientes, cargados en
 momentos distintos, y un fallo durante la ingesta no compromete la
 estructura ya validada.
 
@@ -152,7 +152,7 @@ Si en algún momento se desea regenerar el estado de la base de datos
 por completo, basta con detener el contenedor descartando el volumen
 asociado, lo que provoca que el siguiente arranque vuelva a ejecutar
 \texttt{01\_schema.sql} sobre un volumen vacío. Esta operación elimina
-todos los datasets cargados previamente y debe usarse, por tanto, con
+todos los \textit{datasets} cargados previamente y debe usarse, por tanto, con
 cuidado; el \texttt{README.md} la documenta como recurso de
 \emph{troubleshooting} para los casos en los que el estado de la base
 de datos haya quedado inconsistente.
