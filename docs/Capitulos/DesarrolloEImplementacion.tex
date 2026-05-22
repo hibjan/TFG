@@ -691,8 +691,18 @@ películas, o a qué cadenas están asociadas las series que quedan tras aplicar
 Este cómputo es siempre dinámico: se recalcula en cada petición a partir del conjunto
 de entidades que satisfacen el estado actual.
 
-El sistema distingue dos tipos de facetas, ambas servidas por \texttt{FacetsServlet}
-a través del endpoint \texttt{GET /api/facets}:
+El sistema distingue tres tipos de facetas, cada una servida por su propio servlet
+bajo el prefijo \texttt{/api/facets}: \texttt{MetadataFacetsServlet} resuelve
+\texttt{GET /api/facets/metadata}, \texttt{ReferenceFacetsServlet} resuelve
+\texttt{GET /api/facets/references} y \texttt{LinkFacetsServlet} resuelve
+\texttt{GET /api/facets/links}. Esta separación responde a dos razones. Por un lado,
+cada faceta consulta una estructura distinta de la base de datos (la tabla
+\texttt{metadata} para los atributos, la tabla \texttt{reference} para los vínculos
+filtrables y los destinos alcanzables para los \textit{links} navegables), lo que
+aconseja aislar cada cómputo en su propio controlador y mantener la responsabilidad
+única por endpoint. Por otro, el cliente las refresca de manera independiente tras
+cada acción, de modo que separar los endpoints permite que el frontend evite recalcular
+secciones de la interfaz que no se han visto afectadas por la última transición.
 
 Las \textbf{facetas de metadatos} se obtienen mediante \texttt{getFacets()}, que construye
 una subconsulta con los identificadores de las entidades actualmente visibles
@@ -727,11 +737,13 @@ vinculadas a los resultados actuales, agrupadas por colección y tipo de relaci�
 El resultado expone, por ejemplo, qué personas concretas aparecen como \textit{Director}
 entre las películas visibles, junto con el número de películas en las que aparecen.
 
-Junto a las facetas, el mismo endpoint devuelve los \textit{links} disponibles
---- obtenidos mediante \texttt{getAvailableLinks()} --- que indican a qué otras
-colecciones es posible navegar desde el conjunto actual, y los filtros activos en ese
-momento (\texttt{activeFilters}), permitiendo al frontend reflejar el estado de
-selección sin necesidad de mantener dicha información en el cliente.
+Por su parte, los \textit{links} disponibles --- obtenidos mediante
+\texttt{getAvailableLinks()} --- viajan por el endpoint
+\texttt{GET /api/facets/links} y enumeran las colecciones a las que es posible
+navegar desde el conjunto actual. Las respuestas de las facetas de metadatos y de
+referencia incluyen además los filtros activos en ese momento
+(\texttt{activeFilters}), permitiendo al frontend reflejar el estado de selección
+sin necesidad de mantener dicha información en el cliente.
 
 \section{Navegación transversal}
 \label{sec:navegacion_transversal}
@@ -902,7 +914,7 @@ sobrecarga recursiva que recorre la lista de transiciones del estado
 (\texttt{state.getLinks()}) desde el último \texttt{Link} hacia el primero, generando en
 cada nivel una subconsulta anidada.
 
-La estructura de la recursión tiene la siguite definición: para cada nivel de profundidad, se aplican
+La estructura de la recursión tiene la siguiente definición: para cada nivel de profundidad, se aplican
 primero los filtros del estado en ese nivel mediante \texttt{appendStateFilters}, y a
 continuación se genera una cláusula \texttt{AND ... IN (SELECT ...)} que restringe las
 entidades del nivel actual a aquellas que, a través de la relación registrada en el

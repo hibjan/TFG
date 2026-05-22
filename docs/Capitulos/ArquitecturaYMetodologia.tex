@@ -495,12 +495,12 @@ los resultados.
 
 Este Trabajo de Fin de Grado se ha organizado por principios de Ingeniería de Software fundamentados en el paradigma ágil.
 Como se estableció en el plan de trabajo, hemos optado por \textbf{Scrum} \citep{hanser2026scrum} como referencia, adaptando sus características
-a las particuladades de un equipo reducido de dos personas. La adaptación resultó esencial para mantener la 
+a las particularidades de un equipo reducido de dos personas. La adaptación resultó esencial para mantener la 
 disciplina y estructura ofrecida por el modelo ágil sin introducir una sobrecarga innecesaria.
 
 Por eso la aplicación de \textbf{Scrum} se centró principalmente en ciclos de desarrollo iterativos (\textit{sprints}) 
-de corta duración, donde se planteaban objetivos concretos y alcanzables. En general, todo iteración coincidía con un 
-incremento funcional del sistema, con excepción de las fases iniciales, en lo cual la mayor parte del esfuerzo se mantuvo
+de corta duración, donde se planteaban objetivos concretos y alcanzables. En general, toda iteración coincidía con un
+incremento funcional del sistema, con excepción de las fases iniciales, en las que la mayor parte del esfuerzo se mantuvo
 en una especificación inicial del motor de navegación. Este abordaje permitió ejecutar una validación progresiva de los componentes 
 críticos del proyecto. Específicamente, se ha notado un gran impacto en los \textit{milestones}: motor de 
 navegación en Java, la integración con la base de datos TMDB y la posterior exposición de funcionalidades 
@@ -509,10 +509,10 @@ mediante una API REST.
     \subsection*{Desarrollo iterativo e incremental}
 
 A cambio de definir completa y decididamente la arquitectura desde el principio con un enfoque lineal y secuencial, 
-como la metodología cascada, el sistema se ha desarrollado de forma incremental. Es sus primeras iteraciones, hemos 
+como la metodología cascada, el sistema se ha desarrollado de forma incremental. En sus primeras iteraciones, hemos
 priorizado la validación del propio modelo de navegación y la estructura de datos asociada, al mismo tiempo que en 
 fases posteriores hemos incorporado progresivamente la capa de acceso a datos, la API y el \textit{front-end web}. 
-Dicho tratamiento resultó significativamente relevante dedido a la naturaleza exploratoria del proyecto, ya que 
+Dicho tratamiento resultó significativamente relevante debido a la naturaleza exploratoria del proyecto, ya que
 permitió adaptar el diseño del motor de navegación al mismo tiempo que se probaba con datos reales.
 
     \subsection*{Gestión de requisitos y backlog}
@@ -540,18 +540,18 @@ Figura~\ref{fig:backlog}.
 
     \subsection*{Trabajo colaborativo en un equipo reducido}
 
-Hemos adaptado las práticas de \textbf{Scrum} a un entorno de colaboración directa y continua, ya que el proyecto sería 
+Hemos adaptado las prácticas de \textbf{Scrum} a un entorno de colaboración directa y continua, ya que el proyecto sería
 desarrollado por un equipo de dos personas. En lugar de llevar a cabo reuniones formales, se optó por mantener una 
-comunicación frecuente entre los integrantes, manteniendo siempre una divisón clara y acordada de responsabilidades, 
+comunicación frecuente entre los integrantes, manteniendo siempre una división clara y acordada de responsabilidades,
 fundamental para la paralelización del desarrollo sin perder coherencia en el diseño global. Este método de comunicación 
-y organización facilitó una evolución más eficiente y dinámica del software, con una alta capacidad de reacción 
-frente los problemas técnicos.
+y organización facilitó una evolución más eficiente y dinámica del software, con una alta capacidad de reacción
+frente a los problemas técnicos.
 
     \subsection*{Control de versiones y gestión del código fuente}
 
 En virtud de la necesidad de mantener la integridad del código y facilitar el trabajo colaborativo, hemos 
 utilizado Git como sistema de control de versiones distribuido. El repositorio principal se alojó en GitHub\footnote{\url{https://github.com/hibjan/TFG}}
-y se empleó una estrategia de ramificación sencilla : una rama principal (\texttt{main}) para el código 
+y se empleó una estrategia de ramificación sencilla: una rama principal (\texttt{main}) para el código
 estable y funcional, y ramas de características (\textit{feature branches}) para el desarrollo de nuevos 
 componentes antes de su integración final. Con esa metodología, hemos podido trabajar en paralelo sin conflictos 
 significativos manteniendo siempre una versión funcional del sistema.
@@ -672,7 +672,7 @@ y mantener una coherencia estricta con el modelo de navegación propuesto.
 
     \subsection*{Componentes transversales de la arquitectura}
 
-El sistente contiene una serie de componentes transversales, más allá de la capa de controladores, que proporcionan 
+El sistema contiene una serie de componentes transversales, más allá de la capa de controladores, que proporcionan
 funcionalidades comunes que permiten separar claramente la lógica de dominio y los aspectos técnicos propios de la 
 infraestructura web.
 
@@ -696,7 +696,7 @@ se evita introducir lógica técnica adicional en los controladores y se mantien
 \section{Persistencia y Acceso a Datos}
 
 La capa de persistencia y su respectivo diseño constituyen la base fundamental de la arquitectura del sistema, 
-puesto que el motor de navegación tiene una relación de depencia directa de la estructura y disponibilidad de los 
+puesto que el motor de navegación tiene una relación de dependencia directa de la estructura y disponibilidad de los
 datos sobre los que opera. Como el sistema no se limita a recuperación de la información, en este proyecto los datos no 
 se consumen directamente, sino que pasan por una transformación y reorganización que permiten la exploración mediante 
 un modelo de navegación relacional.
@@ -709,7 +709,7 @@ datos. Este enfoque es particularmente relevante dado que el sistema integra con
 
 Por ese misma razón, hemos optado por organizar el acceso a datos a través de una capa dedicada de abstracción \textit{(DAO)}, 
 que se encarga de aislar la lógica de acceso, traducción y recuperación de la información. Esta separación es lo que garantiza mantener 
-la independencia entre la lógica de navegación y los mecanismos de persistencia, permitiendo al mismo tiempo una evolución del proprio sistema 
+la independencia entre la lógica de navegación y los mecanismos de persistencia, permitiendo al mismo tiempo una evolución del propio sistema
 y posible cambios en las fuentes de datos o incluso en su forma de almacenamiento.
 
     \subsection*{Modelo de datos y representación interna}
@@ -765,7 +765,7 @@ Una de las consideraciones más importantes en este diseño ha sido la coexisten
 con características complementarias. Antes de privilegiar una única fuente como referencia principal,
 hemos diseñado el sistema para permitir la incorporación de nuevas fuentes, siempre que estas
 puedan ser mapeadas al modelo interno. Este enfoque posibilita la extensibilidad del sistema y evita
-dependencias estríctas con tecnologías o fuentes concretas.
+dependencias estrictas con tecnologías o fuentes concretas.
 
 Asimismo, se ha optado por un modelo de integración en el que la responsabilidad de adaptación recae en
 la capa de acceso a datos, evitando trasladar esta complejidad al motor de navegación. De este modo, el
@@ -786,7 +786,7 @@ del sistema de detalles específicos (como el formato de los datos, los mecanism
 particularidades de cada fuente).
 
 Además, esta capa facilita la integración de múltiples conjuntos de datos, ya que cada fuente puede ser gestionada
-mediante su propia implementación de acceso, de manera compleamente independiente, sin afectar al resto del sistema. 
+mediante su propia implementación de acceso, de manera completamente independiente, sin afectar al resto del sistema.
 Esto resulta especialmente relevante en un contexto donde hay una coexistencia de datos heterogéneos, permitiendo 
 su incorporación de manera progresiva, controlada y sin grandes dependencias.
 
