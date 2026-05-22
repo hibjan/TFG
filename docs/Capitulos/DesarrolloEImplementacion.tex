@@ -692,10 +692,11 @@ Este cómputo es siempre dinámico: se recalcula en cada petición a partir del 
 de entidades que satisfacen el estado actual.
 
 El sistema distingue tres tipos de facetas, cada una servida por su propio servlet
-bajo el prefijo \texttt{/api/facets}: \texttt{MetadataFacetsServlet} resuelve
-\texttt{GET /api/facets/metadata}, \texttt{ReferenceFacetsServlet} resuelve
-\texttt{GET /api/facets/references} y \texttt{LinkFacetsServlet} resuelve
-\texttt{GET /api/facets/links}. Esta separación responde a dos razones. Por un lado,
+bajo el prefijo \texttt{/api/facets}: \texttt{Metadata\allowbreak FacetsServlet} resuelve
+\texttt{GET /api/\allowbreak facets/\allowbreak metadata}, \texttt{Reference\allowbreak FacetsServlet}
+resuelve \texttt{GET /api/\allowbreak facets/\allowbreak references} y
+\texttt{Link\allowbreak FacetsServlet} resuelve
+\texttt{GET /api/\allowbreak facets/\allowbreak links}. Esta separación responde a dos razones. Por un lado,
 cada faceta consulta una estructura distinta de la base de datos (la tabla
 \texttt{metadata} para los atributos, la tabla \texttt{reference} para los vínculos
 filtrables y los destinos alcanzables para los \textit{links} navegables), lo que
@@ -793,7 +794,7 @@ mantiene \texttt{StateManager} para conocer cuál es la última transición reve
 eventual operación de \texttt{goback}.
 
 La Figura~\ref{fig:seqLink} resume la secuencia de mensajes entre el
-cliente, el \texttt{NavigationServlet} y el modelo en memoria al
+cliente, el \texttt{Navigation\allowbreak Servlet} y el modelo en memoria al
 ejecutar una operación de \textit{link}. Se observa que el servlet
 invoca primero \texttt{save()} (volcando una copia del estado actual a
 \texttt{historyStack}) y a continuación \texttt{link()}, dentro de
@@ -2008,8 +2009,9 @@ completo durante el desarrollo habría introducido tiempos de carga, poblado de 
 datos y ejecución de queries que habrían dificultado la iteración rápida.
 
 La solución adoptada fue incorporar un mecanismo de filtrado por popularidad directamente
-en el script de procesamiento, controlado por las variables \texttt{FILTER\_TOP\_K\_POPULAR}
-y \texttt{TOP\_K\_COUNT}, configuradas como se muestra en el
+en el script de procesamiento, controlado por las variables
+\texttt{FILTER\_\allowbreak TOP\_\allowbreak K\_\allowbreak POPULAR}
+y \texttt{TOP\_\allowbreak K\_\allowbreak COUNT}, configuradas como se muestra en el
 Código~\ref{lst:filtroPopularidad}.
 
 \begin{lstlisting}[style=pythonStyle, caption=Configuración del filtro por popularidad, label=lst:filtroPopularidad]
@@ -2093,7 +2095,9 @@ if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
 chain.doFilter(req, res);
 \end{lstlisting}
 
-Un detalle relevante fue la combinación de \texttt{Access-Control-Allow-Credentials: true}
+\begin{sloppypar}
+Un detalle relevante fue la combinación de
+\texttt{Access-\allowbreak Control-\allowbreak Allow-\allowbreak Credentials:~true}
 con el reflejo dinámico del origen en lugar de un comodín \texttt{*}: los navegadores
 rechazan el uso de \texttt{*} cuando la petición incluye credenciales (en este caso,
 la cookie de sesión), por lo que el filtro lee el encabezado \texttt{Origin} de la
@@ -2104,6 +2108,7 @@ en peticiones cross-origin. La configuración exacta del contenedor de
 servlets en los modos de desarrollo y de producción, junto con el
 empaquetado del backend tras un mismo origen mediante Nginx en
 producción, se describe en el Apéndice~\ref{Appendix:despliegue}.
+\end{sloppypar}
 
 El flujo completo de una petición HTTP, desde el \textit{preflight}
 CORS hasta la respuesta JSON, se ilustra en la
@@ -2206,8 +2211,12 @@ colección de origen y la razón del salto que se va a deshacer, dejando el hist
 real, residente en \texttt{cur.getLinks()}, intacto y monótonamente creciente. La
 implementación final coincide con la mostrada en el Código~\ref{lst:goback}.
 
-La consecuencia de este diseño, descrita en la sección~\ref{sec:navegacion_transversal},
-es que \texttt{appendFilterClauses} debe recorrer toda la cadena acumulada, incluidos los
-retrocesos, para construir correctamente las subconsultas anidadas. El coste es una query
+\begin{sloppypar}
+La consecuencia de este diseño, descrita en la
+sección~\ref{sec:navegacion_transversal}, es que
+\texttt{append\allowbreak Filter\allowbreak Clauses} debe recorrer toda la cadena
+acumulada, incluidos los retrocesos, para construir correctamente las subconsultas
+anidadas.
+\end{sloppypar} El coste es una query
 potencialmente más larga conforme el usuario navega y retrocede, pero garantiza que el
 contexto de exploración se reconstruye de forma exacta en cada petición.

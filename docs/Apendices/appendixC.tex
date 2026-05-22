@@ -125,11 +125,12 @@ recoge en la Figura~\ref{fig:prodDeployment}.
 
 \section{Base de datos e ingesta inicial}
 
+\begin{sloppypar}
 El esquema relacional, descrito en el cuerpo de la memoria, se
-materializa en \texttt{database/01\_schema.sql}, que crea las cinco
-tablas (\texttt{datasets}, \texttt{collections}, \texttt{entities},
-\texttt{metadata} y \texttt{reference}) junto con sus claves foráneas e
-índices. Este archivo se monta como volumen en el directorio de
+materializa en \texttt{database/\allowbreak 01\_\allowbreak schema.sql}, que crea las
+cinco tablas (\texttt{datasets}, \texttt{collections}, \texttt{entities},
+\texttt{metadata} y \texttt{reference}) junto con sus claves foráneas e índices.
+\end{sloppypar} Este archivo se monta como volumen en el directorio de
 inicialización de la imagen oficial de PostgreSQL, lo que provoca que se
 ejecute automáticamente la primera vez que el contenedor arranca con un
 volumen vacío. La convención de prefijos numéricos en los nombres de
