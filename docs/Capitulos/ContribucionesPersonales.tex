@@ -38,11 +38,11 @@ volcados intermedios y los inserta en el esquema relacional definido en
 \texttt{database/01\_schema.sql}.
 
 En el \textit{backend} Java, mi parte ha sido la \textbf{capa de persistencia y los controladores
-infraestructurales}. Concretamente, he sido responsable de \texttt{DatabaseService} y de la
-lógica de conexión a PostgreSQL, del controlador de sesión \texttt{SessionServlet}, del
-controlador central de transiciones \texttt{NavigationServlet} (que orquesta todas las acciones
-del motor) y del \texttt{CORSFilter} que permite el consumo desde el cliente web en el escenario
-de desarrollo. También he implementado los servlets de cabecera del dominio
+infraestructurales}. Concretamente, he sido responsable de \texttt{Database\allowbreak Service}
+y de la lógica de conexión a PostgreSQL, del controlador de sesión \texttt{Session\allowbreak Servlet},
+del controlador central de transiciones \texttt{Navigation\allowbreak Servlet} (que orquesta todas
+las acciones del motor) y del \texttt{CORSFilter} que permite el consumo desde el cliente web
+en el escenario de desarrollo. También he implementado los servlets de cabecera del dominio
 (\texttt{DatasetsServlet}, \texttt{CollectionsServlet}, \texttt{EntityServlet},
 \texttt{EntitiesServlet} y \texttt{ResourceServlet}) que sirven el contexto sobre el que opera
 el resto del motor.
