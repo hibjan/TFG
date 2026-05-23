@@ -255,7 +255,7 @@ $R^{+}$ salvo en el par $(c', r)$, donde toma el valor $E$.
       \item Postcondición: sea $c$ la colección activa de $s_{\text{cur}}$ y sea
         $\ell_{\text{new}} = \langle \mathsf{fwd},\, c,\, r,\, s_{\text{cur}} \rangle$. El estado activo
         $s_{\text{cur}}'$ se obtiene de $s_{\text{cur}}$ cambiando la colección activa a $c'$, dejando los
-        cuatro mapas de filtros vacíos y añadiendo $\ell_{\text{new}}$ al final de $L$. El contexto registra
+        cuatro mapas de filtros vacíos y añadiendo $\ell_{\text{new}}$ al final de $s_{\text{cur}}.L$. El contexto registra
         además ese mismo link en la cima de $T$. Esto es, el snapshot $\ell_{\text{new}}.s'$ conserva los
         filtros del tramo anterior (porque captura $s_{\text{cur}}$ tal cual estaba antes del salto),
         mientras que el nuevo tramo activo arranca sin filtros sobre la colección destino $c'$.
@@ -271,7 +271,7 @@ $R^{+}$ salvo en el par $(c', r)$, donde toma el valor $E$.
         activo $s_{\text{cur}}'$ se obtiene de $s_{\text{cur}}$ asignando $c_{\text{prev}}$ como nueva
         colección activa, copiando desde el snapshot los cuatro mapas de filtros
         $F^{+}{}' \,{=}\, s_{\text{snap}}.F^{+}$, $F^{-}{}' \,{=}\, s_{\text{snap}}.F^{-}$,
-        $R^{+}{}' \,{=}\, s_{\text{snap}}.R^{+}$, $R^{-}{}' \,{=}\, s_{\text{snap}}.R^{-}$, y añadiendo a $L$
+        $R^{+}{}' \,{=}\, s_{\text{snap}}.R^{+}$, $R^{-}{}' \,{=}\, s_{\text{snap}}.R^{-}$, y añadiendo a $s_{\text{cur}}.L$
         un link $\langle \mathsf{bwd},\, c,\, r_{\text{prev}},\, s_{\text{cur}} \rangle$.
 
         En particular, $L$ crece monótonamente: el retroceso registra un nuevo link en lugar de eliminar el
@@ -765,7 +765,6 @@ Una de las consideraciones más importantes en este diseño ha sido la coexisten
 con características complementarias. Antes que privilegiar una única fuente como referencia principal,
 hemos diseñado el sistema para permitir la incorporación de nuevas fuentes, siempre que estas
 puedan ser mapeadas al modelo interno. Este enfoque posibilita la extensibilidad del sistema y evita
-dependencias estrictas con tecnologías o fuentes concretas.
 dependencias estrictas con tecnologías o fuentes concretas.
 
 Asimismo, hemos optado por un modelo de integración en el que la responsabilidad de adaptación recae en
