@@ -85,6 +85,13 @@
     backdrop-filter: blur(12px);
 }
 
+/* Filters panel needs its own stacking context so combobox dropdowns
+   render above sibling panels (Links, etc.) that come later in the DOM. */
+.filters-panel {
+    position: relative;
+    z-index: 10;
+}
+
 .panel-header {
     display: flex;
     align-items: center;
