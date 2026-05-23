@@ -151,7 +151,8 @@ gestionar el historial, los filtros de metadatos, los filtros relacionales y los
 Para iniciar la validación del motor de navegación, optamos por integrar la base de datos pública
 TMDB (\textit{The Movie Database}), que permite obtener información sobre películas, series y personas.
 Además de consumir la API, diseñamos un proceso de transformación y almacenamiento de los datos en nuestro modelo relacional,
-adaptando la estructura de TMDB a las necesidades de navegación del motor.
+adaptando la estructura de TMDB a las necesidades de navegación del motor. El detalle de este proceso de
+ingesta y transformación se recoge en el apéndice~\ref{Appendix:integracion}.
 \end{itemize}
 
 \subsection{Fase 2: Desarrollo Web e Integración (Enero 2026 - Marzo 2026)}
@@ -170,6 +171,13 @@ Tras definir la API, desarrollamos una interfaz web para la interacción con el 
 Entre sus principales componentes están: el área de resultados, el sistema de filtrado dinámico de metadatos,
 los controles de navegación de estados, el conjunto de controles de filtros y la exploración de relaciones.
 Todo ello desde el paradigma de \textit{API RESTful} con actualización dinámica.
+
+\item \textbf{Integración de DBLP:}
+
+Para validar empíricamente la agnosticidad al dominio del modelo, incorporamos un segundo
+\textit{dataset} de naturaleza estructural diferenciada: DBLP (\textit{Digital Bibliography \&
+Library Project}), un catálogo público de publicaciones científicas en informática. La evidencia
+de la equivalencia operativa de ambos dominios se presenta en la sección~\ref{sec:validacionFuncional}.
 
 \item \textbf{Pruebas de Integración y Refinamiento:}
 Unimos todos los componentes, realizamos pruebas de carga con los \textit{datasets} completos y evaluamos la experiencia
