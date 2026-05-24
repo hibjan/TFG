@@ -102,6 +102,19 @@ function showScreen(name) {
     dom.screenDatasets.classList.toggle('hidden', name !== 'datasets');
     dom.screenCollections.classList.toggle('hidden', name !== 'collections');
     dom.screenNavigation.classList.toggle('hidden', name !== 'navigation');
+
+    const baseTitle = 'Collection Explorer';
+    if (name === 'datasets') {
+        document.title = `Multimedia ${baseTitle}`;
+    } else if (name === 'collections') {
+        document.title = state.datasetName ? `${state.datasetName} | ${baseTitle}` : `Multimedia ${baseTitle}`;
+    } else if (name === 'navigation') {
+        if (state.collectionName && state.datasetName) {
+            document.title = `${state.collectionName} (${state.datasetName}) | ${baseTitle}`;
+        } else {
+            document.title = state.datasetName ? `${state.datasetName} | ${baseTitle}` : `Multimedia ${baseTitle}`;
+        }
+    }
 }
 
 // ──────────────────────────────────────────────
