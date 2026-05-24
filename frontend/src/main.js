@@ -2,7 +2,7 @@ import { $$ } from './utils.js';
 import { api } from './api.js';
 import PaginationHandler from './components/PaginationHandler.js';
 import { addFilterTag, clearTags } from './components/FilterTags.js';
-import { renderModalContent } from './components/Modal.js';
+import { renderModalContent, setEntityFetcher } from './components/Modal.js';
 import { initPanelDragOrder } from './components/PanelDragOrder.js';
 import { createCombobox } from './components/Combobox.js';
 import { Skeleton } from './components/Skeleton.js';
@@ -74,6 +74,8 @@ const dom = {
     modalRefs: {
         modal: $$('entity-modal'),
         modalClose: $$('modal-close'),
+        modalBackBtn: $$('modal-back'),
+        modalBreadcrumb: $$('modal-breadcrumb'),
         modalName: $$('modal-entity-name'),
         modalContents: $$('modal-entity-contents'),
         modalResources: $$('modal-entity-resources'),
@@ -100,6 +102,19 @@ function showScreen(name) {
     dom.screenDatasets.classList.toggle('hidden', name !== 'datasets');
     dom.screenCollections.classList.toggle('hidden', name !== 'collections');
     dom.screenNavigation.classList.toggle('hidden', name !== 'navigation');
+
+    const baseTitle = 'Collection Explorer';
+    if (name === 'datasets') {
+        document.title = `Multimedia ${baseTitle}`;
+    } else if (name === 'collections') {
+        document.title = state.datasetName ? `${state.datasetName} | ${baseTitle}` : `Multimedia ${baseTitle}`;
+    } else if (name === 'navigation') {
+        if (state.collectionName && state.datasetName) {
+            document.title = `${state.collectionName} (${state.datasetName}) | ${baseTitle}`;
+        } else {
+            document.title = state.datasetName ? `${state.datasetName} | ${baseTitle}` : `Multimedia ${baseTitle}`;
+        }
+    }
 }
 
 // ──────────────────────────────────────────────
@@ -109,6 +124,9 @@ async function init() {
     await loadDatasets();
     setupListeners();
     initPanelDragOrder(dom.screenNavigation);
+
+    // Wire up the entity fetcher so the modal can load referenced entities
+    setEntityFetcher(fetchEntityData);
 
     // Try to resume an existing session
     try {
@@ -939,14 +957,17 @@ async function restoreState() {
 // ──────────────────────────────────────────────
 // Entity Detail Modal Controller
 // ──────────────────────────────────────────────
+async function fetchEntityData(entityId, collectionId) {
+    let url = `/entity?id=${entityId}`;
+    if (collectionId !== undefined && collectionId !== null) {
+        url += `&collectionId=${collectionId}`;
+    }
+    return await api(url);
+}
+
 async function viewEntity(entityId, collectionId) {
     try {
-        let url = `/entity?id=${entityId}`;
-        if (collectionId !== undefined && collectionId !== null) {
-            url += `&collectionId=${collectionId}`;
-        }
-        const data = await api(url);
-
+        const data = await fetchEntityData(entityId, collectionId);
         renderModalContent(data, dom.modalRefs);
     } catch (err) {
         console.error('Failed to load entity details:', err);

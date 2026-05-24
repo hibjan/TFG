@@ -1,21 +1,50 @@
 // src/components/Modal.js
 import { getApiBase } from '../api.js';
 
-// Listeners are wired up exactly once on the first render call,
-// so we never accumulate duplicates and never replace DOM nodes.
+// ── State ────────────────────────────────────────────────────
+// Stack of entity data objects. Each entry = one "layer" in the modal.
+let entityStack = [];
+// Callback supplied by main.js so we can fetch entity data from here.
+let fetchEntityCallback = null;
+let modalRefsCache = null;
 let listenersInitialized = false;
 
+/**
+ * Set the function used to fetch entity data.
+ * Signature: async (entityId, collectionId) => entityDataObject
+ */
+export function setEntityFetcher(fn) {
+    fetchEntityCallback = fn;
+}
+
+/**
+ * Open (or push onto) the entity modal.
+ * - First call opens the overlay.
+ * - Subsequent calls while the modal is open push a new layer on top.
+ */
 export function renderModalContent(data, modalRefs) {
+    modalRefsCache = modalRefs;
+    initListenersOnce(modalRefs);
+
+    entityStack.push(data);
+    renderCurrentLayer(modalRefs);
+
+    modalRefs.modal.classList.remove('hidden');
+}
+
+// ── Internal: render the top of the stack ────────────────────
+function renderCurrentLayer(modalRefs) {
     const {
-        modal,
         modalName,
         modalContents,
         modalResources,
         modalMetadata,
         modalReferences,
+        modalBackBtn,
+        modalBreadcrumb,
     } = modalRefs;
 
-    initListenersOnce(modalRefs);
+    const data = entityStack[entityStack.length - 1];
 
     modalName.textContent = data.name || `Entity #${data.id}`;
     modalContents.innerHTML = '';
@@ -23,31 +52,104 @@ export function renderModalContent(data, modalRefs) {
     modalMetadata.innerHTML = '';
     modalReferences.innerHTML = '';
 
-    renderContents(data, modalContents, modalResources);
+    renderResources(data, modalResources);
+    renderContents(data, modalContents);
     renderMetadata(data, modalMetadata);
     renderReferences(data, modalReferences);
+    renderBreadcrumb(modalBreadcrumb);
 
-    modal.classList.remove('hidden');
+    // Show/hide the back button
+    if (modalBackBtn) {
+        modalBackBtn.classList.toggle('hidden', entityStack.length <= 1);
+    }
+}
+
+// ── Breadcrumb trail ─────────────────────────────────────────
+function renderBreadcrumb(container) {
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (entityStack.length <= 1) {
+        container.classList.add('hidden');
+        return;
+    }
+    container.classList.remove('hidden');
+
+    entityStack.forEach((entry, i) => {
+        if (i > 0) {
+            const sep = document.createElement('span');
+            sep.className = 'modal-breadcrumb-sep';
+            sep.textContent = '›';
+            container.appendChild(sep);
+        }
+
+        const crumb = document.createElement('span');
+        crumb.className = 'modal-breadcrumb-item';
+        const entityLabel = entry.name || `Entity #${entry.id}`;
+        const colName = entry.collection?.name;
+        crumb.textContent = colName ? `${entityLabel} (${colName})` : entityLabel;
+        crumb.title = crumb.textContent;
+
+        if (i === entityStack.length - 1) {
+            crumb.classList.add('current');
+        } else {
+            // Clicking a breadcrumb pops back to that level
+            crumb.addEventListener('click', () => {
+                entityStack = entityStack.slice(0, i + 1);
+                renderCurrentLayer(modalRefsCache);
+            });
+        }
+
+        container.appendChild(crumb);
+    });
+}
+
+// ── Close / back helpers ─────────────────────────────────────
+function closeModal(modal) {
+    modal.classList.add('hidden');
+    entityStack = [];
+}
+
+function goBack() {
+    if (entityStack.length <= 1) return;
+    entityStack.pop();
+    renderCurrentLayer(modalRefsCache);
 }
 
 // ── Listener wiring ──────────────────────────────────────────
 function initListenersOnce(modalRefs) {
     if (listenersInitialized) return;
-    const { modal, modalClose } = modalRefs;
+    const { modal, modalClose, modalBackBtn } = modalRefs;
 
     // Close via × button
-    modalClose.addEventListener('click', () => modal.classList.add('hidden'));
+    modalClose.addEventListener('click', () => closeModal(modal));
 
     // Click outside the card to close
     modal.addEventListener('click', (e) => {
-        if (e.target === modal) modal.classList.add('hidden');
+        if (e.target === modal) closeModal(modal);
     });
+
+    // Escape key closes the modal (or pops the stack)
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+            if (entityStack.length > 1) {
+                goBack();
+            } else {
+                closeModal(modal);
+            }
+        }
+    });
+
+    // Back button
+    if (modalBackBtn) {
+        modalBackBtn.addEventListener('click', goBack);
+    }
 
     listenersInitialized = true;
 }
 
 // ── Contents (key/value table from JSON `contents`) ──────────
-function renderContents(data, contentsEl, resourcesEl) {
+function renderContents(data, contentsEl) {
     if (!data.contents) {
         contentsEl.classList.add('hidden');
         return;
@@ -73,11 +175,6 @@ function renderContents(data, contentsEl, resourcesEl) {
             valCell.textContent = typeof value === 'object' ? JSON.stringify(value) : String(value);
         }
         contentsEl.appendChild(table);
-
-        const resources = parsed._resources;
-        if (Array.isArray(resources) && resources.length > 0) {
-            renderResources(resources, resourcesEl);
-        }
     } else {
         contentsEl.textContent = typeof data.contents === 'string'
             ? data.contents
@@ -130,8 +227,12 @@ function renderReferences(data, container) {
         list.className = 'modal-ref-list';
         refs.forEach(ref => {
             const chip = document.createElement('span');
-            chip.className = 'modal-ref-chip';
+            chip.className = 'modal-ref-chip clickable';
             chip.textContent = ref.name || `#${ref.id}`;
+            chip.title = `Click to view ${ref.name || `#${ref.id}`}`;
+
+            chip.addEventListener('click', () => onRefChipClick(ref));
+
             list.appendChild(chip);
         });
         group.appendChild(list);
@@ -140,98 +241,204 @@ function renderReferences(data, container) {
     }
 }
 
-// ── Resources (images / videos / pdfs / links) ──────────────
-function renderResources(resources, container) {
+// ── Clicking a reference chip ────────────────────────────────
+async function onRefChipClick(ref) {
+    if (!fetchEntityCallback) {
+        console.warn('No entity fetcher configured — cannot open referenced entity');
+        return;
+    }
+    try {
+        const data = await fetchEntityCallback(ref.id, ref.collectionId);
+        if (data && modalRefsCache) {
+            entityStack.push(data);
+            renderCurrentLayer(modalRefsCache);
+        }
+    } catch (err) {
+        console.error('Failed to load referenced entity:', err);
+    }
+}
+
+// ── Resources (toggle-button categories) ────────────────────
+function renderResources(data, container) {
+    // Extract resources from parsed contents._resources
+    let resources = [];
+    if (data.contents) {
+        let parsed;
+        try {
+            parsed = typeof data.contents === 'string' ? JSON.parse(data.contents) : data.contents;
+        } catch (_) {
+            parsed = null;
+        }
+        if (parsed && typeof parsed === 'object' && Array.isArray(parsed._resources)) {
+            resources = parsed._resources;
+        }
+    }
+
+    if (resources.length === 0) return;
+
     const backendOrigin = getApiBase().replace(/\/api$/, '');
     const resolveUrl = (url) => url.startsWith('/') ? backendOrigin + url : url;
 
     const images = resources.filter(r => r.type === 'image');
     const videos = resources.filter(r => r.type === 'video');
-    const pdfs = resources.filter(r => r.type === 'pdf');
-    const links = resources.filter(r => r.type === 'link');
+    const pdfs   = resources.filter(r => r.type === 'pdf');
+    const links  = resources.filter(r => r.type === 'link');
 
-    if (images.length > 0) {
-        const wrap = document.createElement('div');
-        wrap.className = 'modal-resource-images';
-        images.forEach(res => {
-            const figure = document.createElement('figure');
-            figure.className = 'modal-resource-figure';
+    // Category definitions
+    const categories = [
+        { key: 'images',  icon: '📷',  label: 'Images',    items: images },
+        { key: 'videos',  icon: '🎬',  label: 'Videos',    items: videos },
+        { key: 'pdfs',    icon: '📄',  label: 'Documents', items: pdfs },
+        { key: 'links',   icon: '🔗',  label: 'Links',     items: links },
+    ].filter(c => c.items.length > 0);
 
-            const a = document.createElement('a');
-            a.href = resolveUrl(res.url);
-            a.target = '_blank';
-            a.rel = 'noopener noreferrer';
+    if (categories.length === 0) return;
 
-            const img = document.createElement('img');
-            img.className = 'modal-resource-image';
-            img.src = resolveUrl(res.url);
-            img.alt = res.label || '';
-            img.loading = 'lazy';
+    // Button bar
+    const bar = document.createElement('div');
+    bar.className = 'modal-resource-bar';
 
-            a.appendChild(img);
-            figure.appendChild(a);
+    // Track which panel is currently open (null = none)
+    let openKey = null;
+    const panels = {};
+    const buttons = {};
 
-            const caption = document.createElement('figcaption');
-            caption.textContent = res.label || '';
-            figure.appendChild(caption);
+    categories.forEach(cat => {
+        // Toggle button
+        const btn = document.createElement('button');
+        btn.className = 'modal-resource-toggle';
+        btn.innerHTML = `<span class="resource-icon">${cat.icon}</span> ${cat.label} <span class="resource-count">${cat.items.length}</span>`;
+        buttons[cat.key] = btn;
 
-            wrap.appendChild(figure);
-        });
-        container.appendChild(wrap);
-    }
+        // Collapsible panel
+        const panel = document.createElement('div');
+        panel.className = 'modal-resource-panel';
+        const inner = document.createElement('div');
+        inner.className = 'modal-resource-panel-inner';
+        panels[cat.key] = panel;
 
-    if (videos.length > 0) {
-        const wrap = document.createElement('div');
-        wrap.className = 'modal-resource-videos';
-        videos.forEach(res => {
-            const figure = document.createElement('figure');
-            figure.className = 'modal-resource-figure';
+        // Render the content inside the panel
+        buildResourceContent(cat.key, cat.items, inner, resolveUrl);
+        panel.appendChild(inner);
 
-            const video = document.createElement('video');
-            video.className = 'modal-resource-video';
-            video.src = resolveUrl(res.url);
-            video.controls = true;
-
-            figure.appendChild(video);
-
-            if (res.label) {
-                const caption = document.createElement('figcaption');
-                caption.textContent = res.label;
-                figure.appendChild(caption);
+        btn.addEventListener('click', () => {
+            if (openKey === cat.key) {
+                // Close
+                panel.classList.remove('open');
+                btn.classList.remove('active');
+                openKey = null;
+            } else {
+                // Close previous
+                if (openKey) {
+                    panels[openKey].classList.remove('open');
+                    buttons[openKey].classList.remove('active');
+                }
+                // Open this
+                panel.classList.add('open');
+                btn.classList.add('active');
+                openKey = cat.key;
             }
-
-            wrap.appendChild(figure);
         });
-        container.appendChild(wrap);
-    }
 
-    if (pdfs.length > 0) {
-        const wrap = document.createElement('div');
-        wrap.className = 'modal-resource-pdfs';
-        pdfs.forEach(res => {
-            const a = document.createElement('a');
-            a.className = 'modal-resource-link modal-resource-pdf';
-            a.href = resolveUrl(res.url);
-            a.target = '_blank';
-            a.rel = 'noopener noreferrer';
-            a.textContent = `📄 ${res.label || 'PDF Document'}`;
-            wrap.appendChild(a);
-        });
-        container.appendChild(wrap);
-    }
+        bar.appendChild(btn);
+    });
 
-    if (links.length > 0) {
-        const wrap = document.createElement('div');
-        wrap.className = 'modal-resource-links';
-        links.forEach(res => {
-            const a = document.createElement('a');
-            a.className = 'modal-resource-link';
-            a.href = resolveUrl(res.url);
-            a.target = '_blank';
-            a.rel = 'noopener noreferrer';
-            a.textContent = `🔗 ${res.label || res.url}`;
-            wrap.appendChild(a);
-        });
-        container.appendChild(wrap);
+    container.appendChild(bar);
+
+    // Append all panels (only the open one will be visible)
+    categories.forEach(cat => {
+        container.appendChild(panels[cat.key]);
+    });
+}
+
+function buildResourceContent(type, items, container, resolveUrl) {
+    switch (type) {
+        case 'images': {
+            const wrap = document.createElement('div');
+            wrap.className = 'modal-resource-images';
+            items.forEach(res => {
+                const figure = document.createElement('figure');
+                figure.className = 'modal-resource-figure';
+
+                const a = document.createElement('a');
+                a.href = resolveUrl(res.url);
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+
+                const img = document.createElement('img');
+                img.className = 'modal-resource-image';
+                img.src = resolveUrl(res.url);
+                img.alt = res.label || '';
+                img.loading = 'lazy';
+
+                a.appendChild(img);
+                figure.appendChild(a);
+
+                if (res.label) {
+                    const caption = document.createElement('figcaption');
+                    caption.textContent = res.label;
+                    figure.appendChild(caption);
+                }
+
+                wrap.appendChild(figure);
+            });
+            container.appendChild(wrap);
+            break;
+        }
+        case 'videos': {
+            const wrap = document.createElement('div');
+            wrap.className = 'modal-resource-videos';
+            items.forEach(res => {
+                const figure = document.createElement('figure');
+                figure.className = 'modal-resource-figure';
+
+                const video = document.createElement('video');
+                video.className = 'modal-resource-video';
+                video.src = resolveUrl(res.url);
+                video.controls = true;
+
+                figure.appendChild(video);
+
+                if (res.label) {
+                    const caption = document.createElement('figcaption');
+                    caption.textContent = res.label;
+                    figure.appendChild(caption);
+                }
+
+                wrap.appendChild(figure);
+            });
+            container.appendChild(wrap);
+            break;
+        }
+        case 'pdfs': {
+            const wrap = document.createElement('div');
+            wrap.className = 'modal-resource-pdfs';
+            items.forEach(res => {
+                const a = document.createElement('a');
+                a.className = 'modal-resource-link modal-resource-pdf';
+                a.href = resolveUrl(res.url);
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                a.textContent = `📄 ${res.label || 'PDF Document'}`;
+                wrap.appendChild(a);
+            });
+            container.appendChild(wrap);
+            break;
+        }
+        case 'links': {
+            const wrap = document.createElement('div');
+            wrap.className = 'modal-resource-links';
+            items.forEach(res => {
+                const a = document.createElement('a');
+                a.className = 'modal-resource-link';
+                a.href = resolveUrl(res.url);
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                a.textContent = `🔗 ${res.label || res.url}`;
+                wrap.appendChild(a);
+            });
+            container.appendChild(wrap);
+            break;
+        }
     }
 }

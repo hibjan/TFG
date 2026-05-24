@@ -2,8 +2,8 @@
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.75);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(6px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -12,25 +12,77 @@
 }
 
 .modal-card {
-    background: #1e2227; /* Solid dark formal background */
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
-    padding: 32px;
-    max-width: 680px;
-    width: 90vw;
-    max-height: 85vh;
+    background: #1a1d22;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 36px 42px;
+    max-width: 960px;
+    width: 94vw;
+    max-height: 88vh;
     overflow-y: auto;
     position: relative;
-    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+    box-shadow:
+        0 32px 64px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
+/* ── Custom Scrollbar ─────────────────────────────────────── */
+.modal-card::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-card::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 12px 0;
+}
+
+.modal-card::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    transition: background 0.2s;
+}
+
+.modal-card::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Firefox scrollbar */
+.modal-card {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+/* Also style the contents box scrollbar */
+.modal-contents::-webkit-scrollbar {
+    width: 5px;
+}
+
+.modal-contents::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-contents::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+}
+
+.modal-contents::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.modal-contents {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+}
+
+/* ── Close Button ─────────────────────────────────────────── */
 .modal-close {
     position: absolute;
-    top: 16px;
-    right: 20px;
+    top: 18px;
+    right: 22px;
     background: none;
     border: none;
-    color: #90a4ae;
+    color: #6b7a88;
     font-size: 1.6rem;
     cursor: pointer;
     transition: color 0.15s;
@@ -41,14 +93,92 @@
     color: #ffffff;
 }
 
-.modal-title {
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: #ffffff;
-    margin-bottom: 18px;
-    padding-right: 30px;
+/* === Back Button === */
+.modal-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 14px;
+    background: rgba(92, 132, 193, 0.12);
+    border: 1px solid rgba(92, 132, 193, 0.3);
+    border-radius: 6px;
+    color: #a4c2f4;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 10px;
 }
 
+.modal-back:hover {
+    background: rgba(92, 132, 193, 0.25);
+    border-color: rgba(92, 132, 193, 0.5);
+    color: #ffffff;
+}
+
+.modal-back.hidden {
+    display: none;
+}
+
+/* === Breadcrumb Trail === */
+.modal-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 6px;
+    font-size: 0.78rem;
+}
+
+.modal-breadcrumb.hidden {
+    display: none;
+}
+
+.modal-breadcrumb-item {
+    color: #7e8fa0;
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.modal-breadcrumb-item:hover:not(.current) {
+    color: #a4c2f4;
+    background: rgba(92, 132, 193, 0.12);
+}
+
+.modal-breadcrumb-item.current {
+    color: #e0e0e0;
+    font-weight: 600;
+    cursor: default;
+}
+
+.modal-breadcrumb-sep {
+    color: #4a5568;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    user-select: none;
+}
+
+/* === Title === */
+.modal-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 20px;
+    padding-right: 40px;
+    letter-spacing: -0.01em;
+}
+
+/* === Contents === */
 .modal-contents {
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.04);
@@ -60,7 +190,7 @@
     color: #cfd8dc;
     white-space: pre-wrap;
     word-break: break-word;
-    max-height: 200px;
+    max-height: 320px;
     overflow-y: auto;
 }
 
@@ -79,6 +209,7 @@
     padding-bottom: 4px;
 }
 
+/* === Metadata Table === */
 .modal-meta-table {
     width: 100%;
     border-collapse: collapse;
@@ -93,7 +224,7 @@
 .modal-meta-table td:first-child {
     font-weight: 600;
     color: #b0bec5;
-    width: 35%;
+    width: 30%;
     vertical-align: top;
 }
 
@@ -101,6 +232,7 @@
     color: #e0e0e0;
 }
 
+/* === References === */
 .modal-ref-group {
     margin-bottom: 12px;
 }
@@ -127,19 +259,125 @@
     color: #cfd8dc;
 }
 
-/* === Resource Rendering === */
-.modal-resource-images,
-.modal-resource-videos {
+/* Clickable reference chips */
+.modal-ref-chip.clickable {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.modal-ref-chip.clickable:hover {
+    background: rgba(92, 132, 193, 0.25);
+    border-color: rgba(92, 132, 193, 0.5);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(92, 132, 193, 0.15);
+    transform: translateY(-1px);
+}
+
+.modal-ref-chip.clickable:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* === Resource Toggle Buttons === */
+.modal-resource-bar {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 14px;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.modal-resource-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    color: #b0bec5;
+    font-size: 0.84rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.modal-resource-toggle .resource-icon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.modal-resource-toggle .resource-count {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #6b7a88;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 1px 7px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.modal-resource-toggle:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+}
+
+.modal-resource-toggle:hover .resource-count {
+    color: #b0bec5;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.modal-resource-toggle.active {
+    background: rgba(92, 132, 193, 0.15);
+    border-color: rgba(92, 132, 193, 0.4);
+    color: #ffffff;
+}
+
+.modal-resource-toggle.active .resource-count {
+    background: rgba(92, 132, 193, 0.3);
+    color: #a4c2f4;
+}
+
+/* === Resource Panels (collapsible) === */
+.modal-resource-panel {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.35s ease, opacity 0.25s ease, margin 0.25s ease;
+    margin-bottom: 0;
+}
+
+.modal-resource-panel.open {
+    max-height: 600px;
+    opacity: 1;
+    margin-bottom: 16px;
+}
+
+.modal-resource-panel-inner {
+    padding: 14px 0;
+}
+
+/* === Resource Rendering === */
+.modal-resource-images {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.modal-resource-videos {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
 }
 
 .modal-resource-video {
     max-width: 100%;
-    border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .modal-resource-figure {
@@ -148,23 +386,29 @@
 }
 
 .modal-resource-image {
-    max-width: 200px;
-    max-height: 280px;
-    border-radius: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-height: 240px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
     object-fit: cover;
-    transition: opacity 0.2s ease;
+    transition: all 0.2s ease;
+    cursor: pointer;
 }
 
 .modal-resource-image:hover {
-    opacity: 0.85;
+    border-color: rgba(92, 132, 193, 0.4);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    transform: scale(1.02);
 }
 
 .modal-resource-figure figcaption {
-    font-size: 0.75rem;
-    color: #78909c;
-    margin-top: 6px;
+    font-size: 0.73rem;
+    color: #6b7a88;
+    margin-top: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .modal-resource-pdfs,
@@ -172,7 +416,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-bottom: 14px;
 }
 
 .modal-resource-link {
@@ -181,8 +424,8 @@
     gap: 6px;
     padding: 8px 18px;
     border: 1px solid rgba(92, 132, 193, 0.4);
-    border-radius: 4px;
-    background: rgba(43, 76, 126, 0.15);
+    border-radius: 6px;
+    background: rgba(43, 76, 126, 0.12);
     color: #a4c2f4;
     font-size: 0.85rem;
     font-weight: 500;
@@ -191,7 +434,7 @@
 }
 
 .modal-resource-link:hover {
-    background: rgba(43, 76, 126, 0.3);
+    background: rgba(43, 76, 126, 0.28);
     border-color: rgba(92, 132, 193, 0.6);
     color: #ffffff;
 }

@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TFG Navigation</title>
+    <title>Multimedia Collection Explorer</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -167,9 +168,11 @@
     <div id="entity-modal" class="modal-overlay hidden">
       <div class="modal-card">
         <button id="modal-close" class="modal-close">&times;</button>
+        <button id="modal-back" class="modal-back hidden" title="Go back to previous entity">&#8592; Back</button>
+        <div id="modal-breadcrumb" class="modal-breadcrumb hidden"></div>
         <h2 id="modal-entity-name" class="modal-title"></h2>
-        <div id="modal-entity-contents" class="modal-contents"></div>
         <div id="modal-entity-resources" class="modal-section"></div>
+        <div id="modal-entity-contents" class="modal-contents"></div>
         <div id="modal-entity-metadata" class="modal-section"></div>
         <div id="modal-entity-references" class="modal-section"></div>
       </div>
