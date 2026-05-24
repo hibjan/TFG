@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TFG — Material Adicional | Multimedia Collection Explorer</title>
+  <meta name="description" content="Aplicación para la navegación en colecciones de contenidos multimedia — Trabajo de Fin de Grado, Universidad Complutense de Madrid.">
+  <meta name="authors" content="Juan Andrés Hibjan Cardona, Leonardo Prado de Souza">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset ─────────────────────────────────────── */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* ── Body — matches frontend base.css gradient ── */
+    body {
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(140deg, #121418 0%, #1a1d24 40%, #21252b 100%);
+      color: #e0e0e0;
+      padding: 24px 20px;
+      overflow: hidden;
+    }
+
+    /* ── Animations ────────────────────────────────── */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Main Card — mirrors .panel from frontend ──── */
+    .card {
+      width: 100%;
+      max-width: 760px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      backdrop-filter: blur(12px);
+      padding: 32px 36px 28px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+      animation: fadeIn 0.3s ease;
+    }
+
+    /* ── Header ────────────────────────────────────── */
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .icon {
+      font-size: 2.2rem;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+      line-height: 1.3;
+      margin-bottom: 6px;
+    }
+
+    .authors {
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: #8f9ba8;
+      line-height: 1.6;
+    }
+
+    /* ── Divider — matches frontend style ──────────── */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.06);
+      margin-bottom: 20px;
+    }
+
+    /* ── Info Grid ─────────────────────────────────── */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    /* ── Block — mirrors .filter-section from frontend */
+    .block {
+      background: rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      border-radius: 6px;
+      padding: 14px 14px;
+      opacity: 0;
+      animation: fadeIn 0.3s ease both;
+    }
+
+    .block:nth-child(1) { animation-delay: 0.08s; }
+    .block:nth-child(2) { animation-delay: 0.14s; }
+    .block:nth-child(3) { animation-delay: 0.20s; }
+    .block:nth-child(4) { animation-delay: 0.26s; }
+
+    .block:hover {
+      border-color: rgba(255, 255, 255, 0.08);
+      background: rgba(0, 0, 0, 0.22);
+    }
+
+    .block-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .block-icon {
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .block-title {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #c5d0e6;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .block-text {
+      font-size: 0.78rem;
+      font-weight: 400;
+      line-height: 1.55;
+      color: #90a4ae;
+    }
+
+    .block-text code {
+      font-family: 'SF Mono', 'Cascadia Code', Consolas, monospace;
+      font-size: 0.72rem;
+      background: rgba(92, 132, 193, 0.1);
+      color: #a4c2f4;
+      padding: 1px 5px;
+      border-radius: 3px;
+      border: 1px solid rgba(92, 132, 193, 0.12);
+    }
+
+    /* ── Buttons — mirrors .pill-row button + .topbar-btn */
+    .buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+      opacity: 0;
+      animation: fadeIn 0.3s ease 0.32s both;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-radius: 6px;
+    }
+
+    .btn-primary {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #2b4c7e 0%, #1c3256 100%);
+      color: #ffffff;
+      border: none;
+      letter-spacing: 0.01em;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(43, 76, 126, 0.4);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      padding: 12px 24px;
+      background: rgba(255, 255, 255, 0.04);
+      color: #cccccc;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+    }
+
+    /* ── Footer ────────────────────────────────────── */
+    .footer {
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 400;
+      color: #5c6975;
+      opacity: 0;
+      animation: fadeIn 0.3s ease 0.4s both;
+    }
+
+    /* ── Responsive ────────────────────────────────── */
+    @media (max-width: 640px) {
+      body { padding: 16px 12px; }
+
+      .card { padding: 24px 20px 20px; }
+
+      .title { font-size: 1.15rem; }
+
+      .grid { grid-template-columns: 1fr; gap: 8px; }
+
+      .buttons { flex-direction: column; align-items: stretch; }
+
+      .btn { justify-content: center; padding: 12px 16px; }
+    }
+
+    @media (max-height: 680px) {
+      .card { padding: 22px 28px 20px; }
+      .icon { font-size: 1.8rem; margin-bottom: 6px; }
+      .title { font-size: 1.15rem; margin-bottom: 4px; }
+      .header { margin-bottom: 14px; }
+      .divider { margin-bottom: 14px; }
+      .grid { gap: 8px; margin-bottom: 16px; }
+      .block { padding: 10px 12px; }
+      .block-header { margin-bottom: 4px; }
+      .block-text { font-size: 0.74rem; line-height: 1.45; }
+      .buttons { margin-bottom: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+  <main class="card">
+
+    <!-- Header -->
+    <div class="header">
+      <span class="icon" aria-hidden="true">🧭</span>
+      <h1 class="title">Aplicación para la navegación en colecciones de contenidos multimedia</h1>
+      <p class="authors">Juan Andrés Hibjan Cardona · Leonardo Prado de Souza</p>
+    </div>
+
+    <div class="divider" aria-hidden="true"></div>
+
+    <!-- Info Grid -->
+    <section class="grid" aria-label="Información del proyecto">
+
+      <article class="block">
+        <div class="block-header">
+          <span class="block-icon" aria-hidden="true">⚙️</span>
+          <h2 class="block-title">Stack Tecnológico</h2>
+        </div>
+        <p class="block-text">
+          Backend Java 17 con Jakarta Servlets sobre Apache Tomcat 10. Frontend en Vanilla JavaScript con Vite. Base de datos PostgreSQL 16.
+        </p>
+      </article>
+
+      <article class="block">
+        <div class="block-header">
+          <span class="block-icon" aria-hidden="true">📁</span>
+          <h2 class="block-title">Estructura del Proyecto</h2>
+        </div>
+        <p class="block-text">
+          Arquitectura modular: <code>backend/</code> (MVC con controller, dao, service, model), <code>frontend/</code> (componentes JS), <code>database/</code> (esquema SQL), <code>scripts/</code> (pipelines de datos).
+        </p>
+      </article>
+
+      <article class="block">
+        <div class="block-header">
+          <span class="block-icon" aria-hidden="true">🎬</span>
+          <h2 class="block-title">Datasets Utilizados</h2>
+        </div>
+        <p class="block-text">
+          Validado con dos datasets reales: TMDb (películas, actores, géneros) y DBLP (publicaciones académicas y autores). Scripts de extracción en Python y Go.
+        </p>
+      </article>
+
+      <article class="block">
+        <div class="block-header">
+          <span class="block-icon" aria-hidden="true">🐳</span>
+          <h2 class="block-title">Despliegue</h2>
+        </div>
+        <p class="block-text">
+          Entorno completamente containerizado con Docker Compose. Producción con 4 servicios: PostgreSQL, Tomcat, Nginx y túnel seguro Cloudflare. Se despliega con un solo comando explicado en <a href="https://github.com/hibjan/TFG#production-set-up" target="_blank" rel="noopener noreferrer" style="color: #a4c2f4; text-decoration: none; border-bottom: 1px dashed rgba(164,194,244,0.5); transition: border-color 0.2s ease;">el README</a>.
+        </p>
+      </article>
+
+    </section>
+
+    <!-- Buttons -->
+    <nav class="buttons" aria-label="Enlaces principales">
+      <a href="https://github.com/hibjan/TFG" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+        🔗 Ver proyecto en GitHub
+      </a>
+      <a href="https://github.com/hibjan/TFG/blob/main/docs/TFGTeXiS.pdf" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+        📄 Consultar la Memoria
+      </a>
+    </nav>
+
+    <!-- Footer -->
+    <footer class="footer">
+      Trabajo de Fin de Grado · GPLv3 · Curso 2025-2026
+    </footer>
+
+  </main>
+
+</body>
+</html>
