@@ -283,7 +283,7 @@ $R^{+}$ salvo en el par $(c', r)$, donde toma el valor $E$.
     \begin{itemize}
       \item $\textsc{save}$ apila una copia inmutable de $s_{\text{cur}}$ en $H$.
       \item $\textsc{restore}$ desapila el último estado guardado y lo restaura como $s_{\text{cur}}$, siempre
-        que $|H| > 1$.
+        que $|H| \geq 1$.
     \end{itemize}
 
   \item $\textsc{union}(\Sigma, c') \Rightarrow \Sigma'$

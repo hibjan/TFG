@@ -38,6 +38,17 @@ participantes externos siguiendo un protocolo formal ha producido evidencia cual
 guiado la última iteración de la interfaz, y constituye en sí misma una contribución reutilizable
 para futuros desarrollos sobre el mismo motor.
 
+Más allá de los componentes concretos del sistema, consideramos que la contribución más reutilizable
+del trabajo es el \textbf{modelo formal} subyacente al motor: la definición precisa del estado de
+exploración, las operaciones que lo transforman y las invariantes que garantizan su coherencia.
+Este modelo responde al hueco identificado en el capítulo~\ref{cap:estadoDeLaCuestion}, donde
+constatamos que las herramientas existentes ofrecen los tres mecanismos (filtrado facetado,
+navegación entre colecciones y operaciones de conjuntos) de manera aislada y sin un marco unificado
+que los articule como piezas de un mismo cálculo. Al haber quedado el modelo desacoplado del
+lenguaje de implementación y del catálogo concreto, puede reutilizarse como cimiento de futuros
+motores construidos sobre otras tecnologías o aplicados a otros dominios, con independencia de
+las decisiones particulares que hemos tomado en el prototipo entregado.
+
 \section{Limitaciones}
 \label{sec:limitaciones}
 
@@ -64,12 +75,15 @@ afirmaciones cuantitativas de carácter estadístico.
 \section{Trabajo futuro}
 \label{sec:trabajoFuturo}
 
-A partir del estado en el que entregamos el sistema, identificamos cinco líneas naturales de
+A partir del estado en el que entregamos el sistema, identificamos varias líneas naturales de
 continuación. Las dos primeras (asistencia mediante modelos del lenguaje y distribución del
 motor) tienen un componente de investigación aplicada y abrirían la puerta a un proyecto de
-mayor envergadura. Las tres restantes (capa de usuario, extensión a nuevos dominios y mejoras
-de la experiencia de usuario) son de carácter más incremental y podrían abordarse de forma
-independiente, sin alterar el núcleo del modelo de navegación.
+mayor envergadura. La tercera (generación incremental de \textit{queries}) afecta al núcleo del
+modelo de navegación y plantea un compromiso interesante entre simplicidad conceptual y coste de
+ejecución. Las restantes (capa de usuario, extensión a nuevos dominios, selección múltiple,
+refuerzo de la suite de pruebas y mejoras de la experiencia de usuario) son de carácter más
+incremental y podrían abordarse de forma independiente, sin alterar el núcleo del modelo de
+navegación.
 
 \subsection{Asistencia mediante modelos del lenguaje}
 
@@ -91,6 +105,25 @@ balancear carga e introducir una capa de caché para resultados intermedios frec
 línea exigiría revisar la noción de sesión, hoy asociada a un único proceso, y diseñar un
 protocolo coherente de invalidación que mantenga la sensación de inmediatez sobre la que descansa
 la experiencia de exploración.
+
+\subsection{Generación incremental de \textit{queries}}
+
+En el motor actual, cada estado contiene por sí solo toda la información para producir su
+consulta, que se construye íntegra en cada interacción. Una alternativa atractiva sería derivar
+la nueva consulta de la anterior, reflejando en el plano técnico la lógica acumulativa con la que
+el usuario percibe la exploración. La motivación no estaría en el rendimiento (el grueso del
+trabajo recae en la ejecución de la consulta sobre la base de datos, no en su construcción, de
+modo que cualquier ahorro al evitar regenerarla sería marginal), sino en disponer de un modelo y
+una implementación conceptualmente más simples y, por tanto, más comprensibles.
+
+Esa supuesta simplicidad, sin embargo, no se traslada de forma inmediata al plano técnico. Pasar
+a un esquema incremental obligaría a introducir mecanismos auxiliares de soporte (por ejemplo,
+apoyarse en vistas de la base de datos o en otras formas de reutilización de resultados), cada
+uno con sus propios problemas de gestión cuando entran en juego sesiones simultáneas, además de
+la necesidad de garantizar que la composición de consultas siga siendo correcta en todos los
+casos. En el diseño actual, cada consulta queda determinada únicamente por el estado al que
+pertenece y resulta independiente de las anteriores, lo que ya proporciona un modelo y una
+implementación sencillos sin asumir esa complejidad añadida.
 
 \subsection{Capa de usuario, persistencia e historial compartido}
 
@@ -115,6 +148,34 @@ a prueba la capa de \textit{links}) y los catálogos de \textit{software} libre 
 de dependencia y autoría dibujan grafos densos). En cada caso, la incorporación efectiva exige
 ajustar las heurísticas de identificación de facetas a las particularidades del dominio y, en
 algunos, ampliar el proceso de carga para acomodar formatos de origen heterogéneos.
+
+Ligado a lo anterior, una mejora natural sería incorporar a la \textit{API} un flujo de
+\textbf{ingesta} expuesto como tal, que sustituyese al \textit{script} externo descrito en el
+apéndice~\ref{Appendix:integracion}. Integrar la carga de nuevos \textit{datasets} en el propio
+servicio simplificaría su uso, abriría la puerta a automatizar la incorporación de fondos y
+reduciría la barrera de entrada para quien quiera explorar dominios distintos a los validados.
+
+\subsection{Selección múltiple de valores y semántica disyuntiva}
+
+En la versión actual cada faceta admite la selección de un único valor a la vez, lo que conduce
+de forma natural a un comportamiento \textbf{conjuntivo} (el resultado es la intersección de los
+filtros activos sobre facetas distintas). Una extensión razonable consiste en permitir la
+\textit{selección múltiple} dentro de una misma faceta, lo que introduciría una semántica
+\textbf{disyuntiva} entre los valores escogidos manteniendo la conjunción entre facetas
+diferentes. El cambio es modesto en la interfaz, pero exige revisar el modelo de estado y la
+generación de \textit{queries} para acomodar el nuevo operador, así como reconsiderar la
+representación visual de los filtros activos para que la distinción entre \textit{y}/\textit{o}
+sea inmediatamente legible.
+
+\subsection{Ampliación de la suite de pruebas unitarias}
+
+La validación realizada se ha apoyado fundamentalmente en pruebas de integración sobre los
+volcados de TMDB y DBLP y en la evaluación cualitativa de usabilidad. Queda como línea
+incremental clara el refuerzo de la \textbf{suite de pruebas unitarias}, especialmente sobre los
+componentes del motor que materializan las operaciones del modelo formal (transiciones de estado,
+composición de filtros, cálculo de \textit{links} y operaciones de conjunto). Una cobertura más
+sistemática a este nivel facilitaría las refactorizaciones futuras y serviría de red de seguridad
+ante extensiones del modelo como las descritas en las subsecciones anteriores.
 
 \subsection{Mejoras incrementales en la experiencia de usuario}
 
