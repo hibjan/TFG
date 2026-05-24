@@ -40,6 +40,9 @@
     .card {
       width: 100%;
       max-width: 760px;
+      height: 650px;
+      display: flex;
+      flex-direction: column;
       background: rgba(255, 255, 255, 0.02);
       border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 8px;
@@ -91,6 +94,8 @@
       grid-template-columns: 1fr 1fr;
       gap: 10px;
       margin-bottom: 22px;
+      flex-grow: 1;
+      align-content: start;
     }
 
     /* ── Block — mirrors .filter-section from frontend */
@@ -212,6 +217,44 @@
       animation: fadeIn 0.3s ease 0.4s both;
     }
 
+    /* ── Language Toggle ───────────────────────────── */
+    .lang-toggle-wrapper {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      display: flex;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 30px;
+      padding: 4px;
+      z-index: 100;
+      animation: fadeIn 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .lang-tab {
+      background: transparent;
+      border: none;
+      color: #788796;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .lang-tab:hover:not(.active) {
+      color: #b0bec5;
+    }
+
+    .lang-tab.active {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
     /* ── Responsive ────────────────────────────────── */
     @media (max-width: 640px) {
       body { padding: 16px 12px; }
@@ -243,12 +286,17 @@
 </head>
 <body>
 
+  <div class="lang-toggle-wrapper">
+    <button id="btn-es" class="lang-tab active" onclick="setLang('es')" aria-label="Español">ES</button>
+    <button id="btn-en" class="lang-tab" onclick="setLang('en')" aria-label="English">EN</button>
+  </div>
+
   <main class="card">
 
     <!-- Header -->
     <div class="header">
       <span class="icon" aria-hidden="true">🧭</span>
-      <h1 class="title">Aplicación para la navegación en colecciones de contenidos multimedia</h1>
+      <h1 class="title" data-i18n="title">Aplicación para la navegación en colecciones de contenidos multimedia</h1>
       <p class="authors">Juan Andrés Hibjan Cardona · Leonardo Prado de Souza</p>
     </div>
 
@@ -260,9 +308,9 @@
       <article class="block">
         <div class="block-header">
           <span class="block-icon" aria-hidden="true">⚙️</span>
-          <h2 class="block-title">Stack Tecnológico</h2>
+          <h2 class="block-title" data-i18n="stackTitle">Stack Tecnológico</h2>
         </div>
-        <p class="block-text">
+        <p class="block-text" data-i18n="stackDesc">
           Backend Java 17 con Jakarta Servlets sobre Apache Tomcat 10. Frontend en Vanilla JavaScript con Vite. Base de datos PostgreSQL 16.
         </p>
       </article>
@@ -270,9 +318,9 @@
       <article class="block">
         <div class="block-header">
           <span class="block-icon" aria-hidden="true">📁</span>
-          <h2 class="block-title">Estructura del Proyecto</h2>
+          <h2 class="block-title" data-i18n="structTitle">Estructura del Proyecto</h2>
         </div>
-        <p class="block-text">
+        <p class="block-text" data-i18n="structDesc">
           Arquitectura modular: <code>backend/</code> (MVC con controller, dao, service, model), <code>frontend/</code> (componentes JS), <code>database/</code> (esquema SQL), <code>scripts/</code> (pipelines de datos).
         </p>
       </article>
@@ -280,9 +328,9 @@
       <article class="block">
         <div class="block-header">
           <span class="block-icon" aria-hidden="true">🎬</span>
-          <h2 class="block-title">Datasets Utilizados</h2>
+          <h2 class="block-title" data-i18n="dataTitle">Datasets Utilizados</h2>
         </div>
-        <p class="block-text">
+        <p class="block-text" data-i18n="dataDesc">
           Validado con dos datasets reales: TMDb (películas, actores, géneros) y DBLP (publicaciones académicas y autores). Scripts de extracción en Python y Go.
         </p>
       </article>
@@ -290,9 +338,9 @@
       <article class="block">
         <div class="block-header">
           <span class="block-icon" aria-hidden="true">🐳</span>
-          <h2 class="block-title">Despliegue</h2>
+          <h2 class="block-title" data-i18n="deployTitle">Despliegue</h2>
         </div>
-        <p class="block-text">
+        <p class="block-text" data-i18n="deployDesc">
           Entorno completamente containerizado con Docker Compose. Producción con 4 servicios: PostgreSQL, Tomcat, Nginx y túnel seguro Cloudflare. Se despliega con un solo comando explicado en <a href="https://github.com/hibjan/TFG#production-set-up" target="_blank" rel="noopener noreferrer" style="color: #a4c2f4; text-decoration: none; border-bottom: 1px dashed rgba(164,194,244,0.5); transition: border-color 0.2s ease;">el README</a>.
         </p>
       </article>
@@ -301,20 +349,71 @@
 
     <!-- Buttons -->
     <nav class="buttons" aria-label="Enlaces principales">
-      <a href="https://github.com/hibjan/TFG" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+      <a href="https://github.com/hibjan/TFG" target="_blank" rel="noopener noreferrer" class="btn btn-primary" data-i18n="btnGithub">
         🔗 Ver proyecto en GitHub
       </a>
-      <a href="https://github.com/hibjan/TFG/blob/main/docs/TFGTeXiS.pdf" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+      <a href="https://github.com/hibjan/TFG/blob/main/docs/TFGTeXiS.pdf" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" data-i18n="btnMemoria">
         📄 Consultar la Memoria
       </a>
     </nav>
 
     <!-- Footer -->
-    <footer class="footer">
+    <footer class="footer" data-i18n="footer">
       Trabajo de Fin de Grado · GPLv3 · Curso 2025-2026
     </footer>
 
   </main>
+
+  <script>
+    const i18n = {
+      es: {
+        title: "Aplicación para la navegación en colecciones de contenidos multimedia",
+        stackTitle: "Stack Tecnológico",
+        stackDesc: "Backend Java 17 con Jakarta Servlets sobre Apache Tomcat 10. Frontend en Vanilla JavaScript con Vite. Base de datos PostgreSQL 16.",
+        structTitle: "Estructura del Proyecto",
+        structDesc: "Arquitectura modular: <code>backend/</code> (MVC con controller, dao, service, model), <code>frontend/</code> (componentes JS), <code>database/</code> (esquema SQL), <code>scripts/</code> (pipelines de datos).",
+        dataTitle: "Datasets Utilizados",
+        dataDesc: "Validado con dos datasets reales: TMDb (películas, actores, géneros) y DBLP (publicaciones académicas y autores). Scripts de extracción en Python y Go.",
+        deployTitle: "Despliegue",
+        deployDesc: 'Entorno completamente containerizado con Docker Compose. Producción con 4 servicios: PostgreSQL, Tomcat, Nginx y túnel seguro Cloudflare. Se despliega con un solo comando explicado en <a href="https://github.com/hibjan/TFG#production-set-up" target="_blank" rel="noopener noreferrer" style="color: #a4c2f4; text-decoration: none; border-bottom: 1px dashed rgba(164,194,244,0.5); transition: border-color 0.2s ease;">el README</a>.',
+        btnGithub: "🔗 Ver proyecto en GitHub",
+        btnMemoria: "📄 Consultar la Memoria",
+        footer: "Trabajo de Fin de Grado · GPLv3 · Curso 2025-2026"
+      },
+      en: {
+        title: "Application for navigating multimedia content collections",
+        stackTitle: "Tech Stack",
+        stackDesc: "Java 17 Backend with Jakarta Servlets on Apache Tomcat 10. Frontend in Vanilla JavaScript with Vite. PostgreSQL 16 Database.",
+        structTitle: "Project Structure",
+        structDesc: "Modular architecture: <code>backend/</code> (MVC with controller, dao, service, model), <code>frontend/</code> (JS components), <code>database/</code> (SQL schema), <code>scripts/</code> (data pipelines).",
+        dataTitle: "Datasets Used",
+        dataDesc: "Validated with two real-world datasets: TMDb (movies, actors, genres) and DBLP (academic publications and authors). Extraction scripts in Python and Go.",
+        deployTitle: "Deployment",
+        deployDesc: 'Fully containerized environment using Docker Compose. Production features 4 services: PostgreSQL, Tomcat, Nginx, and a secure Cloudflare tunnel. Deploys with a single command explained in <a href="https://github.com/hibjan/TFG#production-set-up" target="_blank" rel="noopener noreferrer" style="color: #a4c2f4; text-decoration: none; border-bottom: 1px dashed rgba(164,194,244,0.5); transition: border-color 0.2s ease;">the README</a>.',
+        btnGithub: "🔗 View project on GitHub",
+        btnMemoria: "📄 Read the Thesis (in Spanish)",
+        footer: "Bachelor's Degree Thesis · GPLv3 · Academic Year 2025-2026"
+      }
+    };
+
+    let currentLang = 'es';
+
+    function setLang(lang) {
+      if (currentLang === lang) return;
+      currentLang = lang;
+      document.documentElement.lang = currentLang;
+      
+      document.getElementById('btn-es').classList.toggle('active', currentLang === 'es');
+      document.getElementById('btn-en').classList.toggle('active', currentLang === 'en');
+      
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (i18n[currentLang][key]) {
+          el.innerHTML = i18n[currentLang][key];
+        }
+      });
+    }
+  </script>
 
 </body>
 </html>
