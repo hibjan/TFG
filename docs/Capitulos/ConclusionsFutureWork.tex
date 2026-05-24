@@ -8,7 +8,7 @@ This chapter closes the memoir by gathering what the work has contributed, expli
 acknowledging its limits, and stating the natural continuation lines that open from it. The
 first section synthesizes the results achieved with respect to the objectives stated in the
 Introduction. The second section delimits the scope of the delivered system. The third section
-groups, in five complementary directions, the extensions left open as project continuations.
+groups, in several complementary directions, the extensions left open as project continuations.
 
 \section*{Conclusions}
 
@@ -35,6 +35,17 @@ external participants following a formal protocol has produced qualitative evide
 guided the last interface iteration and constitutes, in itself, a reusable contribution for
 future developments on the same engine.
 
+Beyond the concrete components of the system, we consider that the most reusable contribution
+of the work is the \textbf{formal model} underlying the engine: the precise definition of the
+exploration state, the operations that transform it, and the invariants that guarantee its
+coherence. This model responds to the gap identified in the State of the Art chapter, where
+we observed that existing tools offer the three mechanisms (faceted filtering, navigation
+between collections, and set operations) in isolation and without a unifying framework that
+articulates them as pieces of the same calculus. Since the model has remained decoupled from
+the implementation language and from the specific catalog, it can be reused as the foundation
+of future engines built on other technologies or applied to other domains, regardless of the
+particular decisions we have made in the delivered prototype.
+
 \section*{Limitations}
 
 The scope of the delivered system must be understood within several well-defined limits. The
@@ -58,11 +69,14 @@ but insufficient to sustain quantitative claims of statistical character.
 
 \section*{Future work}
 
-From the state in which the system is delivered, we identify five natural continuation lines.
-The first two (language-model-based assistance and engine distribution) have an applied
-research component and would open the door to a larger-scale project. The remaining three (user
-layer, extension to new domains, and user experience improvements) are more incremental and
-could be addressed independently, without altering the navigation model's core.
+From the state in which the system is delivered, we identify several natural continuation
+lines. The first two (language-model-based assistance and engine distribution) have an applied
+research component and would open the door to a larger-scale project. The third (incremental
+query generation) affects the core of the navigation model and raises an interesting trade-off
+between conceptual simplicity and execution cost. The remaining ones (user layer, extension
+to new domains, multiple selection, reinforcement of the test suite, and user experience
+improvements) are more incremental in nature and could be addressed independently, without
+altering the navigation model's core.
 
 \subsection*{Language-model-based assistance}
 
@@ -78,10 +92,29 @@ visible and delegates only those tasks for which a language model adds real valu
 
 The engine currently runs as a single process against a single database. For larger-scale
 collections, the system would benefit from decomposition into independent nodes: partitioning
-storage by domain or dataset, replicating facet computation to balance load, and introducing a
-cache layer for frequent intermediate results. This line would require revisiting the notion of
-session, today associated with a single process, and designing a coherent invalidation protocol
-that maintains the immediacy on which the exploration experience rests.
+storage by domain or \textit{dataset}, replicating facet computation to balance load, and
+introducing a cache layer for frequent intermediate results. This line would require revisiting
+the notion of session, today associated with a single process, and designing a coherent
+invalidation protocol that maintains the immediacy on which the exploration experience rests.
+
+\subsection*{Incremental \textit{query} generation}
+
+In the current engine, each state contains by itself all the information needed to produce its
+query, which is built in full at every interaction. An attractive alternative would be to
+derive the new query from the previous one, reflecting at the technical level the cumulative
+logic with which the user perceives the exploration. The motivation would not lie in
+performance (the bulk of the work falls on executing the query against the database, not on its
+construction, so any savings from avoiding regeneration would be marginal), but in having a
+model and an implementation that are conceptually simpler and, therefore, more understandable.
+
+That supposed simplicity, however, does not translate immediately to the technical level.
+Moving to an incremental scheme would require introducing auxiliary support mechanisms (for
+example, relying on database views or other forms of result reuse), each with its own
+management problems when concurrent sessions come into play, as well as the need to guarantee
+that the composition of queries remains correct in all cases. In the current design, each
+query is determined solely by the state to which it belongs and is independent of the previous
+ones, which already provides a simple model and implementation without assuming that added
+complexity.
 
 \subsection*{User layer, persistence, and shared history}
 
@@ -94,7 +127,7 @@ one of interaction design: integrating the new functionalities without overloadi
 interface, which has been tuned precisely to offer a light first experience focused on
 exploration.
 
-\subsection*{Extension to new domains and datasets}
+\subsection*{Extension to new domains and \textit{datasets}}
 
 The system has been conceived from the start as domain-agnostic. The integration with TMDB and
 DBLP has served to demonstrate that the relational model generalizes without substantial
@@ -107,6 +140,35 @@ open-source software catalogs (where dependency and authorship relations draw de
 each case, effective incorporation requires adjusting the heuristics for facet identification
 to the particularities of the domain and, in some cases, extending the loading process to
 accommodate heterogeneous source formats.
+
+Tied to the above, a natural improvement would be to incorporate into the \textit{API} an
+\textbf{ingestion} flow exposed as such, replacing the external \textit{script} described in
+appendix~\ref{Appendix:integracion}. Integrating the loading of new \textit{datasets} into the
+service itself would simplify its use, open the door to automating the incorporation of new
+holdings, and lower the barrier of entry for anyone wishing to explore domains different from
+those validated.
+
+\subsection*{Multiple value selection and disjunctive semantics}
+
+In the current version, each facet admits the selection of a single value at a time, which
+naturally leads to a \textbf{conjunctive} behavior (the result is the intersection of the
+active filters over different facets). A reasonable extension consists of allowing
+\textit{multiple selection} within the same facet, which would introduce a \textbf{disjunctive}
+semantics between the chosen values while maintaining the conjunction between different facets.
+The change is modest at the interface level, but it requires revisiting the state model and the
+generation of \textit{queries} to accommodate the new operator, as well as reconsidering the
+visual representation of active filters so that the distinction between \textit{and}/\textit{or}
+is immediately legible.
+
+\subsection*{Expansion of the unit test suite}
+
+The validation carried out has relied fundamentally on integration tests over the TMDB and DBLP
+dumps and on the qualitative usability evaluation. A clear incremental line that remains open
+is the reinforcement of the \textbf{unit test suite}, especially over the engine components
+that materialize the formal model's operations (state transitions, filter composition,
+\textit{link} computation, and set operations). More systematic coverage at this level would
+ease future refactorings and serve as a safety net against extensions of the model such as
+those described in the previous subsections.
 
 \subsection*{Incremental user experience improvements}
 
