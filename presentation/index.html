@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1024">
+  <title>TFG Defense — Multimedia Collection Explorer</title>
+  <meta name="description" content="Bachelor's thesis defense — an exploration engine for digital collections. Juan A. Hibjan & Leonardo Prado, UCM.">
+  <link rel="stylesheet" href="fonts/inter.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text x=%2250%%22 y=%2250%%22 dominant-baseline=%22central%22 text-anchor=%22middle%22 font-size=%2280%22>🧭</text></svg>">
+  <link rel="stylesheet" href="css/deck.css">
+</head>
+<body class="impress-not-supported">
+
+  <div class="fallback-message">
+    <p><b>Your browser is not supported for this presentation.</b></p>
+    <p>Please use a recent Chrome, Edge, Firefox or Safari, and reload.</p>
+  </div>
+
+  <div id="impress" data-transition-duration="900"
+       data-width="1280" data-height="800" data-max-scale="3" data-min-scale="0.05">
+
+    <!-- ════════════ SPEAKER 1 ════════════ -->
+
+    <!-- 1 · HERO -->
+    <div id="hero" class="step" data-x="0" data-y="0">
+      <div class="slide">
+        <div class="hero-icon">🧭</div>
+        <h1>An exploration engine for digital collections</h1>
+        <p class="hero-sub">Faceted filtering + cross-collection navigation + set operations</p>
+        <p class="hero-authors">Juan Andrés Hibjan Cardona &nbsp;·&nbsp; Leonardo Prado de Souza</p>
+        <p class="hero-inst">Bachelor's Thesis · Universidad Complutense de Madrid · 2025–2026</p>
+      </div>
+    </div>
+
+    <!-- 2 · INTRO / MOTIVATION / OBJECTIVES / PROCESS -->
+    <div id="intro" class="step" data-x="0" data-y="1550">
+      <div class="slide">
+        <div class="eyebrow">The problem</div>
+        <h2>Information overload outgrew our tools</h2>
+        <p class="lead">Direct search is rigid, classic filters are opaque, recommenders erase your
+          agency. The three richer mechanisms that <em>do</em> help —
+          <strong>faceted filtering</strong>, <strong>navigation between related collections</strong>
+          and <strong>set operations</strong> — exist only in <em>isolation</em>.</p>
+        <p class="lead" style="margin-top:18px;">Our goal: a single, <strong>domain-agnostic</strong>
+          engine that unifies the three as primitives of one calculus.</p>
+
+        <div class="process">
+          <div class="node">
+            <div class="k">Phase 1</div><div class="v">CLI prototype</div>
+            <div class="d">Validate the navigation idea in Java, no UI.</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="node">
+            <div class="k">Distilled into</div><div class="v">Formal model</div>
+            <div class="d">State, operations, semantics — language-agnostic.</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="node">
+            <div class="k">Phase 2</div><div class="v">Full system</div>
+            <div class="d">REST engine + web client, validated with users.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 · THREE AXES OVERVIEW -->
+    <div id="axes" class="step" data-x="0" data-y="3100">
+      <div class="slide">
+        <div class="eyebrow">The navigation model</div>
+        <h2>One engine, three axes</h2>
+        <p class="lead">We'll walk a tiny catalog — 4 films, their people and studios —
+          and watch the visible set shrink after every action.</p>
+        <div class="axes">
+          <div class="axis-card">
+            <div class="n">AXIS 1</div><div class="t">Filtering</div>
+            <div class="x">Narrow <em>within</em> a collection: metadata (include / exclude) and references.</div>
+          </div>
+          <div class="axis-card">
+            <div class="n">AXIS 2</div><div class="t">Navigation</div>
+            <div class="x">Jump <em>across</em> collections along a typed relation, carrying the context.</div>
+          </div>
+          <div class="axis-card">
+            <div class="n">AXIS 3</div><div class="t">Union</div>
+            <div class="x">Combine independent partial results into one answer.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ THE CANVAS ════════════ -->
+
+    <!-- M0 · the graph -->
+    <div id="m-graph" class="step" data-x="0" data-y="5200" data-scale="1.6">
+      <div class="board">
+        <div class="board-head">
+          <div class="board-title">The mini-catalog</div>
+          <div class="board-step">domain-agnostic data model</div>
+        </div>
+        <div class="board-sub">Entities described by <b>metadata</b>, linked by typed
+          <b>references</b>. The same shape fits films, people, studios — or DBLP papers and authors.</div>
+
+        <div class="relmap">
+          <svg class="rel-svg" viewBox="0 0 1100 580" preserveAspectRatio="none">
+            <defs>
+              <marker id="ah-p" markerWidth="10" markerHeight="10" refX="7" refY="4.5" orient="auto-start-reverse">
+                <path d="M0,0 L9,4.5 L0,9 Z" fill="#5bbd8a"/>
+              </marker>
+              <marker id="ah-s" markerWidth="10" markerHeight="10" refX="7" refY="4.5" orient="auto-start-reverse">
+                <path d="M0,0 L9,4.5 L0,9 Z" fill="#e0a458"/>
+              </marker>
+            </defs>
+            <line x1="438" y1="258" x2="298" y2="316" stroke="#5bbd8a" stroke-width="2.5"
+                  marker-start="url(#ah-p)" marker-end="url(#ah-p)" opacity="0.8"/>
+            <line x1="690" y1="258" x2="806" y2="316" stroke="#e0a458" stroke-width="2.5"
+                  marker-start="url(#ah-s)" marker-end="url(#ah-s)" opacity="0.8"/>
+          </svg>
+
+          <div class="relbox cluster cluster--movies" style="left:330px; top:6px; width:440px;">
+            <div class="cluster-label">Movies</div>
+            <div class="ecards ecards--col">
+              <div class="ecard">Inception<span class="meta">Action · Sci-Fi</span></div>
+              <div class="ecard">Interstellar<span class="meta">Sci-Fi · Drama</span></div>
+              <div class="ecard">The Avengers<span class="meta">Action</span></div>
+              <div class="ecard">The Dark Knight Rises<span class="meta">Action · Drama</span></div>
+            </div>
+          </div>
+
+          <div class="relbox cluster cluster--people" style="left:18px; top:320px; width:452px;">
+            <div class="cluster-label">People</div>
+            <div class="ecards ecards--col">
+              <div class="ecard">L. DiCaprio<span class="meta">b. Los Angeles</span></div>
+              <div class="ecard">R. Downey Jr.<span class="meta">b. New York</span></div>
+              <div class="ecard">C. Bale<span class="meta">b. Haverfordwest</span></div>
+              <div class="ecard">C. Nolan<span class="meta">b. London</span></div>
+            </div>
+          </div>
+
+          <div class="relbox cluster cluster--studios" style="left:630px; top:320px; width:452px;">
+            <div class="cluster-label">Studios</div>
+            <div class="ecards ecards--col">
+              <div class="ecard">Warner Bros.<span class="meta">Founded 1923</span></div>
+              <div class="ecard">Marvel Studios<span class="meta">Founded 1993</span></div>
+            </div>
+          </div>
+
+          <div class="rel-label rel-label--people" style="left:355px; top:287px;">Actor · Director</div>
+          <div class="rel-label rel-label--studios" style="left:763px; top:287px;">Production</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── AXIS 1 · FILTERING ─── -->
+
+    <div id="a1-0" class="step" data-x="1750" data-y="5200">
+      <div class="board">
+        <div class="board-head"><div class="board-title">Axis 1 · Filtering</div><div class="board-step">within one collection</div></div>
+        <div class="board-sub"><b>Goal:</b> action films, not dramatic, made by Marvel.</div>
+        <div class="board-body">
+          <div class="filters"><div class="ph">Filters</div><div class="none">No filters yet</div></div>
+          <div class="cluster cluster--movies">
+            <div class="cluster-label">Movies</div>
+            <div class="ecards">
+              <div class="ecard">Inception</div>
+              <div class="ecard">Interstellar</div>
+              <div class="ecard">The Avengers</div>
+              <div class="ecard">The Dark Knight Rises</div>
+            </div>
+            <div class="resultline"><span class="count">4</span> films visible</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="a1-1" class="step" data-x="3250" data-y="5200">
+      <div class="board">
+        <div class="board-head"><div class="board-title">Axis 1 · Filtering</div><div class="board-step">include metadata</div></div>
+        <div class="board-sub">Add an <b>inclusion</b> filter on metadata.</div>
+        <div class="board-body">
+          <div class="filters"><div class="ph">Filters</div>
+            <span class="chip chip--include is-new"><span class="op">+</span> Genres = Action</span>
+          </div>
+          <div class="cluster cluster--movies">
+            <div class="cluster-label">Movies</div>
+            <div class="ecards">
+              <div class="ecard is-result">Inception</div>
+              <div class="ecard is-out">Interstellar</div>
+              <div class="ecard is-result">The Avengers</div>
+              <div class="ecard is-result">The Dark Knight Rises</div>
+            </div>
+            <div class="resultline"><span class="count">3</span> films <span class="delta">− Interstellar (no Action)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="a1-2" class="step" data-x="4750" data-y="5200">
+      <div class="board">
+        <div class="board-head"><div class="board-title">Axis 1 · Filtering</div><div class="board-step">exclude metadata</div></div>
+        <div class="board-sub">Add an <b>exclusion</b> filter — the same control, negated.</div>
+        <div class="board-body">
+          <div class="filters"><div class="ph">Filters</div>
+            <span class="chip chip--include"><span class="op">+</span> Genres = Action</span>
+            <span class="chip chip--exclude is-new"><span class="op">−</span> Genres = Drama</span>
+          </div>
+          <div class="cluster cluster--movies">
+            <div class="cluster-label">Movies</div>
+            <div class="ecards">
+              <div class="ecard is-result">Inception</div>
+              <div class="ecard is-out">Interstellar</div>
+              <div class="ecard is-result">The Avengers</div>
+              <div class="ecard is-out">The Dark Knight Rises</div>
+            </div>
+            <div class="resultline"><span class="count">2</span> films <span class="delta">− Dark Knight (Drama)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="a1-3" class="step" data-x="6250" data-y="5200">
+      <div class="board">
+        <div class="board-head"><div class="board-title">Axis 1 · Filtering</div><div class="board-step">reference filter</div></div>
+        <div class="board-sub">Now filter by a <b>relationship</b>: produced by Marvel Studios.</div>
+        <div class="board-body">
+          <div class="filters"><div class="ph">Filters</div>
+            <span class="chip chip--include"><span class="op">+</span> Genres = Action</span>
+            <span class="chip chip--exclude"><span class="op">−</span> Genres = Drama</span>
+            <span class="chip chip--ref is-new"><span class="op">→</span> Production = Marvel</span>
+          </div>
+          <div class="cluster cluster--movies">
+            <div class="cluster-label">Movies</div>
+            <div class="ecards">
+              <div class="ecard is-out">Inception</div>
+              <div class="ecard is-out">Interstellar</div>
+              <div class="ecard is-result">The Avengers</div>
+              <div class="ecard is-out">The Dark Knight Rises</div>
+            </div>
+            <div class="resultline"><span class="count">1</span> film <span class="delta">→ The Avengers</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── AXIS 2 · NAVIGATION ─── -->
+
+    <div id="a2-0" class="step" data-x="8000" data-y="5200">
+      <div class="board">
+        <div class="board-head"><div class="board-title">Axis 2 · Navigation</div><div class="board-step">reset · follow a relation</div></div>
+        <div class="board-sub">Fresh start. <b>Which films feature an actor born in Los Angeles?</b>
+          No single filter answers this — we must <em>cross</em> collections.</div>
+        <div class="crumbs"><span class="crumb is-current">Movies</span></div>
+        <div class="board-body solo">
+          <div class="cluster cluster--movies">
+            <div class="cluster-label">Movies — follow <span style="color:var(--blue-light)">Actor →</span></div>
+            <div class="ecards">
+              <div class="ecard">Inception</div><div class="ecard">Interstellar</div>
+              <div class="ecard">The Avengers</div><div class="ecard">The Dark Knight Rises</div>
+            </div>
+            <div class="resultline"><span class="count">4</span> films</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="a2-link" class="step" data-x="9650" data-y="6700" data-rotate="6">
+      <div class="board">
+        <div class="board-head"><div class="board-title">link( People, "Actor" )</div><div class="board-step">we traveled here</div></div>
+        <div class="board-sub">The camera followed the <em>Actor</em> edge. Now we see the people who act in
+          <b>any</b> visible film.</div>
+        <div class="crumbs">
+          <span class="crumb">Movies</span><span class="sep">→</span>
+          <span class="crumb is-current">People <span class="reason">(Actor)</span></span>
+        </div>
+        <div class="board-body solo">
+          <div class="cluster cluster--people">
+            <div class="cluster-label">People</div>
+            <div class="ecards">
+              <div class="ecard is-result">L. DiCaprio</div>
+              <div class="ecard is-result">R. Downey Jr.</div>
+              <div class="ecard is-result">C. Bale</div>
+              <div class="ecard is-out">C. Nolan<span class="meta">director only</span></div>
+            </div>
+            <div class="resultline"><span class="count">3</span> actors <span class="delta">− Nolan (never acts)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="a2-1" class="step" data-x="11300" data-y="6700" data-rotate="6">
+      <div class="board">
+        <div class="board-head"><div class="board-title">Axis 2 · Navigation</div><div class="board-step">filter in the new collection</div></div>
+        <div class="board-sub">Refine the question: actors <b>born in Los Angeles</b>.</div>
+        <div class="crumbs">
+          <span class="crumb">Movies</span><span class="sep">→</span>
+          <span class="crumb is-current">People <span class="reason">(Actor)</span></span>
+        </div>
+        <div class="board-body">
+          <div class="filters"><div class="ph">Filters · People</div>
+            <span class="chip chip--include is-new"><span class="op">+</span> Birthplace = Los Angeles</span>
+          </div>
+          <div class="cluster cluster--people">
+            <div class="cluster-label">People</div>
+            <div class="ecards">
+              <div class="ecard is-result">L. DiCaprio</div>
+              <div class="ecard is-out">R. Downey Jr.</div>
+              <div class="ecard is-out">C. Bale</div>
+              <div class="ecard is-out">C. Nolan</div>
+            </div>
+            <div class="resultline"><span class="count">1</span> actor <span class="delta">→ DiCaprio</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="a2-2" class="step" data-x="12950" data-y="5200">
+      <div class="board">
+        <div class="board-head"><div class="board-title">goback()</div><div class="board-step">the question inverts</div></div>
+        <div class="board-sub">Back in Movies — but the context survives. Now: <b>films whose cast includes
+          that actor</b>. The whole path is one composed query.</div>
+        <div class="crumbs">
+          <span class="crumb">Movies</span><span class="sep">→</span>
+          <span class="crumb">People <span class="reason">(Actor)</span></span><span class="sep">→</span>
+          <span class="crumb is-current">Movies <span class="reason">(Actor)</span></span>
+        </div>
+        <div class="board-body solo">
+          <div class="cluster cluster--movies">
+            <div class="cluster-label">Movies</div>
+            <div class="ecards">
+              <div class="ecard is-result">Inception</div>
+              <div class="ecard is-out">Interstellar</div>
+              <div class="ecard is-out">The Avengers</div>
+              <div class="ecard is-out">The Dark Knight Rises</div>
+            </div>
+            <div class="resultline"><span class="count">1</span> film <span class="delta">→ Inception (DiCaprio's film)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── AXIS 3 · UNION ─── -->
+
+    <div id="a3-0" class="step" data-x="14700" data-y="5200">
+      <div class="board">
+        <div class="board-head"><div class="board-title">Axis 3 · Union</div><div class="board-step">save a partial result</div></div>
+        <div class="board-sub">Build one context… then <b>save it</b> and start another, independent one.</div>
+        <div class="board-body">
+          <div class="filters"><div class="ph">Filters · Movies</div>
+            <span class="chip chip--include"><span class="op">+</span> Genres = Sci-Fi</span>
+          </div>
+          <div class="cluster cluster--movies">
+            <div class="cluster-label">Movies</div>
+            <div class="ecards">
+              <div class="ecard is-result">Inception</div>
+              <div class="ecard is-result">Interstellar</div>
+              <div class="ecard is-out">The Avengers</div>
+              <div class="ecard is-out">The Dark Knight Rises</div>
+            </div>
+            <div class="resultline"><span class="count">2</span> films → <span class="delta">+ Add to Union</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="a3-1" class="step" data-x="16350" data-y="6700" data-rotate="6">
+      <div class="board">
+        <div class="board-head"><div class="board-title">Axis 3 · Union</div><div class="board-step">a second, different collection</div></div>
+        <div class="board-sub">New context on <b>People</b> — born in Haverfordwest. Save this one too.</div>
+        <div class="union-grid">
+          <div class="saved">
+            <div class="stitle">Union set — saved</div>
+            <div class="cluster cluster--movies" style="background:transparent;border:0;padding:0;">
+              <div class="cluster-label">Movies · Sci-Fi</div>
+              <div class="ecards">
+                <div class="ecard is-result">Inception</div><div class="ecard is-result">Interstellar</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="filters" style="margin-bottom:12px;"><div class="ph">Filters · People</div>
+              <span class="chip chip--include is-new"><span class="op">+</span> Birthplace = Haverfordwest</span>
+            </div>
+            <div class="cluster cluster--people">
+              <div class="cluster-label">People</div>
+              <div class="ecards">
+                <div class="ecard is-out">DiCaprio</div><div class="ecard is-out">Downey Jr.</div>
+                <div class="ecard is-result">C. Bale</div><div class="ecard is-out">Nolan</div>
+              </div>
+              <div class="resultline"><span class="count">1</span> → <span class="delta">+ Add to Union</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="a3-2" class="step" data-x="15500" data-y="8700" data-scale="1.7">
+      <div class="board">
+        <div class="board-head"><div class="board-title">⋃ &nbsp;Union result</div><div class="board-step">one answer, two collections</div></div>
+        <div class="board-sub">The union combines both partial results — heterogeneous by design.
+          <b>3 entities from 2 collections</b>, one query.</div>
+        <div class="cluster cluster--movies">
+          <div class="cluster-label">Movies</div>
+          <div class="ecards">
+            <div class="ecard is-result">Inception</div>
+            <div class="ecard is-result">Interstellar</div>
+          </div>
+        </div>
+        <div class="cluster cluster--people" style="margin-top:12px;">
+          <div class="cluster-label">People</div>
+          <div class="ecards"><div class="ecard is-result">C. Bale</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- M-END · formal model capstone -->
+    <div id="m-end" class="step" data-x="15500" data-y="10800" data-scale="1.4">
+      <div class="slide" style="min-height:auto;">
+        <div class="eyebrow">Under the hood</div>
+        <h2>Every action is an operation on a formal state</h2>
+        <p class="lead">A state is a tuple
+          <code style="color:var(--blue-light)">⟨ c, F⁺, F⁻, R⁺, R⁻, L ⟩</code> — active collection,
+          metadata &amp; reference filters, and a history of links. Filtering, <em>link</em>, <em>goback</em>
+          and <em>union</em> are defined operations with precise semantics.</p>
+        <p class="lead" style="margin-top:16px;"><strong>The model is the reusable contribution</strong> —
+          decoupled from the language and from any catalog.</p>
+      </div>
+    </div>
+
+    <!-- ════════════ SPEAKER 2 ════════════ -->
+
+    <!-- ARCH 1 · layers -->
+    <div id="arch-1" class="step" data-x="0" data-y="13400" data-scale="1.3">
+      <div class="slide">
+        <div class="eyebrow">System architecture</div>
+        <h2>A layered, stateful engine</h2>
+        <div class="split">
+          <div class="layers">
+            <div class="layer"><span class="name">Frontend</span><span class="tech">Vanilla JS + Vite</span></div>
+            <div class="flowdown">↓ HTTP / JSON</div>
+            <div class="layer tomcat"><span class="name">CORS filter → Servlets</span><span class="tech">control layer</span></div>
+            <div class="layer tomcat"><span class="name">StateManager · State · Link</span><span class="tech">model — HTTP session</span></div>
+            <div class="layer tomcat"><span class="name">NavigationDAO · DatabaseService</span><span class="tech">data access</span></div>
+            <div class="flowdown">↓ JDBC</div>
+            <div class="layer db"><span class="name">PostgreSQL</span><span class="tech">5 tables</span></div>
+          </div>
+          <div>
+            <ul class="kv">
+              <li><b>Java 17 Servlets on Tomcat 10</b> — direct HTTP control, no heavyweight framework.</li>
+              <li><b>RESTful API</b> exposes the engine; one endpoint per resource, one for all actions.</li>
+              <li>The middle three layers live inside <b>Apache Tomcat</b>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARCH 2 · stateful + state→SQL -->
+    <div id="arch-2" class="step" data-x="1750" data-y="13400" data-scale="1.3">
+      <div class="slide">
+        <div class="eyebrow">Two key decisions</div>
+        <h2>Stateful by design · state → SQL</h2>
+        <div class="split">
+          <div>
+            <ul class="kv">
+              <li>Exploration is <b>cumulative</b>, so REST's stateless model fights us. We keep a
+                <b>StateManager in the HTTP session</b>.</li>
+              <li>No intermediate result sets are materialized: on each request the state is
+                <b>translated into one parameterized SQL query</b>.</li>
+              <li>Links become <b>recursive nested sub-queries</b> — the formal semantics, executable.</li>
+            </ul>
+          </div>
+          <div class="codecard">
+<span class="cm">-- one filter → one EXISTS clause</span>
+<span class="kw">AND EXISTS</span> (<span class="kw">SELECT</span> 1 <span class="kw">FROM</span> metadata m
+  <span class="kw">WHERE</span> m.entity_id = e.global_id
+    <span class="kw">AND</span> m.key = <span class="st">?</span> <span class="kw">AND</span> m.value = <span class="st">?</span>)
+<span class="cm">-- exclusion → NOT EXISTS · link → IN (SELECT …)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARCH 3 · deployment -->
+    <div id="arch-3" class="step" data-x="3500" data-y="13400" data-scale="1.3">
+      <div class="slide">
+        <div class="eyebrow">Deployment</div>
+        <h2>One command, four containers</h2>
+        <p class="lead">The whole stack is containerized with <strong>Docker Compose</strong>.</p>
+        <div class="axes" style="grid-template-columns:repeat(4,1fr);">
+          <div class="axis-card"><div class="t" style="font-size:1rem;">PostgreSQL</div><div class="x">Database</div></div>
+          <div class="axis-card"><div class="t" style="font-size:1rem;">Tomcat</div><div class="x">Java backend</div></div>
+          <div class="axis-card"><div class="t" style="font-size:1rem;">Nginx</div><div class="x">Serves the frontend</div></div>
+          <div class="axis-card"><div class="t" style="font-size:1rem;">Cloudflare</div><div class="x">Secure public tunnel</div></div>
+        </div>
+        <p class="small" style="margin-top:20px;">
+          <code style="color:var(--blue-light)">docker compose -f docker-compose.prod.yml up -d --build</code>
+          → a live public URL, no ports opened.</p>
+      </div>
+    </div>
+
+    <!-- EVAL -->
+    <div id="eval" class="step" data-x="5400" data-y="13400" data-scale="1.3">
+      <div class="slide">
+        <div class="eyebrow">Evaluation</div>
+        <h2>It generalizes — and people can use it</h2>
+        <p class="lead"><strong>Functional:</strong> the same engine, untouched, drives both
+          <em>TMDB</em> (films) and <em>DBLP</em> (papers). <strong>Usability:</strong> a formal
+          think-aloud study with 5 participants (SUS + SEQ).</p>
+        <div class="metrics">
+          <div class="metric good"><div class="big">85</div><div class="lab">SUS score<br>("excellent" range)</div></div>
+          <div class="metric good"><div class="big">93<span class="u">%</span></div><div class="lab">task success<br>(65 / 70 tasks)</div></div>
+          <div class="metric"><div class="big">2</div><div class="lab">domains validated<br>TMDB · DBLP</div></div>
+        </div>
+        <p class="note">Main friction: the <b>include / exclude toggle</b> was hard to discover —
+          turned into the top interface fix for the next iteration.</p>
+      </div>
+    </div>
+
+    <!-- CONCLUSIONS / FUTURE -->
+    <div id="conclusions" class="step" data-x="7300" data-y="13400" data-scale="1.3">
+      <div class="slide">
+        <div class="eyebrow">Conclusions &amp; future work</div>
+        <h2>Three mechanisms, one calculus</h2>
+        <div class="cols2">
+          <div>
+            <h3 style="margin-bottom:10px;">What we delivered</h3>
+            <ul class="kv">
+              <li>An engine that <b>unifies</b> filtering, navigation and union.</li>
+              <li>A <b>formal model</b> — the most reusable contribution.</li>
+              <li>Validated on two real, structurally different catalogs.</li>
+            </ul>
+          </div>
+          <div>
+            <h3 style="margin-bottom:10px;">Where it goes next</h3>
+            <ul class="kv future">
+              <li>LLM <b>assistance</b> over visible operations (agency kept).</li>
+              <li><b>Distribution</b> across nodes; incremental query generation.</li>
+              <li>New domains, multi-value selection, user persistence.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTRIBUTIONS -->
+    <div id="contributions" class="step" data-x="9200" data-y="13400" data-scale="1.4">
+      <div class="slide">
+        <div class="eyebrow">Personal contributions</div>
+        <h2>Who did what</h2>
+        <div class="people-split">
+          <div class="person">
+            <div class="pname">Juan A. Hibjan</div>
+            <div class="prole">Data &amp; service infrastructure</div>
+            <ul>
+              <li>Data integration: TMDB (Python) &amp; DBLP (Go) pipelines</li>
+              <li>Persistence layer &amp; infrastructural servlets; session</li>
+              <li>Deployment: Docker, Nginx, Cloudflare</li>
+              <li>Led: Architecture chapter, data model, technical appendices</li>
+            </ul>
+          </div>
+          <div class="person">
+            <div class="pname">Leonardo Prado</div>
+            <div class="prole">Frontend, UX &amp; evaluation</div>
+            <ul>
+              <li>Full web client (modular Vanilla JS components)</li>
+              <li>Visual &amp; interaction design</li>
+              <li>Backend faceted filters &amp; set operations</li>
+              <li>Led: usability study + Testing &amp; Validation chapter</li>
+            </ul>
+          </div>
+        </div>
+        <div class="joint">The <b>navigation engine</b> (State · StateManager · Link) — designed and built
+          <b>50 / 50</b>, in shared sessions.</div>
+      </div>
+    </div>
+
+    <!-- CLOSING -->
+    <div id="closing" class="step" data-x="9200" data-y="15500" data-scale="1.3">
+      <div class="slide" style="align-items:center; text-align:center;">
+        <div class="hero-icon">🧭</div>
+        <h2>Thank you</h2>
+        <p class="lead" style="margin-top:12px;">Faceted filtering + cross-collection navigation + set operations — one engine.</p>
+        <p class="hero-authors" style="margin-top:22px;">Juan Andrés Hibjan Cardona &nbsp;·&nbsp; Leonardo Prado de Souza</p>
+        <p class="hero-inst" style="margin-top:14px;">Questions welcome</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="hint">Use ← → or Space to navigate</div>
+  <div class="progress" id="progress"></div>
+
+  <script src="js/impress.js"></script>
+  <script>
+    var api = impress();
+    api.init();
+
+    // progress bar
+    var steps = Array.prototype.slice.call(document.querySelectorAll('#impress .step'));
+    var bar = document.getElementById('progress');
+    document.addEventListener('impress:stepenter', function (e) {
+      var i = steps.indexOf(e.target);
+      bar.style.width = ((i + 1) / steps.length * 100) + '%';
+    });
+  </script>
+</body>
+</html>
