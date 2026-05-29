@@ -69,10 +69,20 @@ code, .mono { font-family: var(--mono); }
 .impress-enabled .step.active { opacity: 1; }
 
 .step {
-  width: 1080px;
+  width: auto;
   padding: 0;
   position: relative;
 }
+
+/* The deck is authored at a 1280×800-class scale, then enlarged here so it
+   fills the screen. Crispness requires impress's windowScale to be exactly 1:
+   the canvas is set to 1920×1080 (data-width/height) so that, fullscreen on a
+   1080p display, content maps 1:1 to device pixels. Any scale ≠ 1 (including
+   downscaling) resamples the text inside impress's 3D context and softens it.
+   zoom enlarges the real layout (px + rem together) rather than magnifying a
+   texture like transform would. 1.45 keeps the tallest board (the graph)
+   inside the 1080 height. */
+.slide, .board { zoom: 1.45; }
 
 /* default presentational box that most steps share */
 .slide {
@@ -331,11 +341,6 @@ h3 { font-size: 1.15rem; font-weight: 600; color: var(--text-soft); }
 .rel-label--studios { color: var(--studios); border-color: rgba(224,164,88,0.4); }
 
 /* ── Navigation hint (fixed, outside canvas) ──────────────── */
-.hint {
-  position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
-  font-size: 0.72rem; color: var(--muted-dim); letter-spacing: 0.06em;
-  z-index: 50; pointer-events: none; opacity: 0.7;
-}
 .progress {
   position: fixed; bottom: 0; left: 0; height: 3px; width: 0;
   background: linear-gradient(90deg, var(--blue-deep), var(--blue-light));
