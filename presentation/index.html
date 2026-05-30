@@ -56,18 +56,19 @@
       box-sizing: border-box;
       transition: opacity 1s;
       position: relative;
+      min-width: 2200px;
     }
     #overview-2, #overview-2-hub1, #overview-2-hub2 {
       align-items: flex-start;
-      padding-top: 70px;
+      padding-top: 10px;
     }
-    .step.overview-node:not(#overview-0):not(#overview-0-end)::before {
+    .step.overview-node:not(#overview-0):not(#overview-0-end):not(#overview-0-hub1)::before {
       content: "";
       position: absolute;
-      top: 60px;
-      bottom: 60px;
-      left: 60px;
-      right: 60px;
+      top: -30px;
+      bottom: -30px;
+      left: -30px;
+      right: -30px;
       border: 8px solid rgba(255, 255, 255, 0.15);
       border-radius: 40px;
       background: rgba(255, 255, 255, 0.02);
@@ -75,7 +76,7 @@
       z-index: -1;
     }
     .overview-node .box-title {
-      font-size: 130px;
+      font-size: 200px;
       color: rgba(255, 255, 255, 0.4);
       font-family: 'Inter', sans-serif;
       font-weight: bold;
@@ -234,7 +235,7 @@
     
 
     <!-- 2 · INTRO / PROBLEM -->
-    <div id="intro" class="step" data-x="31000" data-y="-11500" data-transition-duration="400" data-goto-prev="overview-0">
+    <div id="intro" class="step" data-x="31000" data-y="-11500" data-scale="5.0" data-goto-prev="overview-0">
       <div class="slide">
         <div class="eyebrow"><span class="lang-en">Context</span><span class="lang-es">Contexto</span></div>
         <h2><span class="lang-en">Information overload outgrew our tools</span><span class="lang-es">La sobrecarga de información superó a nuestras herramientas</span></h2>
@@ -246,7 +247,7 @@
     </div>
 
     <!-- OBJECTIVES -->
-    <div id="objectives" class="step" data-x="35000" data-y="-11500" data-transition-duration="400">
+    <div id="objectives" class="step" data-x="35000" data-y="-11500" data-scale="5.0">
       <div class="slide">
         <div class="eyebrow"><span class="lang-en">Our goal</span><span class="lang-es">Nuestro objetivo</span></div>
         <h2><span class="lang-en">A domain-agnostic exploration engine</span><span class="lang-es">Un motor de exploración agnóstico al dominio</span></h2>
@@ -259,7 +260,7 @@
     </div>
 
     <!-- PROCESS -->
-    <div id="process" class="step" data-x="39000" data-y="-11500" data-transition-duration="400">
+    <div id="process" class="step" data-x="39000" data-y="-11500" data-scale="5.0">
       <div class="slide">
         <div class="eyebrow"><span class="lang-en">Development process</span><span class="lang-es">Proceso de desarrollo</span></div>
         <h2><span class="lang-en">Two phases, one formal model</span><span class="lang-es">Dos fases, un modelo formal</span></h2>
@@ -285,7 +286,7 @@
     
     <!-- ─── OVERVIEW 2 ─── -->
     <div id="overview-2" class="step overview-node" data-x="35000" data-y="10425" data-scale="40" style="width: 2200px; height: 600px;" data-goto-next="axes">
-      <div class="box-title" style="font-size: 75px;"><!-- Box 2 --><span class="lang-en">CORE</span><span class="lang-es">NÚCLEO</span></div>
+      <div class="box-title" style="font-size: 45px;"><!-- Box 2 --><span class="lang-en">CORE</span><span class="lang-es">NÚCLEO</span></div>
     </div>
 
     <!-- ─── OVERVIEW 3 ─── -->
@@ -294,7 +295,7 @@
     </div>
 
     <!-- 3 · THREE AXES OVERVIEW -->
-    <div id="axes" class="step" data-x="4000" data-y="6525" data-scale="1.0" data-transition-duration="400" data-goto-prev="overview-2">
+    <div id="axes" class="step" data-x="4000" data-y="6525" data-scale="3.0" data-goto-prev="overview-2">
       <div class="slide">
         <div class="eyebrow"><span class="lang-en">Model &amp; Demo</span><span class="lang-es">Modelo y Demo</span></div>
         <h2><span class="lang-en">One engine, three axes</span><span class="lang-es">Un motor, tres ejes</span></h2>
@@ -665,7 +666,7 @@
 
     <!-- ─── OVERVIEW 2 HUB 1 ─── -->
     <div id="overview-2-hub1" class="step overview-node" data-x="35000" data-y="10425" data-scale="40" style="width: 2200px; height: 600px;" data-goto-next="arch-0">
-      <div class="box-title" style="font-size: 75px;"><!-- Box 2 Hub 1 --><span class="lang-en">CORE</span><span class="lang-es">NÚCLEO</span></div>
+      <div class="box-title" style="font-size: 45px;"><!-- Box 2 Hub 1 --><span class="lang-en">CORE</span><span class="lang-es">NÚCLEO</span></div>
     </div>
 
     <!-- ════════════ SPEAKER 2 ════════════ -->
@@ -677,7 +678,7 @@
     </div>
 
     <!-- ARCH 0 · Tech overview -->
-    <div id="arch-0" class="step" data-x="28000" data-y="10425" data-scale="1.3" data-transition-duration="400" data-goto-prev="overview-2-hub1">
+    <div id="arch-0" class="step" data-x="28000" data-y="10425" data-scale="3.0" data-goto-prev="overview-2-hub1">
       <div class="slide">
         <div class="eyebrow"><span class="lang-en">Architecture</span><span class="lang-es">Arquitectura</span></div>
         <h2><span class="lang-en">The tools behind the engine</span><span class="lang-es">Las herramientas detrás del motor</span></h2>
@@ -692,7 +693,7 @@
     </div>
 
     <!-- ARCH 1 · layers -->
-    <div id="arch-1" class="step" data-x="32000" data-y="10425" data-scale="1.3">
+    <div id="arch-1" class="step" data-x="32000" data-y="10425" data-scale="3.0">
       <div class="slide">
         <div class="eyebrow"><span class="lang-en">System architecture</span><span class="lang-es">Arquitectura del sistema</span></div>
         <h2><span class="lang-en">A layered, stateful engine</span><span class="lang-es">Un motor en capas y con estado</span></h2>
@@ -718,7 +719,7 @@
     </div>
 
     <!-- ARCH 2 · stateful + state→SQL -->
-    <div id="arch-2" class="step" data-x="36000" data-y="10425" data-scale="1.3">
+    <div id="arch-2" class="step" data-x="36000" data-y="10425" data-scale="3.0">
       <div class="slide">
         <div class="eyebrow"><span class="lang-en">Two key decisions</span><span class="lang-es">Dos decisiones clave</span></div>
         <h2><span class="lang-en">Stateful by design · state → SQL</span><span class="lang-es">Con estado por diseño · estado → SQL</span></h2>
@@ -744,7 +745,7 @@
     </div>
 
     <!-- ARCH 3 · deployment -->
-    <div id="arch-3" class="step" data-x="40000" data-y="10425" data-scale="1.3">
+    <div id="arch-3" class="step" data-x="40000" data-y="10425" data-scale="3.0">
       <div class="slide">
         <div class="eyebrow"><span class="lang-en">Deployment</span><span class="lang-es">Despliegue</span></div>
         <h2><span class="lang-en">One command, four containers</span><span class="lang-es">Un comando, cuatro contenedores</span></h2>
@@ -767,7 +768,7 @@
 
     <!-- ─── OVERVIEW 2 HUB 2 ─── -->
     <div id="overview-2-hub2" class="step overview-node" data-x="35000" data-y="10425" data-scale="40" style="width: 2200px; height: 600px;" data-goto-next="eval-methodology">
-      <div class="box-title" style="font-size: 75px;"><!-- Box 2 Hub 2 --><span class="lang-en">CORE</span><span class="lang-es">NÚCLEO</span></div>
+      <div class="box-title" style="font-size: 45px;"><!-- Box 2 Hub 2 --><span class="lang-en">CORE</span><span class="lang-es">NÚCLEO</span></div>
     </div>
 
     
@@ -777,7 +778,7 @@
     </div>
 
     <!-- EVAL 1 · Methodology -->
-    <div id="eval-methodology" class="step" data-x="57000" data-y="10425" data-scale="1.3" data-transition-duration="400" data-goto-prev="overview-2-hub2">
+    <div id="eval-methodology" class="step" data-x="57000" data-y="10425" data-scale="3.0" data-goto-prev="overview-2-hub2">
       <div class="slide">
         <div class="eyebrow"><span class="lang-en">Evaluation</span><span class="lang-es">Evaluación</span></div>
         <h2><span class="lang-en">Rigorous validation</span><span class="lang-es">Validación rigurosa</span></h2>
@@ -792,7 +793,7 @@
     </div>
 
     <!-- EVAL 2 · Results -->
-    <div id="eval-results" class="step" data-x="63000" data-y="10425" data-scale="1.3" data-transition-duration="400">
+    <div id="eval-results" class="step" data-x="63000" data-y="10425" data-scale="3.0">
       <div class="slide">
         <div class="eyebrow"><span class="lang-en">Evaluation Results</span><span class="lang-es">Resultados de Evaluación</span></div>
         <h2><span class="lang-en">It generalizes — and people can use it</span><span class="lang-es">Generaliza — y la gente puede usarlo</span></h2>
@@ -817,7 +818,7 @@
     </div>
 
     <!-- CONCLUSIONS 1 · What we delivered -->
-    <div id="conclusions" class="step" data-x="30000" data-y="32300" data-scale="1.3" data-transition-duration="400" data-goto-prev="overview-0-hub1">
+    <div id="conclusions" class="step" data-x="30000" data-y="32300" data-scale="3.0" data-goto-prev="overview-0-hub1">
       <div class="slide">
         <div class="eyebrow"><span class="lang-en">Conclusion</span><span class="lang-es">Conclusión</span></div>
         <h2><span class="lang-en">Three mechanisms, one calculus</span><span class="lang-es">Tres mecanismos, un cálculo</span></h2>
@@ -831,7 +832,7 @@
     </div>
 
     <!-- CONCLUSIONS 2 · Future work -->
-    <div id="future-work" class="step" data-x="35000" data-y="32300" data-scale="1.3" data-transition-duration="400">
+    <div id="future-work" class="step" data-x="35000" data-y="32300" data-scale="3.0">
       <div class="slide">
         <div class="eyebrow"><span class="lang-en">Future work</span><span class="lang-es">Trabajo futuro</span></div>
         <h2><span class="lang-en">Where it goes next</span><span class="lang-es">Qué sigue</span></h2>
@@ -845,7 +846,7 @@
     </div>
 
     <!-- CONTRIBUTIONS -->
-    <div id="contributions" class="step" data-x="40000" data-y="32300" data-scale="1.4">
+    <div id="contributions" class="step" data-x="40000" data-y="32300" data-scale="3.0">
       <div class="slide">
         <div class="eyebrow"><span class="lang-en">Personal contributions</span><span class="lang-es">Contribuciones personales</span></div>
         <h2><span class="lang-en">Who did what</span><span class="lang-es">Quién hizo qué</span></h2>

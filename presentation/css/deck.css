@@ -72,6 +72,9 @@ code, .mono { font-family: var(--mono); }
   width: auto;
   padding: 0;
   position: relative;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
 }
 
 /* The deck is authored at a 1280×800-class scale, then enlarged here so it
