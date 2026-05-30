@@ -57,7 +57,7 @@
       transition: opacity 1s;
       position: relative;
     }
-    #overview-2 {
+    #overview-2, #overview-2-hub1, #overview-2-hub2 {
       align-items: flex-start;
       padding-top: 70px;
     }
@@ -94,15 +94,85 @@
     
     /* Show all titles in the global overviews */
     body.impress-on-overview-0 .box-title,
-    body.impress-on-overview-0-end .box-title {
+    body.impress-on-overview-0-end .box-title,
+    body.impress-on-overview-0-hub1 .box-title {
       opacity: 1;
+    }
+    
+    /* Hide clone titles in global overview to prevent bolding/glitches from overlap */
+    body.impress-on-overview-0 #overview-2-hub1 .box-title,
+    body.impress-on-overview-0 #overview-2-hub2 .box-title,
+    body.impress-on-overview-0 #overview-0-hub1 .box-title,
+    body.impress-on-overview-0-hub1 #overview-2-hub1 .box-title,
+    body.impress-on-overview-0-hub1 #overview-2-hub2 .box-title,
+    body.impress-on-overview-0-hub1 #overview-0-hub1 .box-title {
+      opacity: 0 !important;
     }
     
     /* Show inner boxes (3, 4, 5) titles when Box 2 is focused */
     body.impress-on-overview-2 #overview-3 .box-title,
     body.impress-on-overview-2 #overview-4 .box-title,
-    body.impress-on-overview-2 #overview-5 .box-title {
+    body.impress-on-overview-2 #overview-5 .box-title,
+    body.impress-on-overview-2-hub1 #overview-3 .box-title,
+    body.impress-on-overview-2-hub1 #overview-4 .box-title,
+    body.impress-on-overview-2-hub1 #overview-5 .box-title,
+    body.impress-on-overview-2-hub2 #overview-3 .box-title,
+    body.impress-on-overview-2-hub2 #overview-4 .box-title,
+    body.impress-on-overview-2-hub2 #overview-5 .box-title {
       opacity: 1;
+    }
+
+    #nav-menu {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 40px 60px;
+      z-index: 9999;
+      display: none;
+      backdrop-filter: blur(12px);
+      color: white;
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+      text-align: center;
+      pointer-events: none; /* Disable mouse interaction */
+    }
+    #nav-menu h2 {
+      margin-top: 0;
+      margin-bottom: 24px;
+      font-size: 24px;
+      color: rgba(255,255,255,0.8);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    #nav-menu ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    #nav-menu li {
+      margin-bottom: 16px;
+    }
+    #nav-menu a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 20px;
+      font-weight: 600;
+      opacity: 0.6;
+      transition: all 0.2s ease;
+      display: inline-block;
+      pointer-events: none; /* Disable mouse interaction */
+    }
+    #nav-menu a:hover, #nav-menu a:focus {
+      opacity: 1;
+      transform: scale(1.05);
+      color: #fff;
+      outline: none;
     }
 
   </style>
@@ -112,6 +182,19 @@
   <div class="lang-toggle-wrapper">
     <button id="btn-es" class="lang-tab" onclick="setLang('es')" aria-label="Español">ES</button>
     <button id="btn-en" class="lang-tab active" onclick="setLang('en')" aria-label="English">EN</button>
+  </div>
+
+  <div id="nav-menu">
+    <h2>Navegación</h2>
+    <ul>
+      <li><a href="#" onclick="api.goto('overview-0'); return false;">VISTA GENERAL</a></li>
+      <li><a href="#" onclick="api.goto('intro'); return false;">CONTEXTO</a></li>
+      <li><a href="#" onclick="api.goto('overview-2'); return false;">NÚCLEO</a></li>
+      <li><a href="#" onclick="api.goto('a1-0'); return false;">MODELO Y DEMO</a></li>
+      <li><a href="#" onclick="api.goto('arch-0'); return false;">ARQUITECTURA</a></li>
+      <li><a href="#" onclick="api.goto('eval-methodology'); return false;">EVALUACIÓN</a></li>
+      <li><a href="#" onclick="api.goto('conclusions'); return false;">CONCLUSIÓN</a></li>
+    </ul>
   </div>
 
   <div class="fallback-message">
@@ -136,7 +219,7 @@
     </div>
 
     <!-- ─── OVERVIEW 0 (GLOBAL) ─── -->
-    <div id="overview-0" class="step overview-node" data-x="35000" data-y="10500" data-scale="60" style="border:none; background:none;">
+    <div id="overview-0" class="step overview-node" data-x="35000" data-y="10500" data-scale="60" style="border:none; background:none;" data-goto-next="intro">
     </div>
 
     
@@ -145,15 +228,15 @@
 
     <!-- ─── OVERVIEW 1 ─── -->
     <div id="overview-1" class="step overview-node" data-x="35000" data-y="-11500" data-scale="10">
-      <div class="box-title"><!-- Box 1 --><span class="lang-en">Context</span><span class="lang-es">Contexto</span></div>
+      <div class="box-title"><!-- Box 1 --><span class="lang-en">CONTEXT</span><span class="lang-es">CONTEXTO</span></div>
     </div>
 
     
 
     <!-- 2 · INTRO / PROBLEM -->
-    <div id="intro" class="step" data-x="31000" data-y="-11500" data-transition-duration="400">
+    <div id="intro" class="step" data-x="31000" data-y="-11500" data-transition-duration="400" data-goto-prev="overview-0">
       <div class="slide">
-        <div class="eyebrow"><span class="lang-en">The problem</span><span class="lang-es">El problema</span></div>
+        <div class="eyebrow"><span class="lang-en">Context</span><span class="lang-es">Contexto</span></div>
         <h2><span class="lang-en">Information overload outgrew our tools</span><span class="lang-es">La sobrecarga de información superó a nuestras herramientas</span></h2>
         <p class="lead"><span class="lang-en">Direct search is rigid, classic filters are opaque, recommenders erase your</span><span class="lang-es">La búsqueda directa es rígida, los filtros clásicos son opacos, los recomendadores anulan tu</span>
           <span class="lang-en">agency. The three richer mechanisms that <em>do</em> help —</span><span class="lang-es">agencia. Los tres mecanismos más ricos que <em>sí</em> ayudan —</span>
@@ -201,19 +284,19 @@
 
     
     <!-- ─── OVERVIEW 2 ─── -->
-    <div id="overview-2" class="step overview-node" data-x="35000" data-y="10425" data-scale="40" style="width: 2200px; height: 600px;">
-      <div class="box-title" style="font-size: 75px;"><!-- Box 2 --><span class="lang-en">Core</span><span class="lang-es">Núcleo</span></div>
+    <div id="overview-2" class="step overview-node" data-x="35000" data-y="10425" data-scale="40" style="width: 2200px; height: 600px;" data-goto-next="axes">
+      <div class="box-title" style="font-size: 75px;"><!-- Box 2 --><span class="lang-en">CORE</span><span class="lang-es">NÚCLEO</span></div>
     </div>
 
     <!-- ─── OVERVIEW 3 ─── -->
     <div id="overview-3" class="step overview-node" data-x="10000" data-y="10425" data-scale="10">
-      <div class="box-title"><!-- Box 3 --><span class="lang-en">Model & Demo</span><span class="lang-es">Modelo y Demo</span></div>
+      <div class="box-title"><!-- Box 3 --><span class="lang-en">MODEL &amp; DEMO</span><span class="lang-es">MODELO Y DEMO</span></div>
     </div>
 
     <!-- 3 · THREE AXES OVERVIEW -->
-    <div id="axes" class="step" data-x="4000" data-y="6525" data-scale="1.0" data-transition-duration="400">
+    <div id="axes" class="step" data-x="4000" data-y="6525" data-scale="1.0" data-transition-duration="400" data-goto-prev="overview-2">
       <div class="slide">
-        <div class="eyebrow"><span class="lang-en">The navigation model</span><span class="lang-es">El modelo de navegación</span></div>
+        <div class="eyebrow"><span class="lang-en">Model &amp; Demo</span><span class="lang-es">Modelo y Demo</span></div>
         <h2><span class="lang-en">One engine, three axes</span><span class="lang-es">Un motor, tres ejes</span></h2>
         <p class="lead"><span class="lang-en">We'll walk a tiny catalog — 4 films, their people and studios —</span><span class="lang-es">Recorreremos un catálogo diminuto — 4 películas, sus personas y estudios —</span>
           <span class="lang-en">and watch the visible set shrink after every action.</span><span class="lang-es">y veremos cómo el conjunto visible se reduce tras cada acción.</span></p>
@@ -237,7 +320,7 @@
     <!-- ════════════ THE CANVAS ════════════ -->
 
     <!-- M0 · the graph -->
-    <div id="m-graph" class="step" data-x="8000" data-y="6525" data-scale="1.6">
+    <div id="m-graph" class="step" data-x="8000" data-y="6570" data-scale="1.6">
       <div class="board">
         <div class="board-head">
           <div class="board-title"><span class="lang-en">The mini-catalog</span><span class="lang-es">El mini-catálogo</span></div>
@@ -440,7 +523,7 @@
     <div id="a2-1" class="step" data-x="10000" data-y="12500" data-scale="1.0">
       <div class="board">
         <div class="board-head"><div class="board-title"><span class="lang-en">Axis 2 · Navigation</span><span class="lang-es">Eje 2 · Navegación</span></div><div class="board-step"><span class="lang-en">filter in the new collection</span><span class="lang-es">filtrar en la nueva colección</span></div></div>
-        <div class="board-sub">Refine the question: <span class="lang-en">actors </span><span class="lang-es">actores <</span>b>born in Los Angeles</b>.</div>
+        <div class="board-sub"><span class="lang-en">Refine the question: actors born in Los Angeles</span><span class="lang-es">Refina la pregunta:actores nacidos en Los Ángeles</span></b>.</div>
         <div class="crumbs">
           <span class="crumb"><span class="lang-en">Movies</span><span class="lang-es">Películas</span></span><span class="sep">→</span>
           <span class="crumb is-current">People <span class="reason">(Actor)</span></span>
@@ -547,7 +630,7 @@
       </div>
     </div>
 
-    <div id="a3-2" class="step" data-x="17500" data-y="11000" data-scale="1.7">
+    <div id="a3-2" class="step" data-x="17015" data-y="11000" data-scale="1.7">
       <div class="board">
         <div class="board-head"><div class="board-title">⋃ &nbsp;Union result</div><div class="board-step"><span class="lang-en">one answer, two collections</span><span class="lang-es">una respuesta, dos colecciones</span></div></div>
         <div class="board-sub"><span class="lang-en">The union combines both partial results — heterogeneous by design.</span><span class="lang-es">La unión combina ambos resultados parciales — heterogéneos por diseño.</span>
@@ -580,18 +663,23 @@
       </div>
     </div>
 
+    <!-- ─── OVERVIEW 2 HUB 1 ─── -->
+    <div id="overview-2-hub1" class="step overview-node" data-x="35000" data-y="10425" data-scale="40" style="width: 2200px; height: 600px;" data-goto-next="arch-0">
+      <div class="box-title" style="font-size: 75px;"><!-- Box 2 Hub 1 --><span class="lang-en">CORE</span><span class="lang-es">NÚCLEO</span></div>
+    </div>
+
     <!-- ════════════ SPEAKER 2 ════════════ -->
 
     
     <!-- ─── OVERVIEW 4 ─── -->
     <div id="overview-4" class="step overview-node" data-x="35000" data-y="10425" data-scale="10">
-      <div class="box-title"><!-- Box 4 --><span class="lang-en">Architecture</span><span class="lang-es">Arquitectura</span></div>
+      <div class="box-title"><!-- Box 4 --><span class="lang-en">ARCHITECTURE</span><span class="lang-es">ARQUITECTURA</span></div>
     </div>
 
     <!-- ARCH 0 · Tech overview -->
-    <div id="arch-0" class="step" data-x="28000" data-y="10425" data-scale="1.3" data-transition-duration="400">
+    <div id="arch-0" class="step" data-x="28000" data-y="10425" data-scale="1.3" data-transition-duration="400" data-goto-prev="overview-2-hub1">
       <div class="slide">
-        <div class="eyebrow"><span class="lang-en">Technology stack</span><span class="lang-es">Stack tecnológico</span></div>
+        <div class="eyebrow"><span class="lang-en">Architecture</span><span class="lang-es">Arquitectura</span></div>
         <h2><span class="lang-en">The tools behind the engine</span><span class="lang-es">Las herramientas detrás del motor</span></h2>
         <ul class="kv" style="margin-top: 30px;">
           <li><span class="lang-en"><b>Frontend:</b> Vanilla JS + Vite — modular components, zero frameworks.</span><span class="lang-es"><b>Frontend:</b> Vanilla JS + Vite — componentes modulares, sin frameworks.</span></li>
@@ -677,14 +765,19 @@
       </div>
     </div>
 
+    <!-- ─── OVERVIEW 2 HUB 2 ─── -->
+    <div id="overview-2-hub2" class="step overview-node" data-x="35000" data-y="10425" data-scale="40" style="width: 2200px; height: 600px;" data-goto-next="eval-methodology">
+      <div class="box-title" style="font-size: 75px;"><!-- Box 2 Hub 2 --><span class="lang-en">CORE</span><span class="lang-es">NÚCLEO</span></div>
+    </div>
+
     
     <!-- ─── OVERVIEW 5 ─── -->
     <div id="overview-5" class="step overview-node" data-x="60000" data-y="10425" data-scale="10">
-      <div class="box-title"><!-- Box 5 --><span class="lang-en">Evaluation</span><span class="lang-es">Evaluación</span></div>
+      <div class="box-title"><!-- Box 5 --><span class="lang-en">EVALUATION</span><span class="lang-es">EVALUACIÓN</span></div>
     </div>
 
     <!-- EVAL 1 · Methodology -->
-    <div id="eval-methodology" class="step" data-x="57000" data-y="10425" data-scale="1.3" data-transition-duration="400">
+    <div id="eval-methodology" class="step" data-x="57000" data-y="10425" data-scale="1.3" data-transition-duration="400" data-goto-prev="overview-2-hub2">
       <div class="slide">
         <div class="eyebrow"><span class="lang-en">Evaluation</span><span class="lang-es">Evaluación</span></div>
         <h2><span class="lang-en">Rigorous validation</span><span class="lang-es">Validación rigurosa</span></h2>
@@ -713,16 +806,20 @@
       </div>
     </div>
 
+    <!-- ─── OVERVIEW 0 HUB 1 ─── -->
+    <div id="overview-0-hub1" class="step overview-node" data-x="35000" data-y="10500" data-scale="60" style="border:none; background:none;" data-goto-next="conclusions">
+    </div>
+
     
     <!-- ─── OVERVIEW 6 ─── -->
     <div id="overview-6" class="step overview-node" data-x="35000" data-y="32300" data-scale="10">
-      <div class="box-title"><!-- Box 6 --><span class="lang-en">Conclusion</span><span class="lang-es">Conclusión</span></div>
+      <div class="box-title"><!-- Box 6 --><span class="lang-en">CONCLUSION</span><span class="lang-es">CONCLUSIÓN</span></div>
     </div>
 
     <!-- CONCLUSIONS 1 · What we delivered -->
-    <div id="conclusions" class="step" data-x="30000" data-y="32300" data-scale="1.3" data-transition-duration="400">
+    <div id="conclusions" class="step" data-x="30000" data-y="32300" data-scale="1.3" data-transition-duration="400" data-goto-prev="overview-0-hub1">
       <div class="slide">
-        <div class="eyebrow"><span class="lang-en">Conclusions</span><span class="lang-es">Conclusiones</span></div>
+        <div class="eyebrow"><span class="lang-en">Conclusion</span><span class="lang-es">Conclusión</span></div>
         <h2><span class="lang-en">Three mechanisms, one calculus</span><span class="lang-es">Tres mecanismos, un cálculo</span></h2>
         <h3 style="margin-top: 30px; margin-bottom: 20px;"><span class="lang-en">What we delivered</span><span class="lang-es">Lo que entregamos</span></h3>
         <ul class="kv">
@@ -803,6 +900,54 @@
   <script>
     var api = impress();
     api.init();
+    
+    // Auto-init impressConsole if available (fixes 'P' key)
+    if (typeof impressConsole !== 'undefined') {
+        impressConsole().init();
+    }
+
+    // Nav menu toggle (M key)
+    var navMenu = document.getElementById('nav-menu');
+    var navItems = navMenu.querySelectorAll('a');
+    var navIndex = 0;
+
+    // Intercept both keydown and keyup to block impress.js entirely
+    ['keydown', 'keyup'].forEach(function(eventType) {
+      document.addEventListener(eventType, function(e) {
+        if (e.key === 'm' || e.key === 'M') {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+          if (eventType === 'keydown') {
+            if (navMenu.style.display === 'block') {
+              navMenu.style.display = 'none';
+            } else {
+              navMenu.style.display = 'block';
+              navIndex = 0;
+              navItems[0].focus();
+            }
+          }
+        } else if (navMenu.style.display === 'block') {
+          // Block all presentation navigation keys
+          var navKeys = ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', ' ', 'PageUp', 'PageDown', 'Enter'];
+          if (navKeys.indexOf(e.key) !== -1) {
+            e.stopImmediatePropagation();
+            if (eventType === 'keydown') {
+              e.preventDefault();
+              if (e.key === 'ArrowDown') {
+                navIndex = (navIndex + 1) % navItems.length;
+                navItems[navIndex].focus();
+              } else if (e.key === 'ArrowUp') {
+                navIndex = (navIndex - 1 + navItems.length) % navItems.length;
+                navItems[navIndex].focus();
+              } else if (e.key === 'Enter') {
+                navMenu.style.display = 'none';
+                navItems[navIndex].click();
+              }
+            }
+          }
+        }
+      }, true); // useCapture
+    });
 
     // progress bar
     var steps = Array.prototype.slice.call(document.querySelectorAll('#impress .step'));
@@ -810,6 +955,11 @@
     var previousLang = 'es';
 
     document.addEventListener('impress:stepenter', function (e) {
+      // Hide nav menu on navigation
+      if (navMenu.style.display === 'block') {
+        navMenu.style.display = 'none';
+      }
+
       var i = steps.indexOf(e.target);
       bar.style.width = ((i + 1) / steps.length * 100) + '%';
       

@@ -2683,7 +2683,7 @@
 
         var nextStep = function() {
             var classes = '';
-            var nextElement = document.querySelector( '.active' );
+            var nextElement = document.querySelector( '.step.active' );
 
             // Return to parents as long as there is no next sibling
             while ( !nextElement.nextElementSibling && nextElement.parentNode ) {
@@ -2719,7 +2719,7 @@
             if ( consoleWindow ) {
 
                 // Set notes to next steps notes.
-                var newNotes = document.querySelector( '.active' ).querySelector( '.notes' );
+                var newNotes = document.querySelector( '.step.active' ).querySelector( '.notes' );
                 if ( newNotes ) {
                     newNotes = newNotes.innerHTML;
                 } else {
@@ -2728,9 +2728,9 @@
                 consoleWindow.document.getElementById( 'notes' ).innerHTML = newNotes;
 
                 // Set the views
-                var baseURL = document.URL.substring( 0, document.URL.search( '#/' ) );
-                var slideSrc = baseURL + '#' + document.querySelector( '.active' ).id;
-                var preSrc = baseURL + '#' + nextStep().id;
+                var baseURL = window.location.origin + window.location.pathname;
+                var slideSrc = baseURL + '#/' + document.querySelector( '.step.active' ).id;
+                var preSrc = baseURL + '#/' + nextStep().id;
                 var slideView = consoleWindow.document.getElementById( 'slideView' );
 
                 // Setting when already set causes glitches in Firefox, so check first:
@@ -2754,7 +2754,7 @@
                 // We do everything here again, because if you stopped the previos step to
                 // early, the onstepleave trigger is not called for that step, so
                 // we need this to sync things.
-                var newNotes = document.querySelector( '.active' ).querySelector( '.notes' );
+                var newNotes = document.querySelector( '.step.active' ).querySelector( '.notes' );
                 if ( newNotes ) {
                     newNotes = newNotes.innerHTML;
                 } else {
@@ -2765,9 +2765,9 @@
                 notes.scrollTop = 0;
 
                 // Set the views
-                var baseURL = document.URL.substring( 0, document.URL.search( '#/' ) );
-                var slideSrc = baseURL + '#' + document.querySelector( '.active' ).id;
-                var preSrc = baseURL + '#' + nextStep().id;
+                var baseURL = window.location.origin + window.location.pathname;
+                var slideSrc = baseURL + '#/' + document.querySelector( '.step.active' ).id;
+                var preSrc = baseURL + '#/' + nextStep().id;
                 var slideView = consoleWindow.document.getElementById( 'slideView' );
 
                 // Setting when already set causes glitches in Firefox, so check first:
