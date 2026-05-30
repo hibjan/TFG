@@ -346,3 +346,50 @@ h3 { font-size: 1.15rem; font-weight: 600; color: var(--text-soft); }
   background: linear-gradient(90deg, var(--blue-deep), var(--blue-light));
   z-index: 60; transition: width 0.6s ease;
 }
+
+/* ── Refactoring additions ────────────────────────────────── */
+.action-label {
+  display: inline-block;
+  background: rgba(122, 167, 224, 0.15);
+  border: 1px solid rgba(122, 167, 224, 0.4);
+  color: var(--blue-light);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.axis-summary {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: var(--inset-bg);
+  border: 1px dashed var(--panel-border);
+  border-radius: 12px;
+  padding: 40px;
+  width: 800px;
+  margin: 0 auto;
+}
+.axis-summary .n {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--blue-light);
+  margin-bottom: 12px;
+}
+.axis-summary .t {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 16px;
+}
+.axis-summary .x {
+  font-size: 1.1rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
