@@ -403,3 +403,72 @@ h3 { font-size: 1.15rem; font-weight: 600; color: var(--text-soft); }
   line-height: 1.5;
 }
 
+/* ============================================================
+   PROJECTOR READABILITY — larger type & roomier spacing
+   Sizes / spacing only. Palette, layout grid, and fonts are
+   unchanged. Tuned so the height-constrained graph board does
+   not overflow the 1080 budget.
+   ============================================================ */
+
+/* — Headings, eyebrows, lead — */
+.eyebrow        { font-size: 0.9rem; margin-bottom: 22px; }
+h2              { font-size: 2.35rem; margin-bottom: 12px; }
+h3              { font-size: 1.3rem; }
+.lead           { font-size: 1.42rem; line-height: 1.55; }
+.small          { font-size: 1.04rem; line-height: 1.55; }
+
+/* — Three-axes overview cards — */
+.axes           { gap: 22px; margin-top: 30px; }
+.axis-card      { padding: 24px 26px; }
+.axis-card .n   { font-size: 0.84rem; }
+.axis-card .t   { font-size: 1.32rem; }
+.axis-card .x   { font-size: 1.0rem; line-height: 1.5; }
+
+/* — Model boards (the demo): plenty of vertical slack here — */
+.board          { padding: 32px 38px; }
+.board-title    { font-size: 1.6rem; }
+.board-step     { font-size: 0.9rem; }
+.board-sub      { font-size: 1.1rem; line-height: 1.5; margin-bottom: 20px; }
+.board-body     { gap: 28px; }
+
+/* — Breadcrumb — */
+.crumb          { font-size: 0.96rem; padding: 5px 14px; }
+
+/* — Filters — */
+.filters        { padding: 18px; }
+.filters .ph    { font-size: 0.82rem; margin-bottom: 14px; }
+.chip           { font-size: 1.02rem; padding: 7px 14px; margin: 0 7px 9px 0; }
+.filters .none  { font-size: 1.0rem; }
+
+/* — Entity clusters — */
+.cluster        { padding: 16px 18px; }
+.cluster-label  { font-size: 0.88rem; margin-bottom: 14px; }
+.ecards         { gap: 9px; }
+.ecard          { font-size: 1.04rem; padding: 11px 16px; }
+.ecard .meta    { font-size: 0.84rem; }
+.resultline     { font-size: 1.08rem; margin-top: 16px; }
+.resultline .delta { font-size: 0.98rem; }
+.saved .stitle  { font-size: 0.86rem; }
+.action-label   { font-size: 0.92rem; padding: 5px 12px; }
+
+/* — Graph board (height-constrained → gentle bump only) — */
+.relbox .ecard  { font-size: 0.95rem; padding: 6px 13px; }
+.rel-label      { font-size: 0.82rem; }
+/* keep the graph slide within the 1080 budget: hold its intro text
+   near original size and tighten its margin to absorb the card growth */
+#m-graph .board-sub { font-size: 1.0rem; margin-bottom: 12px; }
+
+/* — Architecture / eval / contributions slides — */
+.process .node .v { font-size: 1.15rem; }
+.process .node .d { font-size: 0.92rem; }
+.layer .name    { font-size: 1.08rem; }
+.layer .tech    { font-size: 0.9rem; }
+.kv li          { font-size: 1.1rem; }
+.metric .big    { font-size: 3.0rem; }
+.metric .lab    { font-size: 0.94rem; }
+.note           { font-size: 1.04rem; line-height: 1.55; }
+.person .pname  { font-size: 1.32rem; }
+.person .prole  { font-size: 0.92rem; }
+.person li      { font-size: 1.02rem; }
+.joint          { font-size: 1.02rem; }
+
