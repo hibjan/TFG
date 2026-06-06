@@ -87,6 +87,13 @@ code, .mono { font-family: var(--mono); }
    inside the 1080 height. */
 .slide, .board { zoom: 1.45; }
 
+/* ── Real-app screenshots (full-bleed demo steps) ─────────── */
+.shot { width: 1920px; height: 1080px; }
+.shot img {
+  width: 1920px; height: 1080px; display: block; object-fit: cover;
+  border-radius: 6px;
+}
+
 /* default presentational box that most steps share */
 .slide {
   width: 1080px;
