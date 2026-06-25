@@ -93,6 +93,10 @@ code, .mono { font-family: var(--mono); }
   width: 1920px; height: 1080px; display: block; object-fit: cover;
   border-radius: 6px;
 }
+/* detail-view modal captures are ~1:1, not 16:9 — fit (don't crop) and
+   letterbox with the app's near-black backdrop so it reads as a modal */
+.shot--fit { background: #050507; }
+.shot--fit img { object-fit: contain; background: #050507; }
 
 /* default presentational box that most steps share */
 .slide {

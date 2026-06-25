@@ -93,9 +93,13 @@ Nuevo contexto en Personas: nacidos en Haverfordwest. Solo Bale. Lo añadimos.
 
 La unión devuelve tres entidades de dos colecciones: Inception, Interstellar y Bale. Heterogénea por diseño.
 
+### Dentro de una entidad (`shot-4-5-1` · `shot-4-5-3` · `shot-4-5-5`)
+
+La exploración encuentra entidades; luego abres una. Aquí está The Dark Knight: su contenido multimedia — imágenes, texto y vínculos, y también soporta documentos y vídeo —, sus metadatos y sus referencias tipadas a otras entidades. Clicamos en una de esas referencias y saltamos directamente a la entidad conectada: Morgan Freeman, con su propio contenido y un vínculo externo a la fuente. La misma vista de detalle funciona para cualquier entidad de cualquier catálogo.
+
 ### `m-end`
 
-Todo lo que hemos visto se formaliza así: un estado es una tupla — la colección que estábamos viendo, los filtros que aplicamos y los enlaces que seguimos. Filtrado, link, goback y unión son operaciones con semántica precisa. El modelo es la contribución más reutilizable, independiente del lenguaje y del dominio.
+Todo lo que hemos visto —filtrado, navegación y unión— se formaliza así: un estado es una tupla — la colección que estábamos viendo, los filtros que aplicamos y los enlaces que seguimos. Filtrado, link, goback y unión son operaciones con semántica precisa. El modelo es la contribución más reutilizable, independiente del lenguaje y del dominio.
 
 ⚡ **CAMBIO DE SPEAKER → Juan**
 
