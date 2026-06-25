@@ -1,0 +1,193 @@
+/* ============================================================
+   THEMES — runtime light / dark switch
+   Loaded after deck.css. Both palettes are scoped to a
+   `data-theme` attribute on <html> (the same mechanism the
+   language toggle uses with `lang`), so switching is instant
+   and needs no extra files. deck.css owns layout & typography;
+   here we only swap colors, opacities and a few accents.
+
+     html[data-theme="light"]  → projector-proof light theme
+     html[data-theme="dark"]   → high-contrast dark theme
+   ============================================================ */
+
+/* ════════════════════ LIGHT ════════════════════ */
+html[data-theme="light"] {
+  --bg-0: #ffffff;
+  --bg-1: #f3f6fa;
+  --bg-2: #e9eef4;
+
+  --text: #1b2430;
+  --text-soft: #33414f;
+  --muted: #505d69;       /* readable medium grey on white (~5:1) */
+  --muted-dim: #6a7884;   /* still readable for small labels (~4:1) */
+  --card-text: #2a3744;
+
+  --blue: #2f6bc4;
+  --blue-deep: #244e8a;
+  --blue-darker: #1c3256;
+  --blue-light: #2b5fa6;  /* was a pale tint — now a usable text accent */
+
+  --movies: #2f6bc4;
+  --people: #1f9d63;
+  --studios: #bf7818;
+
+  --include: #1f9d63;
+  --exclude: #c64b3d;
+  --ref: #2f6bc4;
+
+  --panel-bg: #ffffff;
+  --panel-border: rgba(20, 30, 45, 0.14);
+  --inset-bg: #f1f4f8;
+
+  /* zoom-out map (defined in index.html's inline <style>) */
+  --ov-title: rgba(10, 14, 22, 0.88);
+  --ov-frame-border: rgba(20, 30, 45, 0.16);
+  --ov-frame-bg: rgba(20, 30, 45, 0.02);
+
+  background: linear-gradient(140deg, #ffffff 0%, #eef2f7 55%, #e6ecf3 100%);
+}
+html[data-theme="light"] body {
+  background: linear-gradient(140deg, #ffffff 0%, #eef2f7 55%, #e6ecf3 100%);
+}
+
+/* Pure-white text from the base must become ink on a light background */
+html[data-theme="light"] b,
+html[data-theme="light"] strong {
+  color: #0f1722;
+}
+html[data-theme="light"] h1,
+html[data-theme="light"] h2 {
+  color: #0f1722;
+}
+html[data-theme="light"] .process .node .v,
+html[data-theme="light"] .axis-card .t,
+html[data-theme="light"] .board-title,
+html[data-theme="light"] .crumb.is-current,
+html[data-theme="light"] .resultline .count,
+html[data-theme="light"] .layer .name,
+html[data-theme="light"] .metric .big,
+html[data-theme="light"] .person .pname,
+html[data-theme="light"] .axis-summary .t,
+html[data-theme="light"] .joint b {
+  color: #0f1722;
+}
+
+/* Entity cards: solid white tiles with a clear border + soft shadow */
+html[data-theme="light"] .ecard {
+  background: #ffffff;
+  border-color: rgba(20, 30, 45, 0.14);
+  color: var(--card-text);
+  box-shadow: inset 3px 0 0 transparent, 0 1px 2px rgba(20, 30, 45, 0.06);
+}
+html[data-theme="light"] .cluster--movies .ecard.is-result {
+  background: rgba(47, 107, 196, 0.16);
+  color: #0f1722;
+}
+html[data-theme="light"] .cluster--people .ecard.is-result {
+  background: rgba(31, 157, 99, 0.16);
+  color: #0f1722;
+}
+html[data-theme="light"] .cluster--studios .ecard.is-result {
+  background: rgba(191, 120, 24, 0.18);
+  color: #0f1722;
+}
+html[data-theme="light"] .ecard.is-out {
+  opacity: 0.4;
+}
+
+/* Filter chips: deep ink text on pale tints */
+html[data-theme="light"] .chip--include {
+  background: rgba(31, 157, 99, 0.13);
+  border-color: rgba(31, 157, 99, 0.45);
+  color: #157a4b;
+}
+html[data-theme="light"] .chip--exclude {
+  background: rgba(198, 75, 61, 0.12);
+  border-color: rgba(198, 75, 61, 0.45);
+  color: #a8392c;
+}
+html[data-theme="light"] .chip--ref {
+  background: rgba(47, 107, 196, 0.12);
+  border-color: rgba(47, 107, 196, 0.45);
+  color: #234e8a;
+}
+
+/* Accents that were light tints on dark — re-deepened */
+html[data-theme="light"] .metric.good .big {
+  color: #1f9d63;
+}
+html[data-theme="light"] .note b {
+  color: #b23a2c;
+}
+/* The code card stays dark on purpose — reads like a code block on a light slide */
+
+/* ════════════════════ DARK (high-contrast) ════════════════════ */
+html[data-theme="dark"] {
+  --bg-0: #07090d;
+  --bg-1: #0b0e13;
+  --bg-2: #0f131a;
+
+  --text: #eef2f7;
+  --text-soft: #dde7f5;
+  --muted: #b7c2cf;       /* was #8f9ba8 — lifted so it never disappears */
+  --muted-dim: #93a0ad;   /* was #5c6975 — readable when the lamp dims */
+  --card-text: #e6ecf2;
+
+  --blue: #7ea7e6;
+  --blue-deep: #3a5e96;
+  --blue-darker: #24406b;
+  --blue-light: #bcd6ff;
+
+  --movies: #7ea7e6;
+  --people: #6ed6a2;
+  --studios: #f2bd72;
+
+  --include: #6ed6a2;
+  --exclude: #ef8d82;
+  --ref: #93b8ef;
+
+  --panel-bg: rgba(255, 255, 255, 0.05);
+  --panel-border: rgba(255, 255, 255, 0.18);
+  --inset-bg: rgba(255, 255, 255, 0.03);
+
+  --ov-title: rgba(255, 255, 255, 0.62);
+  --ov-frame-border: rgba(255, 255, 255, 0.15);
+  --ov-frame-bg: rgba(255, 255, 255, 0.02);
+
+  background: #07090d;
+}
+html[data-theme="dark"] body {
+  background: #07090d;
+}
+
+/* Entity cards: clearer fill + border */
+html[data-theme="dark"] .ecard {
+  background: rgba(126, 167, 230, 0.12);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+html[data-theme="dark"] .cluster--movies .ecard.is-result {
+  background: rgba(126, 167, 230, 0.30);
+}
+html[data-theme="dark"] .cluster--people .ecard.is-result {
+  background: rgba(110, 214, 162, 0.26);
+}
+html[data-theme="dark"] .cluster--studios .ecard.is-result {
+  background: rgba(242, 189, 114, 0.26);
+}
+html[data-theme="dark"] .ecard.is-out {
+  opacity: 0.38;
+}
+
+/* Filter chips: brighter text + stronger borders */
+html[data-theme="dark"] .chip--include {
+  color: #b8f0d4;
+  border-color: rgba(110, 214, 162, 0.55);
+}
+html[data-theme="dark"] .chip--exclude {
+  color: #ffc4bd;
+  border-color: rgba(239, 141, 130, 0.55);
+}
+html[data-theme="dark"] .chip--ref {
+  color: #cfe0ff;
+  border-color: rgba(147, 184, 239, 0.55);
+}
