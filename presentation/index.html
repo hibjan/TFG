@@ -1,6 +1,6 @@
 <!doctype html>
 
-<html lang="en" data-theme="dark">
+<html lang="es" data-theme="dark">
   <head>
     <meta charset="utf-8" />
     <meta content="width=1024" name="viewport" />
@@ -240,7 +240,7 @@
     <div class="theme-toggle-wrapper">
       <button
         aria-label="Tema claro"
-        class="theme-tab"
+        class="theme-tab active"
         id="btn-light"
         onclick="setTheme('light')"
       >
@@ -263,7 +263,7 @@
       </button>
       <button
         aria-label="Tema oscuro"
-        class="theme-tab active"
+        class="theme-tab"
         id="btn-dark"
         onclick="setTheme('dark')"
       >
@@ -1883,6 +1883,7 @@
             <li>BD: PostgreSQL · 5 tablas</li>
             <li>Pipelines: Python (TMDB) + Go (DBLP)</li>
             <li>Infra: Docker + Nginx + Cloudflare</li>
+            <li>Menor abstracción por diseño → control total</li>
           </ul>
         </div>
 
@@ -1895,7 +1896,19 @@
             <span class="lang-en">The tools behind the engine</span
             ><span class="lang-es">Las herramientas detrás del motor</span>
           </h2>
-          <ul class="kv" style="margin-top: 30px">
+          <p
+            class="small"
+            style="margin-top: 10px; color: var(--blue-light); font-weight: 600"
+          >
+            <span class="lang-en"
+              >Lowest-abstraction by design — full control over behavior and
+              optimizations.</span
+            ><span class="lang-es"
+              >La menor abstracción posible por diseño — control total sobre el
+              comportamiento y las optimizaciones.</span
+            >
+          </p>
+          <ul class="kv" style="margin-top: 18px">
             <li>
               <span class="lang-en"
                 ><b>Frontend:</b> Vanilla JS + Vite — modular components, zero
@@ -2421,7 +2434,7 @@
           <ul>
             <li>
               Motor unificado · Modelo formal reutilizable · Validación en 2
-              catálogos
+              catálogos · Álgebra completa (∧∨¬) · API agnóstica (enchufable)
             </li>
           </ul>
         </div>
@@ -2435,37 +2448,110 @@
             <span class="lang-en">Three mechanisms, one calculus</span
             ><span class="lang-es">Tres mecanismos, un cálculo</span>
           </h2>
-          <h3 style="margin-top: 30px; margin-bottom: 20px">
-            <span class="lang-en">What we delivered</span
-            ><span class="lang-es">Lo que entregamos</span>
-          </h3>
-          <ul class="kv">
-            <li>
-              <span class="lang-en"
-                >An engine that <b>unifies</b> filtering, navigation and
-                union.</span
-              ><span class="lang-es"
-                >Un motor que <b>unifica</b> filtrado, navegación y unión.</span
+          <div class="split" style="margin-top: 24px; align-items: start">
+            <div>
+              <h3 style="margin-bottom: 16px">
+                <span class="lang-en">What we delivered</span
+                ><span class="lang-es">Lo que entregamos</span>
+              </h3>
+              <ul class="kv">
+                <li>
+                  <span class="lang-en"
+                    >An engine that <b>unifies</b> filtering, navigation and
+                    union.</span
+                  ><span class="lang-es"
+                    >Un motor que <b>unifica</b> filtrado, navegación y
+                    unión.</span
+                  >
+                </li>
+                <li>
+                  <span class="lang-en"
+                    >A <b>formal model</b> — the most reusable
+                    contribution.</span
+                  ><span class="lang-es"
+                    >Un <b>modelo formal</b> — la contribución más
+                    reutilizable.</span
+                  >
+                </li>
+                <li>
+                  <span class="lang-en"
+                    >Validated conceptually and empirically on two distinct
+                    catalogs.</span
+                  ><span class="lang-es"
+                    >Validado conceptual y empíricamente en dos catálogos
+                    distintos.</span
+                  >
+                </li>
+                <li>
+                  <span class="lang-en"
+                    >Exposed via a <b>domain-agnostic REST API</b> — any catalog
+                    plugs in (Netflix, a store, a museum).</span
+                  ><span class="lang-es"
+                    >Expuesto vía una <b>API REST agnóstica al dominio</b> —
+                    cualquier catálogo se enchufa (Netflix, una tienda, un
+                    museo).</span
+                  >
+                </li>
+              </ul>
+            </div>
+            <div>
+              <div
+                class="axes"
+                style="grid-template-columns: 1fr; margin-top: 0; gap: 12px"
               >
-            </li>
-            <li>
-              <span class="lang-en"
-                >A <b>formal model</b> — the most reusable contribution.</span
-              ><span class="lang-es"
-                >Un <b>modelo formal</b> — la contribución más
-                reutilizable.</span
+                <div class="axis-card">
+                  <div class="t">
+                    <span style="color: var(--blue-light)">∧</span>
+                    <span class="lang-en">Conjunction</span
+                    ><span class="lang-es">Conjunción</span>
+                  </div>
+                  <div class="x">
+                    <span class="lang-en">metadata &amp; relation filters</span
+                    ><span class="lang-es"
+                      >filtros de metadatos y relaciones</span
+                    >
+                  </div>
+                </div>
+                <div class="axis-card">
+                  <div class="t">
+                    <span style="color: var(--blue-light)">∨</span>
+                    <span class="lang-en">Disjunction</span
+                    ><span class="lang-es">Disyunción</span>
+                  </div>
+                  <div class="x">
+                    <span class="lang-en">the union operation</span
+                    ><span class="lang-es">la operación de unión</span>
+                  </div>
+                </div>
+                <div class="axis-card">
+                  <div class="t">
+                    <span style="color: var(--blue-light)">¬</span>
+                    <span class="lang-en">Negation</span
+                    ><span class="lang-es">Negación</span>
+                  </div>
+                  <div class="x">
+                    <span class="lang-en">their exclusions (F⁻, R⁻)</span
+                    ><span class="lang-es">sus exclusiones (F⁻, R⁻)</span>
+                  </div>
+                </div>
+              </div>
+              <p
+                class="small"
+                style="
+                  margin-top: 14px;
+                  color: var(--blue-light);
+                  font-weight: 600;
+                "
               >
-            </li>
-            <li>
-              <span class="lang-en"
-                >Validated conceptually and empirically on two distinct
-                catalogs.</span
-              ><span class="lang-es"
-                >Validado conceptual y empíricamente en dos catálogos
-                distintos.</span
-              >
-            </li>
-          </ul>
+                <span class="lang-en"
+                  >A complete query algebra — any query is expressible.</span
+                ><span class="lang-es"
+                  >Un álgebra de consultas completa — cualquier consulta es
+                  expresable.</span
+                >
+              </p>
+            </div>
+          </div>
         </div>
       </div>
       <!-- CONCLUSIONS 2 · Future work -->
@@ -2479,7 +2565,7 @@
         <div class="notes">
           <ul>
             <li>
-              LLM copiloto · Distribución · Persistencia · Nuevos dominios
+              LLM copiloto · Distribución · Persistencia
             </li>
           </ul>
         </div>
@@ -2519,15 +2605,6 @@
               ><span class="lang-es"
                 ><b>Persistencia de usuario:</b> historial compartido, URLs
                 reproducibles.</span
-              >
-            </li>
-            <li>
-              <span class="lang-en"
-                ><b>New domains:</b> Library catalogs, institutional
-                repositories.</span
-              ><span class="lang-es"
-                ><b>Nuevos dominios:</b> Catálogos de bibliotecas, repositorios
-                institucionales.</span
               >
             </li>
           </ul>

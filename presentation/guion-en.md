@@ -110,11 +110,11 @@ Everything we've just seen — filtering, navigation and union — is formalized
 
 ### `arch-0`
 
-Now I'll explain how we took the model to a real system. The frontend is Vanilla JS with Vite, no frameworks. The backend, Java 17 Servlets on Tomcat. The database, PostgreSQL with five tables. Two data pipelines: Python for TMDB and Go for DBLP. And Docker Compose with Nginx and Cloudflare Tunnel in production.
+Now I'll explain how we took the model to a real system. The frontend is Vanilla JS with Vite, no frameworks. The backend, Java 17 Servlets on Tomcat. The database, PostgreSQL with five tables. Two data pipelines: Python for TMDB and Go for DBLP. And Docker Compose with Nginx and Cloudflare Tunnel in production. This was a deliberate decision: we chose the tools with the least possible abstraction — raw Vanilla JS, plain Servlets on Tomcat — to keep maximum control over the implementation and over every optimization, with nothing hidden behind a framework.
 
 ### `arch-1`
 
-The architecture has five layers. The frontend sends HTTP/JSON to the Servlets. Below that, the model: State, StateManager and Link, in the HTTP session. And the data-access layer connects to PostgreSQL over JDBC. The three middle layers live inside Tomcat.
+The architecture has five layers. The frontend sends HTTP/JSON to the Servlets. Below that, the model: State, StateManager and Link, in the HTTP session. And the data-access layer connects to PostgreSQL over JDBC.
 
 ### `arch-2`
 
@@ -122,7 +122,7 @@ Two key decisions. First: exploration is cumulative, so we keep the state in the
 
 ### `arch-3`
 
-Deployment: a single command. Docker Compose brings up four containers: PostgreSQL, Tomcat, Nginx and Cloudflare. Nginx unifies frontend and API under a single origin. Cloudflare exposes the app without opening any ports.
+Deployment is a single command: Docker Compose brings up four containers. Nginx unifies frontend and API under one origin, and Cloudflare exposes the app without opening any ports.
 
 ⚡ **SPEAKER CHANGE → Leonardo**
 
@@ -144,9 +144,13 @@ Results: a SUS of 85, the excellent range. 93% success: sixty-five of seventy ta
 
 In conclusion, we delivered three things. An engine that unifies filtering, navigation and union. A reusable formal model, independent of the language and of the domain. And a conceptual and empirical validation on two distinct catalogs.
 
+And that formal model is expressively complete: combining metadata and relation filters gives us conjunction, the union operation gives us disjunction, and their exclusions give us negation. With those three connectives — AND, OR and NOT — any query over a catalog can be expressed.
+
+Because the whole engine lives behind a domain-agnostic REST API, any application can plug into it and get this navigation for free — a streaming catalog like Netflix, an online store, a museum archive. They would only supply their own data; the engine and its semantics stay the same.
+
 ### `future-work`
 
-Looking ahead, the most promising extension: LLM assistance, where the model acts as a copilot without removing the user's control. In addition: distribution across nodes, persistence with shared history and reproducible exploration URLs, and extension to new domains such as libraries and institutional repositories.
+Looking ahead, the most promising extension is LLM assistance, where the model acts as a copilot without removing the user's control. Beyond that: distribution across nodes, and user persistence with shared history and reproducible exploration URLs.
 
 ## 6. Contributions (60 s) — Both
 

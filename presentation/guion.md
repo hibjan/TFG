@@ -107,11 +107,11 @@ Todo lo que hemos visto —filtrado, navegación y unión— se formaliza así: 
 
 ### `arch-0`
 
-Paso a explicar cómo llevamos el modelo a un sistema real. El frontend es Vanilla JS con Vite, sin frameworks. El backend, Servlets Java 17 sobre Tomcat. La base de datos, PostgreSQL con cinco tablas. Dos pipelines de datos: Python para TMDB y Go para DBLP. Y Docker Compose con Nginx y Cloudflare Tunnel en producción.
+Paso a explicar cómo llevamos el modelo a un sistema real. El frontend es Vanilla JS con Vite, sin frameworks. El backend, Servlets Java 17 sobre Tomcat. La base de datos, PostgreSQL con cinco tablas. Dos pipelines de datos: Python para TMDB y Go para DBLP. Y Docker Compose con Nginx y Cloudflare Tunnel en producción. Fue una decisión deliberada: escogimos las herramientas con la menor abstracción posible —JavaScript vanilla y Servlets sobre Tomcat— para conservar el máximo control sobre la implementación y sobre cada optimización, sin nada oculto tras un framework.
 
 ### `arch-1`
 
-La arquitectura tiene cinco capas. El frontend envía HTTP/JSON a los Servlets. Debajo, el modelo: State, StateManager y Link, en la sesión HTTP. Y la capa de acceso a datos se conecta a PostgreSQL por JDBC. Las tres capas intermedias viven dentro de Tomcat.
+La arquitectura tiene cinco capas. El frontend envía HTTP/JSON a los Servlets. Debajo, el modelo: State, StateManager y Link, en la sesión HTTP. Y la capa de acceso a datos se conecta a PostgreSQL por JDBC.
 
 ### `arch-2`
 
@@ -119,7 +119,7 @@ Dos decisiones clave. Primera: la exploración es acumulativa, así que guardamo
 
 ### `arch-3`
 
-El despliegue: un solo comando. Docker Compose levanta cuatro contenedores: PostgreSQL, Tomcat, Nginx y Cloudflare. Nginx unifica frontend y API bajo un mismo origen. Cloudflare expone la app sin abrir puertos.
+El despliegue es un solo comando: Docker Compose levanta cuatro contenedores. Nginx unifica frontend y API bajo un mismo origen, y Cloudflare expone la app sin abrir puertos.
 
 ⚡ **CAMBIO DE SPEAKER → Leonardo**
 
@@ -141,9 +141,13 @@ Resultados: SUS de 85, rango excelente. 93% de éxito: sesenta y cinco de setent
 
 En conclusión, entregamos tres cosas. Un motor que unifica filtrado, navegación y unión. Un modelo formal reutilizable, independiente del lenguaje y del dominio. Y una validación conceptual y empírica sobre dos catálogos.
 
+Y ese modelo formal tiene una expresividad semántica completa: combinar filtros de metadatos y de relaciones nos da la conjunción, la operación de unión nos da la disyunción, y sus exclusiones nos dan la negación. Con esos tres conectores —Y, O y NO— se puede expresar cualquier consulta sobre un catálogo.
+
+Y como todo el motor vive tras una API REST agnóstica al dominio, cualquier aplicación puede enchufarse a ella y obtener esta navegación de forma gratuita —un catálogo de streaming como Netflix, una tienda online, el archivo de un museo—. Solo tendrían que aportar sus propios datos; el motor y su semántica no cambian.
+
 ### `future-work`
 
-De cara al futuro, la extensión más prometedora: asistencia con LLMs, donde el modelo actúa como copiloto sin eliminar el control del usuario. Complementariamente, distribución entre nodos, persistencia con historial compartido, y extensión a nuevos dominios como bibliotecas y repositorios institucionales.
+De cara al futuro, la extensión más prometedora es la asistencia con LLMs, donde el modelo actúa como copiloto sin eliminar el control del usuario. Más allá de eso: distribución entre nodos, y persistencia de usuario con historial compartido y URLs de exploración reproducibles.
 
 ## 6. Contribuciones — en inglés (60 s) — Ambos
 

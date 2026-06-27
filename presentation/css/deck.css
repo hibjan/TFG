@@ -33,6 +33,11 @@
   --inset-bg: rgba(0, 0, 0, 0.18);
 
   --mono: 'SF Mono', 'Cascadia Code', Consolas, monospace;
+
+  /* The app screenshots are near-black; on a dim/eco-mode projector their fine
+     UI text dies. A measured brightness+contrast lift makes them legible and,
+     on the light deck, less of a harsh black slab. Tune here if needed. */
+  --shot-filter: brightness(1.30) contrast(0.98) saturate(1.07);
 }
 
 /* ── Reset / base ─────────────────────────────────────────── */
@@ -92,6 +97,7 @@ code, .mono { font-family: var(--mono); }
 .shot img {
   width: 1920px; height: 1080px; display: block; object-fit: cover;
   border-radius: 6px;
+  filter: var(--shot-filter);
 }
 /* detail-view modal captures are ~1:1, not 16:9 — fit (don't crop) and
    letterbox with the app's near-black backdrop so it reads as a modal */

@@ -12,9 +12,13 @@
 
 /* ════════════════════ LIGHT ════════════════════ */
 html[data-theme="light"] {
-  --bg-0: #ffffff;
-  --bg-1: #f3f6fa;
-  --bg-2: #e9eef4;
+  /* Soft neutral, NOT pure white: a bright projector blooms on #fff and makes
+     the dark app screenshots look even blacker by contrast. A light grey page
+     survives lamp dimming + ambient light and softens the jump to the shots.
+     Cards/insets stay near-white so they still read as raised tiles. */
+  --bg-0: #eef1f5;
+  --bg-1: #e6ebf2;
+  --bg-2: #dde4ec;
 
   --text: #1b2430;
   --text-soft: #33414f;
@@ -37,17 +41,17 @@ html[data-theme="light"] {
 
   --panel-bg: #ffffff;
   --panel-border: rgba(20, 30, 45, 0.14);
-  --inset-bg: #f1f4f8;
+  --inset-bg: #e9edf3;
 
   /* zoom-out map (defined in index.html's inline <style>) */
   --ov-title: rgba(10, 14, 22, 0.88);
   --ov-frame-border: rgba(20, 30, 45, 0.16);
   --ov-frame-bg: rgba(20, 30, 45, 0.02);
 
-  background: linear-gradient(140deg, #ffffff 0%, #eef2f7 55%, #e6ecf3 100%);
+  background: linear-gradient(140deg, #eef1f5 0%, #e6ecf2 55%, #dde5ee 100%);
 }
 html[data-theme="light"] body {
-  background: linear-gradient(140deg, #ffffff 0%, #eef2f7 55%, #e6ecf3 100%);
+  background: linear-gradient(140deg, #eef1f5 0%, #e6ecf2 55%, #dde5ee 100%);
 }
 
 /* Pure-white text from the base must become ink on a light background */
